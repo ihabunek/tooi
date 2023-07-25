@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tooi"
+version = "0.0.1"
+authors = [{ name="Ivan Habunek", email="ivan@habunek.com" }]
+description = "Mastodon terminal user interface"
+readme = "README.md"
+license = { file="LICENSE" }
+requires-python = ">=3.8"
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+]
+
+dependencies = [
+    "click>=8.0.0,<9.0.0",
+    # TODO: versioning
+    "textual",
+    "httpx",
+]
+
+[project.optional-dependencies]
+dev = ["pyright", "textual-dev"]
+
+[project.urls]
+"Homepage" = "https://git.sr.ht/~ihabunek/tooi"
+
+[project.scripts]
+tooi = "tooi.cli:main"
+
+[tool.pyright]
+include = ["tooi"]
