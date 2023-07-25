@@ -1,0 +1,7 @@
+ListView > ListItem {
+    background: transparent;
+}
+
+ListView:focus > ListItem.--highlight {
+    background: $primary;
+}

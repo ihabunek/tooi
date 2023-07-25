@@ -20,13 +20,22 @@ classifiers = [
 
 dependencies = [
     "click>=8.0.0,<9.0.0",
+    "beautifulsoup4>=4.0.0,<5.0.0",
     # TODO: versioning
     "textual",
     "httpx",
 ]
 
+[tool.setuptools.packages.find]
+include = ["tooi"]
+
+
 [project.optional-dependencies]
-dev = ["pyright", "textual-dev"]
+dev = [
+    "pyright",
+    "textual-dev",
+    "vermin",
+]
 
 [project.urls]
 "Homepage" = "https://git.sr.ht/~ihabunek/tooi"
