@@ -1,5 +1,3 @@
-import webbrowser
-
 from datetime import datetime
 from markdownify import markdownify
 from textual.app import Binding, Reactive, log
@@ -9,8 +7,10 @@ from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widget import Widget
 from textual.widgets import Footer, ListItem, ListView, Markdown, Static
-from tooi.entities import Status
 from typing import List
+
+from tooi.entities import Status
+from tooi.widgets.header import Header
 
 
 class TimelineScreen(Screen):
@@ -23,7 +23,7 @@ class TimelineScreen(Screen):
     def compose(self):
         self.status = self.statuses[0] if self.statuses else None
 
-        yield TimelineHeader()
+        yield Header("tooi | timeline")
         yield Horizontal(
             StatusList(self.statuses),
             StatusDetail(self.status),
@@ -44,23 +44,6 @@ class MyListView(ListView):
         Binding("k", "cursor_up", "Cursor Up", show=False),
         Binding("j", "cursor_down", "Cursor Down", show=False),
     ]
-
-
-class TimelineHeader(Widget):
-    DEFAULT_CSS = """
-    TimelineHeader {
-        dock: top;
-        width: 100%;
-        background: $primary;
-        color: $text;
-        height: 1;
-    }
-    """
-
-    DEFAULT_CLASSES = ""
-
-    def render(self):
-        return "toot | timeline"
 
 
 class StatusSelected(Message, bubble=True):
@@ -161,7 +144,7 @@ class MarkdownContent(Widget):
     def _on_markdown_link_clicked(self, message: Markdown.LinkClicked):
         log(f"click {message.href=}")
         message.stop()
-        webbrowser.open(message.href)
+        # webbrowser.open(message.href)
 
 
 class StatusListItem(Widget, can_focus=True):

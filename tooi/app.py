@@ -3,36 +3,12 @@ import httpx
 
 from httpx import AsyncClient
 from textual.app import App
-from textual.screen import Screen
-from textual.widgets import Static
 
 from tooi import api
 from tooi.entities import Status, from_dict
+from tooi.help import HelpScreen
+from tooi.loading import LoadingScreen
 from tooi.timeline import TimelineScreen
-
-
-class LoadingScreen(Screen):
-    DEFAULT_CSS = """
-        LoadingScreen {
-            align: center middle;
-            background: $panel;
-        }
-
-        LoadingScreen > Static {
-            color: white;
-            background: $primary-background;
-            text-align: center;
-        }
-
-        LoadingScreen > .spacer {
-            height: 1fr;
-        }
-    """
-
-    def compose(self):
-        yield Static("[b]tooi 1.0.0-beta[/b]")
-        yield Static(" Loading toots…")
-        yield Static("Imagine this is spinning")
 
 
 class TooiApp(App[int]):
@@ -63,8 +39,11 @@ class TooiApp(App[int]):
         data = response.json()
         return [from_dict(Status, s) for s in data]
 
-    def action_quit(self) -> None:
+    def action_quit(self):
         self.exit()
+
+    def action_help(self):
+        self.push_screen(HelpScreen())
 
 
 def _make_client():
