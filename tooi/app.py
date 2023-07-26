@@ -6,9 +6,9 @@ from textual.app import App
 
 from tooi import api
 from tooi.entities import Status, from_dict
-from tooi.help import HelpScreen
-from tooi.loading import LoadingScreen
-from tooi.timeline import TimelineScreen
+from tooi.screens.help import HelpScreen
+from tooi.screens.loading import LoadingScreen
+from tooi.screens.timeline import TimelineScreen
 
 
 class TooiApp(App[int]):
