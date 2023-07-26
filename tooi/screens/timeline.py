@@ -1,20 +1,26 @@
 from datetime import datetime
 from markdownify import markdownify
-from textual.app import Binding, Reactive, log
+from textual.app import log
+from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.message import Message
 from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widget import Widget
 from textual.widgets import Footer, ListItem, ListView, Markdown, Static
-from typing import List
+from typing import List, Optional
 
 from tooi.entities import Status
 from tooi.widgets.header import Header
 
 
 class TimelineScreen(Screen):
+    status: Optional[Status]
     statuses: reactive[List[Status]] = reactive([])
+
+    BINDINGS = [
+        Binding("s", "show_source", "Source"),
+    ]
 
     def __init__(self, statuses):
         super().__init__()
@@ -35,15 +41,8 @@ class TimelineScreen(Screen):
         self.query_one("StatusDetail").remove()
         self.query_one("Horizontal").mount(StatusDetail(self.status))
 
-
-class MyListView(ListView):
-    BINDINGS = [
-        Binding("enter", "select_cursor", "Select", show=False),
-        Binding("up", "cursor_up", "Cursor Up", show=False),
-        Binding("down", "cursor_down", "Cursor Down", show=False),
-        Binding("k", "cursor_up", "Cursor Up", show=False),
-        Binding("j", "cursor_down", "Cursor Down", show=False),
-    ]
+    def action_show_source(self):
+        self.app.show_source(self.status, f"status #{self.status.id}")
 
 
 class StatusSelected(Message, bubble=True):
@@ -68,7 +67,7 @@ class StatusList(Widget):
     }
     """
 
-    statuses: Reactive[List[Status]] = reactive([])
+    statuses: reactive[List[Status]] = reactive([])
 
     def __init__(self, statuses):
         super().__init__()

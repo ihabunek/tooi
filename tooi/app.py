@@ -2,12 +2,13 @@ import os
 import httpx
 
 from httpx import AsyncClient
-from textual.app import App
+from textual.app import App, log
 
 from tooi import api
 from tooi.entities import Status, from_dict
 from tooi.screens.help import HelpScreen
 from tooi.screens.loading import LoadingScreen
+from tooi.screens.source import SourceScreen
 from tooi.screens.timeline import TimelineScreen
 
 
@@ -44,6 +45,9 @@ class TooiApp(App[int]):
 
     def action_help(self):
         self.push_screen(HelpScreen())
+
+    def show_source(self, obj, title):
+        self.push_screen(SourceScreen(obj, title))
 
 
 def _make_client():
