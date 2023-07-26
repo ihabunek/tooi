@@ -1,15 +1,16 @@
+import webbrowser
+
 from datetime import datetime
+from markdownify import markdownify
 from textual.app import Binding, Reactive, log
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, ScrollableContainer, VerticalScroll
 from textual.message import Message
 from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widget import Widget
-from textual.widgets import Footer, ListItem, ListView
-from typing import List
-
+from textual.widgets import Footer, ListItem, ListView, Markdown, Static
 from tooi.entities import Status
-from tooi.utils.html import get_text
+from typing import List
 
 
 class TimelineScreen(Screen):
@@ -30,7 +31,9 @@ class TimelineScreen(Screen):
         yield Footer()
 
     def on_status_highlighted(self, message: "StatusHighlighted"):
-        self.query_one("StatusDetail").update(message.status)
+        self.status = message.status
+        self.query_one("StatusDetail").remove()
+        self.query_one("Horizontal").mount(StatusDetail(self.status))
 
 
 class MyListView(ListView):
@@ -95,8 +98,9 @@ class StatusList(Widget):
         status = message.item.children[0].status
         self.post_message(StatusHighlighted(status))
 
-    # def on_list_view_selected(self):
-    #     ...
+    def on_list_view_selected(self, message):
+        status = message.item.children[0].status
+        self.post_message(StatusSelected(status))
 
 
 class StatusDetail(Widget, can_focus=True):
@@ -105,52 +109,62 @@ class StatusDetail(Widget, can_focus=True):
         border-left: heavy $primary;
         padding: 1;
         width: 1fr;
+        layout: vertical;
+        overflow: auto auto;
     }
-    StatusDetail:focus ScrollableContainer {
+
+    StatusDetail:focus {
         border: heavy red;
     }
     """
+
+    BINDINGS = [
+        Binding("up", "scroll_up", "Scroll Up", show=False),
+        Binding("down", "scroll_down", "Scroll Down", show=False),
+        Binding("left", "scroll_left", "Scroll Up", show=False),
+        Binding("right", "scroll_right", "Scroll Right", show=False),
+        Binding("home", "scroll_home", "Scroll Home", show=False),
+        Binding("end", "scroll_end", "Scroll End", show=False),
+        Binding("pageup", "page_up", "Page Up", show=False),
+        Binding("pagedown", "page_down", "Page Down", show=False),
+    ]
+
+    status: Status
 
     def __init__(self, status):
         self.status = status
         super().__init__()
 
     def compose(self):
-        yield Vertical(
-            StatusDetailContent(self.status)
-        )
+        status = self.status.original
 
-    def update(self, status: Status):
-        self.query_one("StatusDetailContent").update(status)
+        # Make it scroll!
+        content = "\n\n".join([markdownify(status.content)] * 10)
+
+        yield Static(status.account.acct)
+        yield Static(status.account.display_name)
+        yield Static("")
+        yield MarkdownContent(content)
 
 
-class StatusDetailContent(Widget):
-    status: Status
+class MarkdownContent(Widget):
+    DEFAULT_CSS = """
+    MarkdownContent Markdown {
+        margin: 0;
+    }
+    """
 
-    def __init__(self, status: Status):
-        self.status = status
+    def __init__(self, markdown: str):
+        self.markdown = markdown
         super().__init__()
 
-    def update(self, status: Status):
-        self.status = status
-        self.refresh()
+    def compose(self):
+        yield Markdown(self.markdown)
 
-    def render(self):
-        if self.status:
-            return "\n".join(self._render(self.status))
-
-    def _render(self, status: Status):
-        yield status.id
-
-        if status.account.display_name:
-            yield f'[green]{status.account.display_name}[/green]'
-
-        yield f'[yellow]{status.account.acct}[/yellow]'
-
-        if status.content:
-            for _ in range(10):
-                yield ""
-                yield get_text(status.content)
+    def _on_markdown_link_clicked(self, message: Markdown.LinkClicked):
+        log(f"click {message.href=}")
+        message.stop()
+        webbrowser.open(message.href)
 
 
 class StatusListItem(Widget, can_focus=True):

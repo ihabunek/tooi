@@ -24,6 +24,7 @@ dependencies = [
     # TODO: versioning
     "textual",
     "httpx",
+    "markdownify",
 ]
 
 [tool.setuptools.packages.find]
