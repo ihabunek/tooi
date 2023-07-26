@@ -3,7 +3,7 @@ import webbrowser
 from datetime import datetime
 from markdownify import markdownify
 from textual.app import Binding, Reactive, log
-from textual.containers import Horizontal, ScrollableContainer, VerticalScroll
+from textual.containers import Horizontal
 from textual.message import Message
 from textual.reactive import reactive
 from textual.screen import Screen
@@ -92,7 +92,7 @@ class StatusList(Widget):
         self.statuses = statuses
 
     def compose(self):
-        yield ListView(*[ListItem(StatusListItem(s)) for s in self.statuses])
+        yield StatusListView(*[ListItem(StatusListItem(s)) for s in self.statuses])
 
     def on_list_view_highlighted(self, message):
         status = message.item.children[0].status
@@ -101,6 +101,14 @@ class StatusList(Widget):
     def on_list_view_selected(self, message):
         status = message.item.children[0].status
         self.post_message(StatusSelected(status))
+
+
+class StatusListView(ListView):
+    BINDINGS = [
+        Binding("enter", "select_cursor", "Select", show=False),
+        Binding("up,k", "cursor_up", "Cursor Up", show=False),
+        Binding("down,j", "cursor_down", "Cursor Down", show=False),
+    ]
 
 
 class StatusDetail(Widget, can_focus=True):
@@ -117,17 +125,6 @@ class StatusDetail(Widget, can_focus=True):
         border: heavy red;
     }
     """
-
-    BINDINGS = [
-        Binding("up", "scroll_up", "Scroll Up", show=False),
-        Binding("down", "scroll_down", "Scroll Down", show=False),
-        Binding("left", "scroll_left", "Scroll Up", show=False),
-        Binding("right", "scroll_right", "Scroll Right", show=False),
-        Binding("home", "scroll_home", "Scroll Home", show=False),
-        Binding("end", "scroll_end", "Scroll End", show=False),
-        Binding("pageup", "page_up", "Page Up", show=False),
-        Binding("pagedown", "page_down", "Page Down", show=False),
-    ]
 
     status: Status
 
