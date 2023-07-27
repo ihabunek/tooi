@@ -4,6 +4,7 @@ from textual.app import App, log
 from tooi import api
 from tooi.auth import Context, get_context
 from tooi.entities import Status, from_dict
+from tooi.screens.compose import ComposeScreen
 from tooi.screens.help import HelpScreen
 from tooi.screens.loading import LoadingScreen
 from tooi.screens.source import SourceScreen
@@ -22,6 +23,7 @@ class TooiApp(App):
     BINDINGS = [
         ("?", "help", "Help"),
         ("q", "quit", "Quit"),
+        ("c", "compose", "Compose"),
     ]
 
     def __init__(self):
@@ -37,6 +39,9 @@ class TooiApp(App):
         response = await api.timeline(self.ctx)
         data = response.json()
         return [from_dict(Status, s) for s in data]
+
+    def action_compose(self):
+        self.push_screen(ComposeScreen())
 
     def action_quit(self):
         self.exit()
