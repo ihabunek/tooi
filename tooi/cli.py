@@ -13,4 +13,5 @@ def tooi():
 
 def main():
     logging.basicConfig(level=logging.INFO, handlers=[TextualHandler()])
+    logging.getLogger("http").setLevel(logging.WARNING)
     tooi()

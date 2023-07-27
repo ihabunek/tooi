@@ -11,11 +11,13 @@ from tooi.entities import Status
 from tooi.messages import StatusHighlighted, StatusSelected
 from tooi.utils.datetime import format_datetime
 from tooi.widgets.header import Header
+from tooi.api.timeline import StatusListGenerator
 
 
 class TimelineScreen(Screen):
     status: Optional[Status]
     statuses: List[Status]
+    generator: StatusListGenerator
 
     BINDINGS = [
         Binding("s", "show_source", "Source"),
@@ -31,7 +33,7 @@ class TimelineScreen(Screen):
     }
     """
 
-    def __init__(self, statuses):
+    def __init__(self, statuses, generator):
         super().__init__()
         self.status = statuses[0] if statuses else None
         self.statuses = statuses

@@ -2,6 +2,7 @@ from httpx import AsyncClient
 from textual.app import App, log
 
 from tooi import api
+from tooi.api.timeline import home_timeline_generator
 from tooi.auth import Context, get_context
 from tooi.entities import Status, from_dict
 from tooi.screens.compose import ComposeScreen
@@ -32,13 +33,11 @@ class TooiApp(App):
 
     async def on_mount(self):
         self.push_screen("loading")
-        statuses = await self.load_statuses()
-        self.switch_screen(TimelineScreen(statuses))
 
-    async def load_statuses(self):
-        response = await api.timeline(self.ctx)
-        data = response.json()
-        return [from_dict(Status, s) for s in data]
+        generator = await home_timeline_generator(self.ctx)
+        statuses = await anext(generator)
+        screen = TimelineScreen(statuses, generator)
+        self.switch_screen(screen)
 
     def action_compose(self):
         self.push_screen(ComposeScreen())
