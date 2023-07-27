@@ -2,13 +2,13 @@ from markdownify import markdownify
 from textual.app import log
 from textual.binding import Binding
 from textual.containers import Horizontal
-from textual.message import Message
 from textual.screen import Screen
 from textual.widget import Widget
 from textual.widgets import Footer, ListItem, ListView, Markdown, Static
 from typing import List, Optional
 
 from tooi.entities import Status
+from tooi.messages import StatusHighlighted, StatusSelected
 from tooi.utils.datetime import format_datetime
 from tooi.widgets.header import Header
 
@@ -41,18 +41,6 @@ class TimelineScreen(Screen):
 
     def action_show_source(self):
         self.app.show_source(self.status, f"status #{self.status.id}")
-
-
-class StatusSelected(Message, bubble=True):
-    def __init__(self, status: Status) -> None:
-        super().__init__()
-        self.status = status
-
-
-class StatusHighlighted(Message, bubble=True):
-    def __init__(self, status: Status) -> None:
-        super().__init__()
-        self.status = status
 
 
 class StatusList(Widget):
