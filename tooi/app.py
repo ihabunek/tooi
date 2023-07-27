@@ -1,10 +1,10 @@
 from httpx import AsyncClient
-from textual.app import App, log
+from textual.app import App
 
-from tooi import api
 from tooi.api.timeline import home_timeline_generator
 from tooi.auth import Context, get_context
-from tooi.entities import Status, from_dict
+from tooi.entities import Account
+from tooi.screens.account import AccountScreen
 from tooi.screens.compose import ComposeScreen
 from tooi.screens.help import HelpScreen
 from tooi.screens.loading import LoadingScreen
@@ -50,3 +50,6 @@ class TooiApp(App):
 
     def show_source(self, obj, title):
         self.push_screen(SourceScreen(obj, title))
+
+    def show_account(self, account: Account):
+        self.push_screen(AccountScreen(account))

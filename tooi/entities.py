@@ -6,8 +6,11 @@ import dataclasses
 
 from dataclasses import dataclass, is_dataclass
 from datetime import date, datetime
+from functools import cached_property
 from typing import Dict, List, Optional, Type, TypeVar, Union, get_args, get_origin
 from typing import get_type_hints
+
+from markdownify import markdownify
 
 
 @dataclass
@@ -62,6 +65,10 @@ class Account:
     statuses_count: int
     followers_count: int
     following_count: int
+
+    @cached_property
+    def note_md(self):
+        return markdownify(self.note)
 
 
 @dataclass
@@ -238,6 +245,10 @@ class Status:
     @property
     def original(self) -> "Status":
         return self.reblog or self
+
+    @cached_property
+    def content_md(self):
+        return markdownify(self.content)
 
 
 @dataclass

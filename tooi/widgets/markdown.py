@@ -1,8 +1,10 @@
+from markdownify import markdownify
+from textual.app import log
 from textual.binding import Binding
-from textual.widgets import MarkdownViewer
+from textual.widgets import Markdown, MarkdownViewer
 
 
-class Markdown(MarkdownViewer):
+class MarkdownContent(MarkdownViewer):
     BINDINGS = [
         Binding("up,k", "scroll_up", "Scroll Up", show=False),
         Binding("down,j", "scroll_down", "Scroll Down", show=False),
@@ -12,5 +14,17 @@ class Markdown(MarkdownViewer):
         Binding("pagedown", "page_down", "Page Down", show=False),
     ]
 
-    def __init__(self, markdown: str, *, show_table_of_contents: bool = False):
-        super().__init__(markdown, show_table_of_contents=show_table_of_contents)
+    DEFAULT_CSS = """
+    MarkdownContent Markdown {
+        margin: 0;
+    }
+    """
+
+    def __init__(self, html: str):
+        markdown = markdownify(html)
+        super().__init__(markdown, show_table_of_contents=False)
+
+    def _on_markdown_link_clicked(self, message: Markdown.LinkClicked):
+        # TODO: handle URL clicked
+        log(f"Clicked: {message.href}")
+        message.stop()

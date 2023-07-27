@@ -1,10 +1,8 @@
-from markdownify import markdownify
-from textual.app import log
 from textual.binding import Binding
 from textual.containers import Horizontal, VerticalScroll
 from textual.screen import Screen
 from textual.widget import Widget
-from textual.widgets import Footer, ListItem, ListView, Markdown, Static
+from textual.widgets import Footer, ListItem, ListView, Static
 from typing import List, Optional
 
 from tooi.entities import Status
@@ -12,6 +10,7 @@ from tooi.messages import StatusHighlighted, StatusSelected
 from tooi.utils.datetime import format_datetime
 from tooi.widgets.header import Header
 from tooi.api.timeline import StatusListGenerator
+from tooi.widgets.markdown import MarkdownContent
 
 
 class TimelineScreen(Screen):
@@ -77,6 +76,11 @@ class StatusList(Widget):
     }
     """
 
+    BINDINGS = [
+        Binding("a", "show_account", "Account"),
+    ]
+
+    current: Optional[Status]
     statuses: List[Status]
 
     def __init__(self, statuses):
@@ -86,13 +90,17 @@ class StatusList(Widget):
     def compose(self):
         yield StatusListView(*[ListItem(StatusListItem(s)) for s in self.statuses])
 
-    def on_list_view_highlighted(self, message):
-        status = message.item.children[0].status
-        self.post_message(StatusHighlighted(status))
+    def on_list_view_highlighted(self, message: ListView.Highlighted):
+        self.current = message.item.children[0].status
+        self.post_message(StatusHighlighted(self.current))
 
-    def on_list_view_selected(self, message):
+    def on_list_view_selected(self, message: ListView.Highlighted):
         status = message.item.children[0].status
         self.post_message(StatusSelected(status))
+
+    def action_show_account(self):
+        if self.current:
+            self.app.show_account(self.current.account)
 
 
 class StatusListView(ListView):
@@ -131,33 +139,10 @@ class StatusDetail(VerticalScroll):
     def compose(self):
         status = self.status.original
 
-        # Make it scroll!
-        content = "\n\n".join([markdownify(status.content)] * 10)
-
         yield Static(status.account.acct)
         yield Static(status.account.display_name)
         yield Static("")
-        yield MarkdownContent(content)
-
-
-class MarkdownContent(Widget):
-    DEFAULT_CSS = """
-    MarkdownContent Markdown {
-        margin: 0;
-    }
-    """
-
-    def __init__(self, markdown: str):
-        self.markdown = markdown
-        super().__init__()
-
-    def compose(self):
-        yield Markdown(self.markdown)
-
-    def _on_markdown_link_clicked(self, message: Markdown.LinkClicked):
-        log(f"click {message.href=}")
-        message.stop()
-        # webbrowser.open(message.href)
+        yield MarkdownContent(status.content_md)
 
 
 class StatusListItem(Static, can_focus=True):
