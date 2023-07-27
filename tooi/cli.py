@@ -1,5 +1,7 @@
 import click
+import logging
 
+from textual.logging import TextualHandler
 from tooi.app import TooiApp
 
 
@@ -10,4 +12,5 @@ def tooi():
 
 
 def main():
+    logging.basicConfig(level=logging.INFO, handlers=[TextualHandler()])
     tooi()
