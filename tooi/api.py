@@ -1,7 +1,7 @@
-import httpx
+from tooi import Context
 
 
-async def timeline(client: httpx.AsyncClient):
-    response = await client.get("/api/v1/timelines/home/")
+async def timeline(ctx: Context):
+    response = await ctx.client.get("/api/v1/timelines/home/")
     response.raise_for_status()
     return response

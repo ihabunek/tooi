@@ -1,10 +1,8 @@
-import os
-import httpx
-
 from httpx import AsyncClient
 from textual.app import App, log
 
 from tooi import api
+from tooi.auth import Context, get_context
 from tooi.entities import Status, from_dict
 from tooi.screens.help import HelpScreen
 from tooi.screens.loading import LoadingScreen
@@ -12,11 +10,9 @@ from tooi.screens.source import SourceScreen
 from tooi.screens.timeline import TimelineScreen
 
 
-class TooiApp(App[int]):
+class TooiApp(App):
     client: AsyncClient
-
-    def __init__(self):
-        super().__init__()
+    ctx: Context
 
     TITLE = "tooi"
     SUB_TITLE = "1.0.0"
@@ -28,15 +24,17 @@ class TooiApp(App[int]):
         ("q", "quit", "Quit"),
     ]
 
-    async def on_mount(self):
-        self.client = _make_client()
+    def __init__(self):
+        super().__init__()
+        self.ctx = get_context()
 
+    async def on_mount(self):
         self.push_screen("loading")
         statuses = await self.load_statuses()
         self.switch_screen(TimelineScreen(statuses))
 
     async def load_statuses(self):
-        response = await api.timeline(self.client)
+        response = await api.timeline(self.ctx)
         data = response.json()
         return [from_dict(Status, s) for s in data]
 
@@ -48,13 +46,3 @@ class TooiApp(App[int]):
 
     def show_source(self, obj, title):
         self.push_screen(SourceScreen(obj, title))
-
-
-def _make_client():
-    base_url = os.getenv("TOOI_BASE_URL", "")
-    token = os.getenv("TOOI_ACCESS_TOKEN", "")
-
-    return httpx.AsyncClient(
-        base_url=base_url,
-        headers={"Authorization": f"Bearer {token}"},
-    )
