@@ -3,7 +3,6 @@ from textual.app import log
 from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.message import Message
-from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widget import Widget
 from textual.widgets import Footer, ListItem, ListView, Markdown, Static
@@ -16,7 +15,7 @@ from tooi.widgets.header import Header
 
 class TimelineScreen(Screen):
     status: Optional[Status]
-    statuses: reactive[List[Status]] = reactive([])
+    statuses: List[Status]
 
     BINDINGS = [
         Binding("s", "show_source", "Source"),
@@ -24,11 +23,10 @@ class TimelineScreen(Screen):
 
     def __init__(self, statuses):
         super().__init__()
+        self.status = statuses[0] if statuses else None
         self.statuses = statuses
 
     def compose(self):
-        self.status = self.statuses[0] if self.statuses else None
-
         yield Header("tooi | timeline")
         yield Horizontal(
             StatusList(self.statuses),
@@ -67,11 +65,11 @@ class StatusList(Widget):
     }
     """
 
-    statuses: reactive[List[Status]] = reactive([])
+    statuses: List[Status]
 
     def __init__(self, statuses):
-        super().__init__()
         self.statuses = statuses
+        super().__init__()
 
     def compose(self):
         yield StatusListView(*[ListItem(StatusListItem(s)) for s in self.statuses])
