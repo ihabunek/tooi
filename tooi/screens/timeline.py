@@ -115,6 +115,7 @@ class StatusDetail(VerticalScroll):
     DEFAULT_CSS = """
     #status_detail {
         width: 1fr;
+        margin: 0 1;
     }
     #status_detail:focus {
         background: $panel;
@@ -139,8 +140,8 @@ class StatusDetail(VerticalScroll):
     def compose(self):
         status = self.status.original
 
-        yield Static(status.account.acct)
-        yield Static(status.account.display_name)
+        yield Static(f"[green]@{status.account.acct}[/]")
+        yield Static(f"[yellow]{status.account.display_name}[/]")
         yield Static("")
         yield MarkdownContent(status.content_md)
 
