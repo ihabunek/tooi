@@ -1,3 +1,4 @@
+import asyncio
 from textual.binding import Binding
 from textual.containers import Horizontal, VerticalScroll
 from textual.screen import Screen
@@ -14,9 +15,10 @@ from tooi.widgets.markdown import MarkdownContent
 
 
 class TimelineScreen(Screen):
-    status: Optional[Status]
-    statuses: List[Status]
     generator: StatusListGenerator
+    status_list: "StatusList"
+    status_detail: "StatusDetail"
+    fetching: bool
 
     BINDINGS = [
         Binding("s", "show_source", "Source"),
@@ -34,36 +36,55 @@ class TimelineScreen(Screen):
 
     def __init__(self, statuses, generator):
         super().__init__()
-        self.status = statuses[0] if statuses else None
-        self.statuses = statuses
+        self.generator = generator
+        self.fetching = False
+
+        status = statuses[0] if statuses else None
+        self.status_list = StatusList(statuses)
+        self.status_detail = StatusDetail(status)
 
     def compose(self):
         yield Header("tooi | timeline")
         yield Horizontal(
-            StatusList(self.statuses),
+            self.status_list,
             Static("", id="timeline_divider"),
-            StatusDetail(self.status),
+            self.status_detail,
         )
         yield Footer()
 
-    def on_status_highlighted(self, message: "StatusHighlighted"):
-        self.status = message.status
-
+    async def on_status_highlighted(self, message: "StatusHighlighted"):
         # TODO: This is slow, try updating the existing StatusDetail instead of
         # creating a new one. This requires some fiddling since compose() is
         # called only once, so updating needs to be implemented manually.
         # See: https://github.com/Textualize/textual/discussions/1683
         self.query_one("StatusDetail").remove()
-        self.query_one("Horizontal").mount(StatusDetail(self.status))
+        self.query_one("Horizontal").mount(StatusDetail(message.status))
+        asyncio.create_task(self.maybe_fetch_next_batch())
 
     def action_show_source(self):
-        self.app.show_source(self.status, f"status #{self.status.id}")
+        status = self.status_list.current
+        self.app.show_source(status, f"status #{status.id}")
 
     def action_scroll_left(self):
         self.query_one("StatusListView").focus()
 
     def action_scroll_right(self):
         self.query_one("StatusDetail").focus()
+
+    async def maybe_fetch_next_batch(self):
+        if self.should_fetch():
+            self.fetching = True
+            # TODO: handle expcetions
+            try:
+                next_statuses = await anext(self.generator)
+                self.status_list.update(next_statuses)
+            finally:
+                self.fetching = False
+
+    def should_fetch(self):
+        if not self.fetching and self.status_list.index is not None:
+            diff = self.status_list.count - self.status_list.index
+            return diff < 10
 
 
 class StatusList(Widget):
@@ -80,27 +101,48 @@ class StatusList(Widget):
         Binding("a", "show_account", "Account"),
     ]
 
-    current: Optional[Status]
     statuses: List[Status]
+    status_list_view: "StatusListView"
 
     def __init__(self, statuses):
         self.statuses = statuses
+        self.status_list_view = StatusListView(
+            *[ListItem(StatusListItem(s)) for s in self.statuses]
+        )
         super().__init__(id="status_list")
 
     def compose(self):
-        yield StatusListView(*[ListItem(StatusListItem(s)) for s in self.statuses])
+        yield self.status_list_view
+
+    def update(self, next_statuses: List[Status]):
+        self.statuses += next_statuses
+        for status in next_statuses:
+            self.status_list_view.mount(ListItem(StatusListItem(status)))
+
+    @property
+    def index(self):
+        return self.status_list_view.index
+
+    @property
+    def count(self):
+        return len(self.statuses)
+
+    @property
+    def current(self) -> Optional[Status]:
+        if isinstance(self.index, int):
+            return self.statuses[self.index]
 
     def on_list_view_highlighted(self, message: ListView.Highlighted):
-        self.current = message.item.children[0].status
-        self.post_message(StatusHighlighted(self.current))
+        if status := self.current:
+            self.post_message(StatusHighlighted(status))
 
     def on_list_view_selected(self, message: ListView.Highlighted):
-        status = message.item.children[0].status
-        self.post_message(StatusSelected(status))
+        if status := self.current:
+            self.post_message(StatusSelected(status))
 
     def action_show_account(self):
-        if self.current:
-            self.app.show_account(self.current.account)
+        if status := self.current:
+            self.app.show_account(status.account)
 
 
 class StatusListView(ListView):
@@ -115,7 +157,7 @@ class StatusDetail(VerticalScroll):
     DEFAULT_CSS = """
     #status_detail {
         width: 1fr;
-        margin: 0 1;
+        padding: 0 1;
     }
     #status_detail:focus {
         background: $panel;
