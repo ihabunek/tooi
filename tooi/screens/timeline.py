@@ -1,4 +1,3 @@
-from datetime import datetime
 from markdownify import markdownify
 from textual.app import log
 from textual.binding import Binding
@@ -11,6 +10,7 @@ from textual.widgets import Footer, ListItem, ListView, Markdown, Static
 from typing import List, Optional
 
 from tooi.entities import Status
+from tooi.utils.datetime import format_datetime
 from tooi.widgets.header import Header
 
 
@@ -158,8 +158,3 @@ class StatusListItem(Widget, can_focus=True):
         acct = self.status.account.acct
         acct = acct if "@" in acct else f"{acct}@???"
         return f"{dttm}  [green]{acct}[/]"
-
-
-def format_datetime(dttm: datetime):
-    """Returns an aware datetime in local timezone"""
-    return dttm.astimezone().strftime("%Y-%m-%d %H:%M")
