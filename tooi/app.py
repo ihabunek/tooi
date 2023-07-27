@@ -20,7 +20,7 @@ class TooiApp(App):
     CSS_PATH = "app.css"
 
     BINDINGS = [
-        ("h", "help", "Help"),
+        ("?", "help", "Help"),
         ("q", "quit", "Quit"),
     ]
 

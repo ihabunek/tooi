@@ -1,4 +1,4 @@
-from textual.app import Binding
+from textual.binding import Binding
 from textual.widgets import MarkdownViewer
 
 
