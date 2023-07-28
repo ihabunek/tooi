@@ -101,11 +101,13 @@ class StatusList(Widget):
         Binding("a", "show_account", "Account"),
     ]
 
+    current: Optional[Status]
     statuses: List[Status]
     status_list_view: "StatusListView"
 
     def __init__(self, statuses):
         self.statuses = statuses
+        self.current = statuses[0] if statuses else None
         self.status_list_view = StatusListView(
             *[ListItem(StatusListItem(s)) for s in self.statuses]
         )
@@ -127,22 +129,20 @@ class StatusList(Widget):
     def count(self):
         return len(self.statuses)
 
-    @property
-    def current(self) -> Optional[Status]:
-        if isinstance(self.index, int):
-            return self.statuses[self.index]
-
     def on_list_view_highlighted(self, message: ListView.Highlighted):
-        if status := self.current:
-            self.post_message(StatusHighlighted(status))
+        if message.item:
+            status = message.item.children[0].status
+            if status != self.current:
+                self.current = status
+                self.post_message(StatusHighlighted(status))
 
     def on_list_view_selected(self, message: ListView.Highlighted):
-        if status := self.current:
-            self.post_message(StatusSelected(status))
+        if self.current:
+            self.post_message(StatusSelected(self.current))
 
     def action_show_account(self):
-        if status := self.current:
-            self.app.show_account(status.account)
+        if self.current:
+            self.app.show_account(self.current.account)
 
 
 class StatusListView(ListView):
