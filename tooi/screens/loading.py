@@ -1,6 +1,8 @@
 from textual.screen import Screen
 from textual.widgets import Static
 
+from tooi import __version__
+
 
 class LoadingScreen(Screen):
     DEFAULT_CSS = """
@@ -21,6 +23,6 @@ class LoadingScreen(Screen):
     """
 
     def compose(self):
-        yield Static("[b]tooi 1.0.0-beta[/b]")
+        yield Static(f"[b]tooi {__version__}[/b]")
         yield Static(" Loading toots…")
         yield Static("Imagine this is spinning")
