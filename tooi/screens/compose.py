@@ -3,6 +3,7 @@ from textual.binding import Binding
 from textual.containers import Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Input, Static
+from textual_textarea import TextArea
 
 from tooi.widgets.header import Header
 
@@ -27,7 +28,7 @@ class ComposeScreen(ModalScreen):
         yield Vertical(
             Header("Compose toot"),
             Static(),
-            Input(placeholder="Content"),
+            TextArea(),
             id="compose_dialog",
         )
 

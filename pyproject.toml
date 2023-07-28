@@ -23,6 +23,7 @@ dependencies = [
     "beautifulsoup4>=4.0.0,<5.0.0",
     # TODO: versioning
     "textual",
+    "textual-textarea",
     "httpx",
     "markdownify",
 ]
