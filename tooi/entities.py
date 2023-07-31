@@ -7,10 +7,11 @@ import dataclasses
 from dataclasses import dataclass, is_dataclass
 from datetime import date, datetime
 from functools import cached_property
+from markdownify import markdownify
 from typing import Dict, List, Optional, Type, TypeVar, Union, get_args, get_origin
 from typing import get_type_hints
 
-from markdownify import markdownify
+from tooi.utils.datetime import parse_datetime
 
 
 @dataclass
@@ -360,6 +361,65 @@ class Instance:
     rules: List[Rule]
 
 
+@dataclass
+class UsageUsers:
+    active_month: int
+
+
+@dataclass
+class Usage:
+    users: UsageUsers
+
+
+@dataclass
+class InstanceThumbnail:
+    url: str
+    blurhash: Optional[str]
+    versions: Optional[dict]
+
+
+@dataclass
+class InstanceRegistrations:
+    enabled: bool
+    approval_required: bool
+    message: Optional[str]
+
+
+@dataclass
+class InstanceContact:
+    email: str
+    account: Account
+
+
+@dataclass
+class InstanceV2:
+    """
+    https://docs.joinmastodon.org/entities/Instance/
+    """
+    domain: str
+    title: str
+    version: str
+    source_url: str
+    description: str
+    usage: Usage
+    thumbnail: InstanceThumbnail
+    languages: List[str]
+    # TODO: add v2 specific fields to configurationm
+    configuration: InstanceConfiguration
+    registrations: InstanceRegistrations
+    contact: InstanceContact
+    rules: List[Rule]
+
+
+@dataclass
+class ExtendedDescription:
+    """
+    https://docs.joinmastodon.org/entities/ExtendedDescription/
+    """
+    updated_at: datetime
+    content: str
+
+
 # Generic data class instance
 T = TypeVar("T")
 
@@ -395,7 +455,7 @@ def _convert(field_type, value):
         return value
 
     if field_type == datetime:
-        return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f%z")
+        return parse_datetime(value)
 
     if field_type == date:
         return date.fromisoformat(value)

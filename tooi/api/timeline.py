@@ -25,7 +25,7 @@ from tooi.utils.string import str_bool
 #     return _anon_timeline_generator(ctx, instance, path, params)
 
 
-async def home_timeline_generator(ctx: Context, limit=20):
+def home_timeline_generator(ctx: Context, limit=20):
     path = "/api/v1/timelines/home"
     params = {"limit": limit}
     return _timeline_generator(ctx, path, params)

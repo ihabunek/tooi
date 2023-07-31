@@ -1,4 +1,5 @@
 import asyncio
+
 from textual.binding import Binding
 from textual.containers import Horizontal, VerticalScroll
 from textual.screen import Screen
@@ -91,6 +92,7 @@ class StatusList(Widget):
     DEFAULT_CSS = """
     #status_list {
         width: 1fr;
+        min-width: 20;
     }
     #status_list:focus-within {
         background: $panel;
@@ -108,6 +110,7 @@ class StatusList(Widget):
     def __init__(self, statuses):
         self.statuses = statuses
         self.current = statuses[0] if statuses else None
+
         self.status_list_view = StatusListView(
             *[ListItem(StatusListItem(s)) for s in self.statuses]
         )
@@ -147,16 +150,17 @@ class StatusList(Widget):
 
 class StatusListView(ListView):
     BINDINGS = [
-        Binding("enter", "select_cursor", "Select", show=False),
+        Binding("enter,space", "select_cursor", "Select", show=False),
         Binding("up,k", "cursor_up", "Cursor Up", show=False),
         Binding("down,j", "cursor_down", "Cursor Down", show=False),
+        # TODO: add page up/down
     ]
 
 
 class StatusDetail(VerticalScroll):
     DEFAULT_CSS = """
     #status_detail {
-        width: 1fr;
+        width: 2fr;
         padding: 0 1;
     }
     #status_detail:focus {
@@ -198,7 +202,8 @@ class StatusListItem(Static, can_focus=True):
         self.status = status
 
     def render(self):
+        instance = self.app.instance
         dttm = format_datetime(self.status.created_at)
         acct = self.status.account.acct
-        acct = acct if "@" in acct else f"{acct}@???"
+        acct = acct if "@" in acct else f"{acct}@{instance.domain}"
         return f"{dttm}  [green]{acct}[/]"

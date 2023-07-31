@@ -1,9 +1,11 @@
+from asyncio import gather
 from httpx import AsyncClient
-from textual.app import App
+from textual.app import App, log
+from tooi.api.instance import extended_description, server_information
 
 from tooi.api.timeline import home_timeline_generator
 from tooi.auth import Context, get_context
-from tooi.entities import Account
+from tooi.entities import Account, ExtendedDescription, InstanceV2, from_dict
 from tooi.screens.account import AccountScreen
 from tooi.screens.compose import ComposeScreen
 from tooi.screens.help import HelpScreen
@@ -34,8 +36,16 @@ class TooiApp(App):
     async def on_mount(self):
         self.push_screen("loading")
 
-        generator = await home_timeline_generator(self.ctx)
-        statuses = await anext(generator)
+        generator = home_timeline_generator(self.ctx)
+        statuses, instance, description = await gather(
+            anext(generator),
+            server_information(self.ctx),
+            extended_description(self.ctx),
+        )
+
+        self.instance = from_dict(InstanceV2, instance.json())
+        self.description = from_dict(ExtendedDescription, description.json())
+
         screen = TimelineScreen(statuses, generator)
         self.switch_screen(screen)
 
