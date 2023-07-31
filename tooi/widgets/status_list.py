@@ -19,10 +19,6 @@ class StatusList(Widget):
     }
     """
 
-    BINDINGS = [
-        Binding("a", "show_account", "Account"),
-    ]
-
     current: Optional[Status]
     statuses: List[Status]
     status_list_view: "StatusListView"
@@ -62,10 +58,6 @@ class StatusList(Widget):
     def on_list_view_selected(self, message: ListView.Highlighted):
         if self.current:
             self.post_message(StatusSelected(self.current))
-
-    def action_show_account(self):
-        if self.current:
-            self.app.show_account(self.current.account)
 
 
 class StatusListView(ListView):

@@ -19,6 +19,7 @@ class TimelineScreen(Screen):
     fetching: bool
 
     BINDINGS = [
+        Binding("a", "show_account", "Account"),
         Binding("s", "show_source", "Source"),
         Binding("left,h", "scroll_left", "Scroll Left", show=False),
         Binding("right,l", "scroll_right", "Scroll Right", show=False),
@@ -59,9 +60,13 @@ class TimelineScreen(Screen):
         self.query_one("Horizontal").mount(StatusDetail(message.status))
         asyncio.create_task(self.maybe_fetch_next_batch())
 
+    def action_show_account(self):
+        if status := self.status_list.current:
+            self.app.show_account(status.original.account)
+
     def action_show_source(self):
-        status = self.status_list.current
-        self.app.show_source(status, f"status #{status.id}")
+        if status := self.status_list.current:
+            self.app.show_source(status, f"status #{status.id}")
 
     def action_scroll_left(self):
         self.query_one("StatusListView").focus()

@@ -49,8 +49,8 @@ class StatusDetail(VerticalScroll):
         yield Static("")
         yield Markdown(status.content_md, classes="content")
 
-        if status.card:
-            yield StatusCard(status)
+        # if status.card:
+        #     yield StatusCard(status)
 
         yield StatusMeta(status)
 
@@ -111,7 +111,7 @@ class StatusCard(Widget):
         log("Click")
 
 
-class StatusMeta(Widget):
+class StatusMeta(Static):
     DEFAULT_CSS = """
     .meta {
         border-top: ascii gray;
@@ -124,7 +124,7 @@ class StatusMeta(Widget):
         self.status = status
         super().__init__(classes="meta")
 
-    def compose(self):
+    def render(self):
         status = self.status.original
         parts = [
             f"[bold]{format_datetime(status.created_at)}[/]",
@@ -133,4 +133,4 @@ class StatusMeta(Widget):
             f"{status.replies_count} replies",
             f"{status.visibility.capitalize()}",
         ]
-        yield Static(" · ".join(parts))
+        return " · ".join(parts)
