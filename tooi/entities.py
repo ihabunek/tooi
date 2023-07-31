@@ -162,6 +162,10 @@ class PreviewCard:
     embed_url: str
     blurhash: Optional[str]
 
+    @cached_property
+    def markdown(self):
+        return markdownify(self.html)
+
 
 @dataclass
 class FilterKeyword:

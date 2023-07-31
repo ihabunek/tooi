@@ -1,4 +1,5 @@
 import asyncio
+from textual.app import log
 
 from textual.binding import Binding
 from textual.containers import Horizontal, VerticalScroll
@@ -186,10 +187,76 @@ class StatusDetail(VerticalScroll):
     def compose(self):
         status = self.status.original
 
+        if self.status.reblog:
+            yield BoostedBy(self.status)
+
         yield Static(f"[green]@{status.account.acct}[/]")
         yield Static(f"[yellow]{status.account.display_name}[/]")
         yield Static("")
         yield MarkdownContent(status.content_md)
+
+        if status.card:
+            yield StatusCard(status)
+
+
+class BoostedBy(Static):
+    DEFAULT_CSS = """
+    BoostedBy {
+        color: gray;
+        border-bottom: ascii gray;
+    }
+    """
+
+    def __init__(self, status):
+        self.status = status
+        super().__init__()
+
+    def render(self):
+        return f"boosted by {self.status.account.acct}"
+
+
+class StatusCard(Widget):
+    DEFAULT_CSS = """
+    .card {
+        border: round white;
+        padding: 0 1;
+        height: auto;
+        margin-top: 1;
+    }
+
+    .card > .title {
+        text-style: bold;
+    }
+    """
+
+    status: Status
+
+    def __init__(self, status):
+        self.status = status
+        super().__init__(classes="card")
+
+    def compose(self):
+        card = self.status.original.card
+
+        if not card:
+            return
+
+        yield Static(f"[@click='onclick']{card.title}[/]", classes="title")
+        if card.author_name:
+            yield Static(f"by {card.author_name}")
+        if card.description:
+            yield Static("")
+            yield Static(card.description)
+        if card.markdown:
+            log(card.markdown)
+            yield Static("")
+            yield MarkdownContent(card.markdown)
+        yield Static("")
+        yield Static(f"[@click='onclick']{card.url}[/]")
+
+    # TODO: this no worky
+    def action_onclick(self):
+        log("Click")
 
 
 class StatusListItem(Static, can_focus=True):
@@ -202,8 +269,10 @@ class StatusListItem(Static, can_focus=True):
         self.status = status
 
     def render(self):
+        status = self.status.original
         instance = self.app.instance
-        dttm = format_datetime(self.status.created_at)
-        acct = self.status.account.acct
+
+        dttm = format_datetime(status.created_at)
+        acct = status.account.acct
         acct = acct if "@" in acct else f"{acct}@{instance.domain}"
         return f"{dttm}  [green]{acct}[/]"

@@ -13,13 +13,13 @@ from tooi.entities import Status, from_dict
 from tooi.utils.string import str_bool
 
 
-# async def anon_public_timeline_generator(ctx, instance, local=False, limit=20):
+# def anon_public_timeline_generator(ctx, instance, local=False, limit=20):
 #     path = "/api/v1/timelines/public"
 #     params = {"local": str_bool(local), "limit": limit}
 #     return _anon_timeline_generator(ctx, instance, path, params)
 
 
-# async def anon_tag_timeline_generator(ctx, instance, hashtag, local=False, limit=20):
+# def anon_tag_timeline_generator(ctx, instance, hashtag, local=False, limit=20):
 #     path = f"/api/v1/timelines/tag/{quote(hashtag)}"
 #     params = {"local": str_bool(local), "limit": limit}
 #     return _anon_timeline_generator(ctx, instance, path, params)
@@ -31,45 +31,45 @@ def home_timeline_generator(ctx: Context, limit=20):
     return _timeline_generator(ctx, path, params)
 
 
-async def public_timeline_generator(ctx: Context, local=False, limit=20):
+def public_timeline_generator(ctx: Context, local=False, limit=20):
     path = "/api/v1/timelines/public"
     params = {"local": str_bool(local), "limit": limit}
     return _timeline_generator(ctx, path, params)
 
 
-async def tag_timeline_generator(ctx: Context, hashtag, local=False, limit=20):
+def tag_timeline_generator(ctx: Context, hashtag, local=False, limit=20):
     path = f"/api/v1/timelines/tag/{quote(hashtag)}"
     params = {"local": str_bool(local), "limit": limit}
     return _timeline_generator(ctx, path, params)
 
 
-async def bookmark_timeline_generator(ctx: Context, limit=20):
+def bookmark_timeline_generator(ctx: Context, limit=20):
     path = "/api/v1/bookmarks"
     params = {"limit": limit}
     return _timeline_generator(ctx, path, params)
 
 
-async def notification_timeline_generator(ctx: Context, limit=20):
+def notification_timeline_generator(ctx: Context, limit=20):
     # exclude all but mentions and statuses
     exclude_types = ["follow", "favourite", "reblog", "poll", "follow_request"]
     params = {"exclude_types[]": exclude_types, "limit": limit}
     return _notification_timeline_generator(ctx, "/api/v1/notifications", params)
 
 
-async def conversation_timeline_generator(ctx: Context, limit=20):
+def conversation_timeline_generator(ctx: Context, limit=20):
     path = "/api/v1/conversations"
     params = {"limit": limit}
     return _conversation_timeline_generator(ctx, path, params)
 
 
-# async def account_timeline_generator(ctx: Context, account_name: str, replies=False, reblogs=False, limit=20):
+# def account_timeline_generator(ctx: Context, account_name: str, replies=False, reblogs=False, limit=20):
 #     account = await find_account(ctx, account_name)
 #     path = f"/api/v1/accounts/{account["id"]}/statuses"
 #     params = {"limit": limit, "exclude_replies": not replies, "exclude_reblogs": not reblogs}
 #     return _timeline_generator(ctx, path, params)
 
 
-async def list_timeline_generator(ctx: Context, list_id: str, limit: int = 20):
+def list_timeline_generator(ctx: Context, list_id: str, limit: int = 20):
     path = f"/api/v1/timelines/list/{list_id}"
     return _timeline_generator(ctx, path, {"limit": limit})
 
