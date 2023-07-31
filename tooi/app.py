@@ -3,7 +3,7 @@ from httpx import AsyncClient
 from textual.app import App
 
 from tooi.api.instance import extended_description, server_information
-from tooi.api.timeline import home_timeline_generator, public_timeline_generator
+from tooi.api.timeline import home_timeline_generator
 from tooi.auth import Context, get_context
 from tooi.entities import Account, ExtendedDescription, InstanceV2, from_dict
 from tooi.screens.account import AccountScreen
@@ -36,7 +36,7 @@ class TooiApp(App):
     async def on_mount(self):
         self.push_screen("loading")
 
-        generator = public_timeline_generator(self.ctx)
+        generator = home_timeline_generator(self.ctx)
         statuses, instance, description = await gather(
             anext(generator),
             server_information(self.ctx),

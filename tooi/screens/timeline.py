@@ -198,6 +198,8 @@ class StatusDetail(VerticalScroll):
         if status.card:
             yield StatusCard(status)
 
+        yield StatusMeta(status)
+
 
 class BoostedBy(Static):
     DEFAULT_CSS = """
@@ -247,16 +249,37 @@ class StatusCard(Widget):
         if card.description:
             yield Static("")
             yield Static(card.description)
-        if card.markdown:
-            log(card.markdown)
-            yield Static("")
-            yield MarkdownContent(card.markdown)
         yield Static("")
         yield Static(f"[@click='onclick']{card.url}[/]")
 
     # TODO: this no worky
     def action_onclick(self):
         log("Click")
+
+
+class StatusMeta(Widget):
+    DEFAULT_CSS = """
+    .meta {
+        border-top: ascii gray;
+    }
+    """
+
+    status: Status
+
+    def __init__(self, status):
+        self.status = status
+        super().__init__(classes="meta")
+
+    def compose(self):
+        status = self.status.original
+        parts = [
+            f"[bold]{format_datetime(status.created_at)}[/]",
+            f"{status.reblogs_count} boosts",
+            f"{status.favourites_count} favourites",
+            f"{status.replies_count} replies",
+            f"{status.visibility.capitalize()}",
+        ]
+        yield Static(" · ".join(parts))
 
 
 class StatusListItem(Static, can_focus=True):
