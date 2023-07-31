@@ -5,7 +5,7 @@ from textual.binding import Binding
 from textual.containers import Horizontal, VerticalScroll
 from textual.screen import Screen
 from textual.widget import Widget
-from textual.widgets import Footer, ListItem, ListView, Static
+from textual.widgets import Footer, ListItem, ListView, Markdown, Static
 from typing import List, Optional
 
 from tooi.entities import Status
@@ -167,6 +167,9 @@ class StatusDetail(VerticalScroll):
     #status_detail:focus {
         background: $panel;
     }
+    #status_detail .content {
+        margin: 0;
+    }
     """
 
     BINDINGS = [
@@ -193,7 +196,7 @@ class StatusDetail(VerticalScroll):
         yield Static(f"[green]@{status.account.acct}[/]")
         yield Static(f"[yellow]{status.account.display_name}[/]")
         yield Static("")
-        yield MarkdownContent(status.content_md)
+        yield Markdown(status.content_md, classes="content")
 
         if status.card:
             yield StatusCard(status)
