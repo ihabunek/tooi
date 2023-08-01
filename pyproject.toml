@@ -19,10 +19,10 @@ classifiers = [
 ]
 
 dependencies = [
-    "click>=8.0.0,<9.0.0",
-    "beautifulsoup4>=4.0.0,<5.0.0",
-    # TODO: versioning
-    "textual",
+    "click~=8.0",
+    "beautifulsoup4~=4.0",
+    "textual~=0.31.0",
+    # TODO: versions
     "textual-textarea",
     "httpx",
     "markdownify",
@@ -34,8 +34,10 @@ include = ["tooi"]
 
 [project.optional-dependencies]
 dev = [
+    "build",
     "pyright",
     "textual-dev",
+    "twine",
     "vermin",
 ]
 
