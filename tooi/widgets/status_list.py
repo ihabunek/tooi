@@ -1,11 +1,11 @@
-from textual.binding import Binding
 from textual.widget import Widget
-from textual.widgets import ListItem, ListView, Static
+from textual.widgets import ListItem, Static
 from typing import List, Optional
 
 from tooi.entities import Status
 from tooi.messages import StatusHighlighted, StatusSelected
 from tooi.utils.datetime import format_datetime
+from tooi.widgets.list_view import ListView
 
 
 class StatusList(Widget):
@@ -17,17 +17,20 @@ class StatusList(Widget):
     #status_list:focus-within {
         background: $panel;
     }
+    #status_list ListItem > Widget {
+        height: 1;
+    }
     """
 
     current: Optional[Status]
     statuses: List[Status]
-    status_list_view: "StatusListView"
+    status_list_view: ListView
 
     def __init__(self, statuses):
         self.statuses = statuses
         self.current = statuses[0] if statuses else None
 
-        self.status_list_view = StatusListView(
+        self.status_list_view = ListView(
             *[ListItem(StatusListItem(s)) for s in self.statuses]
         )
         super().__init__(id="status_list")
@@ -58,15 +61,6 @@ class StatusList(Widget):
     def on_list_view_selected(self, message: ListView.Highlighted):
         if self.current:
             self.post_message(StatusSelected(self.current))
-
-
-class StatusListView(ListView):
-    BINDINGS = [
-        Binding("enter,space", "select_cursor", "Select", show=False),
-        Binding("up,k", "cursor_up", "Cursor Up", show=False),
-        Binding("down,j", "cursor_down", "Cursor Down", show=False),
-        # TODO: add page up/down
-    ]
 
 
 class StatusListItem(Static, can_focus=True):
