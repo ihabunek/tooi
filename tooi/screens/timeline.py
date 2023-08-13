@@ -69,7 +69,7 @@ class TimelineScreen(Screen):
             self.app.show_source(status, f"status #{status.id}")
 
     def action_scroll_left(self):
-        self.query_one("StatusListView").focus()
+        self.query_one("StatusList").focus()
 
     def action_scroll_right(self):
         self.query_one("StatusDetail").focus()
