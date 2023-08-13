@@ -1,4 +1,4 @@
-from textual.app import Widget
+from textual.widget import Widget
 
 
 class Header(Widget):
