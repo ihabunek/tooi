@@ -17,6 +17,7 @@ class SourceScreen(Screen):
 
     BINDINGS = [
         Binding("q", "quit", "Close"),
+        Binding("esc", "quit", "Close"),
         # TODO: modal shows bindings defined in app, so hide this one
         Binding("h", "help", "Help", show=False),
     ]

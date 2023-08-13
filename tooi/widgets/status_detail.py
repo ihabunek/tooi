@@ -1,4 +1,3 @@
-from textual.app import log
 from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.widget import Widget

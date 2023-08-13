@@ -2,8 +2,10 @@ import asyncio
 
 from textual.binding import Binding
 from textual.containers import Horizontal
+from textual.message import Message
 from textual.screen import Screen
 from textual.widgets import Footer, Static
+from tooi.entities import Account, Status
 
 from tooi.messages import StatusHighlighted
 from tooi.widgets.header import Header
@@ -63,11 +65,11 @@ class TimelineScreen(Screen):
 
     def action_show_account(self):
         if status := self.status_list.current:
-            self.app.show_account(status.original.account)
+            self.post_message(self.ShowAccount(status.original.account))
 
     def action_show_source(self):
         if status := self.status_list.current:
-            self.app.show_source(status, f"status #{status.id}")
+            self.post_message(self.ShowSource(status, f"status #{status.id}"))
 
     def action_scroll_left(self):
         self.query_one("StatusList").focus()
@@ -89,3 +91,14 @@ class TimelineScreen(Screen):
         if not self.fetching and self.status_list.index is not None:
             diff = self.status_list.count - self.status_list.index
             return diff < 10
+
+    class ShowAccount(Message):
+        def __init__(self, account: Account) -> None:
+            self.account = account
+            super().__init__()
+
+    class ShowSource(Message):
+        def __init__(self, status: Status, title: str) -> None:
+            self.status = status
+            self.title = title
+            super().__init__()

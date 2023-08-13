@@ -5,7 +5,7 @@ from textual.app import App, log
 from tooi.api.instance import extended_description, server_information
 from tooi.api.timeline import home_timeline_generator
 from tooi.auth import Context, get_context
-from tooi.entities import Account, ExtendedDescription, InstanceV2, from_dict
+from tooi.entities import ExtendedDescription, InstanceV2, from_dict
 from tooi.screens.account import AccountScreen
 from tooi.screens.compose import ComposeScreen
 from tooi.screens.goto import GotoScreen
@@ -13,6 +13,7 @@ from tooi.screens.help import HelpScreen
 from tooi.screens.loading import LoadingScreen
 from tooi.screens.source import SourceScreen
 from tooi.screens.timeline import TimelineScreen
+from tooi.widgets.link import Link
 
 
 class TooiApp(App):
@@ -66,9 +67,12 @@ class TooiApp(App):
     def show_source(self, obj, title):
         self.push_screen(SourceScreen(obj, title))
 
-    def show_account(self, account: Account):
-        self.push_screen(AccountScreen(account))
+    def on_timeline_screen_show_account(self, message: TimelineScreen.ShowAccount):
+        self.push_screen(AccountScreen(message.account))
 
-    def on_link_clicked(self, link):
-        # TODO: handle this
-        log(f"Clicked: {link}")
+    def on_timeline_screen_show_source(self, message: TimelineScreen.ShowSource):
+        self.push_screen(SourceScreen(message.status, message.title))
+
+    def on_link_clicked(self, message: Link.Clicked):
+        # TODO: handle links
+        log(f"Link clicked: {message.url=}, {message.title=}")

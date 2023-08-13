@@ -3,7 +3,6 @@ from textual.binding import Binding
 from textual.containers import Vertical
 from textual.screen import ModalScreen
 from textual.widgets import ListItem, Static
-from tooi.widgets.header import Header
 
 from tooi.widgets.list_view import ListView
 
