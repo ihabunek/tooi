@@ -23,6 +23,10 @@ class AccountField:
     value: str
     verified_at: Optional[datetime]
 
+    @cached_property
+    def value_md(self):
+        return markdownify(self.value)
+
 
 @dataclass
 class CustomEmoji:

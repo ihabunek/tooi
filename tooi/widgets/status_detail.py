@@ -1,12 +1,13 @@
 from textual.app import log
-
 from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.widget import Widget
-from textual.widgets import Markdown, Static
+from textual.widgets import Static
 
 from tooi.entities import Status
 from tooi.utils.datetime import format_datetime
+from tooi.widgets.link import Link
+from tooi.widgets.markdown import Markdown
 
 
 class StatusDetail(VerticalScroll):
@@ -18,8 +19,7 @@ class StatusDetail(VerticalScroll):
     #status_detail:focus {
         background: $panel;
     }
-    #status_detail .content {
-        margin: 0;
+    .status_content {
     }
     """
 
@@ -47,10 +47,10 @@ class StatusDetail(VerticalScroll):
         yield Static(f"[green]@{status.account.acct}[/]")
         yield Static(f"[yellow]{status.account.display_name}[/]")
         yield Static("")
-        yield Markdown(status.content_md, classes="content")
+        yield Markdown(status.content_md, classes="status_content")
 
-        # if status.card:
-        #     yield StatusCard(status)
+        if status.card:
+            yield StatusCard(status)
 
         yield StatusMeta(status)
 
@@ -97,18 +97,17 @@ class StatusCard(Widget):
         if not card:
             return
 
-        yield Static(f"[@click='onclick']{card.title}[/]", classes="title")
+        yield Link(card.url, card.title, classes="title")
+
         if card.author_name:
             yield Static(f"by {card.author_name}")
+
         if card.description:
             yield Static("")
             yield Static(card.description)
-        yield Static("")
-        yield Static(f"[@click='onclick']{card.url}[/]")
 
-    # TODO: this no worky
-    def action_onclick(self):
-        log("Click")
+        yield Static("")
+        yield Link(card.url)
 
 
 class StatusMeta(Static):

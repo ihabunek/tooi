@@ -1,14 +1,14 @@
-from markdownify import markdownify
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.screen import Screen
 from textual.widget import Widget
-from textual.widgets import Footer, Markdown, Static
+from textual.widgets import Footer, Static
 
 from tooi import entities
 from tooi.entities import Account
 from tooi.widgets.header import Header
+from tooi.widgets.markdown import Markdown
 
 
 class AccountScreen(Screen):
@@ -34,7 +34,7 @@ class AccountScreen(Screen):
 class AccountDetail(VerticalScroll):
     DEFAULT_CSS = """
     #account_detail {
-        margin: 0 1;
+        margin: 1 1;
     }
     #account_note {
         margin: 0;
@@ -50,23 +50,22 @@ class AccountDetail(VerticalScroll):
         yield Static(f"[green]@{account.acct}[/]")
         yield Static(f"[yellow]{account.display_name}[/]")
         yield Static("")
-        yield Markdown(account.note_md, id="note")
+        yield Markdown(account.note_md, id="account_note")
 
         for f in account.fields:
-            # yield Static("")
-            # yield Static(f"[bold]{f.name}[/]")
-            # yield Markdown(markdownify(f.value))
             yield AccountField(f)
 
 
 class AccountField(Widget):
     DEFAULT_CSS = """
     .account_field {
-        border: solid;
+        height: auto;
+    }
+    .account_field_name {
+        text-style: bold;
     }
     .account_field_value {
         margin: 0;
-        border: round;
     }
     """
 
@@ -75,5 +74,5 @@ class AccountField(Widget):
         super().__init__(classes="account_field")
 
     def compose(self):
-        yield Static(f"[bold]{self.field.name}[/]")
-        yield Markdown(markdownify(self.field.value), classes="account_field_value")
+        yield Static(self.field.name, classes="account_field_name")
+        yield Markdown(self.field.value_md, classes="account_field_value")

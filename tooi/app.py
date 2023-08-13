@@ -1,6 +1,6 @@
 from asyncio import gather
 from httpx import AsyncClient
-from textual.app import App
+from textual.app import App, log
 
 from tooi.api.instance import extended_description, server_information
 from tooi.api.timeline import home_timeline_generator
@@ -69,5 +69,6 @@ class TooiApp(App):
     def show_account(self, account: Account):
         self.push_screen(AccountScreen(account))
 
-    def action_click_link(self, link):
-        ...
+    def on_link_clicked(self, link):
+        # TODO: handle this
+        log(f"Clicked: {link}")
