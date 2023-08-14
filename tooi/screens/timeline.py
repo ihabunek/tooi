@@ -4,12 +4,14 @@ from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.message import Message
 from textual.screen import Screen
-from textual.widgets import Footer, Static
+from textual.widgets import Footer
 from tooi.entities import Account, Status
 
 from tooi.messages import StatusHighlighted
+from tooi.widgets.divider import VerticalDivider
 from tooi.widgets.header import Header
 from tooi.api.timeline import StatusListGenerator
+from tooi.widgets.status_bar import StatusBar
 from tooi.widgets.status_detail import StatusDetail
 from tooi.widgets.status_list import StatusList
 
@@ -27,14 +29,6 @@ class TimelineScreen(Screen):
         Binding("right,l", "scroll_right", "Scroll Right", show=False),
     ]
 
-    DEFAULT_CSS = """
-    #timeline_divider {
-        width: 1;
-        height: 100%;
-        background: $primary;
-    }
-    """
-
     def __init__(self, statuses, generator):
         super().__init__()
         self.generator = generator
@@ -43,15 +37,17 @@ class TimelineScreen(Screen):
         status = statuses[0] if statuses else None
         self.status_list = StatusList(statuses)
         self.status_detail = StatusDetail(status)
+        self.status_bar = StatusBar()
 
     def compose(self):
         yield Header("tooi | timeline")
         yield Horizontal(
             self.status_list,
-            Static("", id="timeline_divider"),
+            VerticalDivider(),
             self.status_detail,
         )
         yield Footer()
+        yield self.status_bar
 
     async def on_status_highlighted(self, message: "StatusHighlighted"):
         # TODO: This is slow, try updating the existing StatusDetail instead of
@@ -80,12 +76,14 @@ class TimelineScreen(Screen):
     async def maybe_fetch_next_batch(self):
         if self.should_fetch():
             self.fetching = True
-            # TODO: handle expcetions
+            self.status_bar.update("[green]Loading statuses...[/]")
+            # TODO: handle exceptions
             try:
                 next_statuses = await anext(self.generator)
                 self.status_list.update(next_statuses)
             finally:
                 self.fetching = False
+                self.status_bar.update()
 
     def should_fetch(self):
         if not self.fetching and self.status_list.index is not None:
