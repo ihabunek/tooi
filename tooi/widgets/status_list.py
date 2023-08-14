@@ -1,4 +1,4 @@
-from textual.widget import Widget
+from rich.text import Text
 from textual.widgets import ListItem, Static
 from typing import List, Optional
 
@@ -17,9 +17,6 @@ class StatusList(ListView):
     #status_list:focus-within {
         background: $panel;
     }
-    #status_list ListItem > Widget {
-        height: 1;
-    }
     """
 
     current: Optional[Status]
@@ -29,13 +26,13 @@ class StatusList(ListView):
         self.statuses = statuses
         self.current = statuses[0] if statuses else None
 
-        items = [ListItem(StatusListItem(s)) for s in self.statuses]
+        items = [StatusListItem(s) for s in self.statuses]
         super().__init__(*items, id="status_list")
 
     def update(self, next_statuses: List[Status]):
         self.statuses += next_statuses
         for status in next_statuses:
-            self.mount(ListItem(StatusListItem(status)))
+            self.mount(StatusListItem(status))
 
     @property
     def count(self):
@@ -43,7 +40,7 @@ class StatusList(ListView):
 
     def on_list_view_highlighted(self, message: ListView.Highlighted):
         if message.item:
-            status = message.item.children[0].status
+            status = message.item.status
             if status != self.current:
                 self.current = status
                 self.post_message(StatusHighlighted(status))
@@ -53,20 +50,24 @@ class StatusList(ListView):
             self.post_message(StatusSelected(self.current))
 
 
-class StatusListItem(Static, can_focus=True):
+class StatusListItem(ListItem, can_focus=True):
     status: Status
 
-    # TODO: this widget wraps and it shouldn't
-
     def __init__(self, status: Status):
-        super().__init__()
+        super().__init__(classes="status_list_item")
         self.status = status
 
-    def render(self):
-        status = self.status.original
+    def compose(self):
         instance = self.app.instance
+        status = self.status.original
 
         dttm = format_datetime(status.created_at)
         acct = status.account.acct
         acct = acct if "@" in acct else f"{acct}@{instance.domain}"
-        return f"{dttm}  [green]{acct}[/]"
+
+        # TODO: this does not allow for CSS customization, look into alternatives
+        # see: https://github.com/Textualize/textual/discussions/1183
+        text = Text.from_markup(f"{dttm}  [green]{acct}[/]", overflow="ellipsis")
+        text.no_wrap = True
+
+        yield Static(text)

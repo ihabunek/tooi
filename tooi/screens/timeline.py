@@ -56,8 +56,9 @@ class TimelineScreen(Screen):
         # creating a new one. This requires some fiddling since compose() is
         # called only once, so updating needs to be implemented manually.
         # See: https://github.com/Textualize/textual/discussions/1683
-        self.query_one("StatusDetail").remove()
-        self.query_one("Horizontal").mount(StatusDetail(message.status))
+        self.status_detail.remove()
+        self.status_detail = StatusDetail(message.status)
+        self.query_one("Horizontal").mount(self.status_detail)
         asyncio.create_task(self.maybe_fetch_next_batch())
 
     def action_show_account(self):
