@@ -49,7 +49,7 @@ class TimelineScreen(Screen):
         yield Footer()
         yield self.status_bar
 
-    async def on_status_highlighted(self, message: "StatusHighlighted"):
+    def on_status_highlighted(self, message: StatusHighlighted):
         # TODO: This is slow, try updating the existing StatusDetail instead of
         # creating a new one. This requires some fiddling since compose() is
         # called only once, so updating needs to be implemented manually.
