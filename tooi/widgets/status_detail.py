@@ -3,7 +3,7 @@ from textual.containers import VerticalScroll
 from textual.widget import Widget
 from textual.widgets import Static
 
-from tooi.entities import Status
+from tooi.entities import MediaAttachment, Status
 from tooi.utils.datetime import format_datetime
 from tooi.widgets.link import Link
 from tooi.widgets.markdown import Markdown
@@ -50,6 +50,9 @@ class StatusDetail(VerticalScroll):
 
         if status.card:
             yield StatusCard(status)
+
+        for attachment in status.original.media_attachments:
+            yield StatusMediaAttachment(attachment)
 
         yield StatusMeta(status)
 
@@ -107,6 +110,31 @@ class StatusCard(Widget):
 
         yield Static("")
         yield Link(card.url)
+
+
+class StatusMediaAttachment(Widget):
+    DEFAULT_CSS = """
+    .media_attachment {
+        border-top: ascii gray;
+        height: auto;
+    }
+
+    .media_attachment > .title {
+        text-style: bold;
+    }
+    """
+
+    attachment: MediaAttachment
+
+    def __init__(self, attachment: MediaAttachment):
+        self.attachment = attachment
+        super().__init__(classes="media_attachment")
+
+    def compose(self):
+        yield Static(f"Media attachment ({self.attachment.type})", classes="title")
+        if self.attachment.description:
+            yield Static(self.attachment.description)
+        yield Link(self.attachment.url)
 
 
 class StatusMeta(Static):
