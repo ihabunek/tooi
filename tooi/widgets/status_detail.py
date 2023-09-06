@@ -140,6 +140,7 @@ class StatusMediaAttachment(Widget):
 class StatusMeta(Static):
     DEFAULT_CSS = """
     .meta {
+        color: gray;
         border-top: ascii gray;
     }
     """
