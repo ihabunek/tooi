@@ -108,10 +108,11 @@ async def _conversation_timeline_generator(ctx, path, params=None):
         path = _get_next_path(response.headers)
 
 
-def _get_next_path(headers: Mapping[str, str]) -> Optional[str]:
+def _get_next_path(headers: Mapping[str, str]) -> str | None:
     """Given timeline response headers, returns the path to the next batch"""
     links = headers.get("Link", "")
     matches = re.match(r'<([^>]+)>; rel="next"', links)
     if matches:
         parsed = urlparse(matches.group(1))
         return "?".join([parsed.path, parsed.query])
+    return None

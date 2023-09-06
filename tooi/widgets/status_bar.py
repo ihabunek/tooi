@@ -3,6 +3,8 @@ from textual.widgets import Static
 
 
 class StatusBar(Static):
+    timer: Timer
+
     # TODO: support multiple messages
     def set_message(self, text: str, timeout: float | None = None):
         if self.timer:

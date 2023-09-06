@@ -35,9 +35,11 @@ include = ["tooi"]
 [project.optional-dependencies]
 dev = [
     "build",
+    "mypy",
     "pyright",
     "textual-dev",
     "twine",
+    "types-beautifulsoup4",
     "vermin",
 ]
 
