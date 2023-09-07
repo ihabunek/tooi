@@ -5,6 +5,7 @@ from textual.widgets import Static
 
 from tooi.entities import MediaAttachment, Status
 from tooi.utils.datetime import format_datetime
+from tooi.widgets.account import AccountHeader
 from tooi.widgets.link import Link
 from tooi.widgets.markdown import Markdown
 
@@ -19,6 +20,7 @@ class StatusDetail(VerticalScroll):
         background: $panel;
     }
     .status_content {
+        margin-top: 1;
     }
     """
 
@@ -43,9 +45,7 @@ class StatusDetail(VerticalScroll):
         if self.status.reblog:
             yield BoostedBy(self.status)
 
-        yield Static(f"[green]@{status.account.acct}[/]")
-        yield Static(f"[yellow]{status.account.display_name}[/]")
-        yield Static("")
+        yield AccountHeader(status.account)
         yield Markdown(status.content_md, classes="status_content")
 
         if status.card:

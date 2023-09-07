@@ -7,6 +7,7 @@ from textual.widgets import Footer, Static
 
 from tooi import entities
 from tooi.entities import Account
+from tooi.widgets.account import AccountHeader
 from tooi.widgets.header import Header
 from tooi.widgets.markdown import Markdown
 
@@ -38,6 +39,7 @@ class AccountDetail(VerticalScroll):
     }
     #account_note {
         margin: 0;
+        margin-top: 1;
     }
     """
 
@@ -47,9 +49,7 @@ class AccountDetail(VerticalScroll):
 
     def compose(self):
         account = self.account
-        yield Static(f"[green]@{account.acct}[/]")
-        yield Static(f"[yellow]{account.display_name}[/]")
-        yield Static("")
+        yield AccountHeader(account)
         yield Markdown(account.note_md, id="account_note")
 
         for f in account.fields:
