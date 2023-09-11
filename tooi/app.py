@@ -3,9 +3,10 @@ from httpx import AsyncClient
 from textual.app import App, log
 
 from tooi.api.instance import extended_description, server_information
-from tooi.api.timeline import home_timeline_generator
+from tooi.api.timeline import home_timeline_generator, public_timeline_generator, tag_timeline_generator
 from tooi.auth import Context, get_context
 from tooi.entities import ExtendedDescription, InstanceV2, from_dict
+from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoPublicTimeline
 from tooi.screens.account import AccountScreen
 from tooi.screens.compose import ComposeScreen
 from tooi.screens.goto import GotoScreen
@@ -72,6 +73,25 @@ class TooiApp(App):
 
     def on_timeline_screen_show_source(self, message: TimelineScreen.ShowSource):
         self.push_screen(SourceScreen(message.status, message.title))
+
+    async def on_goto_home_timeline(self, message: GotoHomeTimeline):
+        # TODO: add footer message while loading statuses
+        generator = home_timeline_generator(self.ctx)
+        await self._switch_timeline(generator)
+
+    async def on_goto_public_timeline(self, message: GotoPublicTimeline):
+        generator = public_timeline_generator(self.ctx)
+        await self._switch_timeline(generator)
+
+    async def on_goto_hashtag_timeline(self, message: GotoHashtagTimeline):
+        generator = tag_timeline_generator(self.ctx, message.hashtag)
+        await self._switch_timeline(generator)
+
+    async def _switch_timeline(self, generator):
+        statuses = await anext(generator)
+        screen = TimelineScreen(statuses, generator)
+        # TODO: clear stack, how?
+        self.switch_screen(screen)
 
     def on_link_clicked(self, message: Link.Clicked):
         # TODO: handle links

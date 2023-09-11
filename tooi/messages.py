@@ -16,3 +16,17 @@ class StatusSelected(StatusMessage):
 
 class StatusHighlighted(StatusMessage):
     pass
+
+
+class GotoHomeTimeline(Message):
+    ...
+
+
+class GotoPublicTimeline(Message):
+    ...
+
+
+class GotoHashtagTimeline(Message):
+    def __init__(self, hashtag: str) -> None:
+        super().__init__()
+        self.hashtag = hashtag

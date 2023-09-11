@@ -29,9 +29,10 @@ class TimelineScreen(Screen):
         Binding("right,l", "scroll_right", "Scroll Right", show=False),
     ]
 
-    def __init__(self, statuses, generator):
+    def __init__(self, statuses, generator, *, title: str = "timeline"):
         super().__init__()
         self.generator = generator
+        self.title = title
         self.fetching = False
 
         status = statuses[0] if statuses else None
