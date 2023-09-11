@@ -90,7 +90,7 @@ class TooiApp(App):
     async def _switch_timeline(self, generator):
         statuses = await anext(generator)
         screen = TimelineScreen(statuses, generator)
-        # TODO: clear stack, how?
+        # TODO: clear stack? how?
         self.switch_screen(screen)
 
     def on_link_clicked(self, message: Link.Clicked):
