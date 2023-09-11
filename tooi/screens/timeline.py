@@ -25,6 +25,7 @@ class TimelineScreen(Screen):
     BINDINGS = [
         Binding("a", "show_account", "Account"),
         Binding("s", "show_source", "Source"),
+        Binding("t", "show_thread", "Thread"),
         Binding("left,h", "scroll_left", "Scroll Left", show=False),
         Binding("right,l", "scroll_right", "Scroll Right", show=False),
     ]
@@ -68,6 +69,10 @@ class TimelineScreen(Screen):
         if status := self.status_list.current:
             self.post_message(self.ShowSource(status, f"status #{status.id}"))
 
+    def action_show_thread(self):
+        if status := self.status_list.current:
+            self.post_message(self.ShowThread(status, f"thread #{status.id}"))
+
     def action_scroll_left(self):
         self.query_one("StatusList").focus()
 
@@ -97,6 +102,12 @@ class TimelineScreen(Screen):
             super().__init__()
 
     class ShowSource(Message):
+        def __init__(self, status: Status, title: str) -> None:
+            self.status = status
+            self.title = title
+            super().__init__()
+
+    class ShowThread(Message):
         def __init__(self, status: Status, title: str) -> None:
             self.status = status
             self.title = title
