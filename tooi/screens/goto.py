@@ -18,11 +18,19 @@ class GotoScreen(ModalScreen):
         return "Go To"
 
     def compose_modal(self) -> ComposeResult:
-        yield ListView(
+        self.list_view = ListView(
             ListItem(Static("< Home timeline >"), id="goto_home"),
             ListItem(Static("< Public timeline >"), id="goto_public"),
             ListItem(Static("< Hashtag timeline >"), id="goto_hashtag"),
         )
+        self.status = Static("")
+
+        yield self.list_view
+        yield self.status
+
+    def set_loading(self):
+        self.list_view.disabled = True
+        self.status.update("[green]Loading...[/]")
 
     def on_list_view_selected(self, message: ListView.Selected):
         message.stop()
@@ -32,8 +40,10 @@ class GotoScreen(ModalScreen):
 
         match message.item.id:
             case "goto_home":
+                self.set_loading()
                 self.post_message(GotoHomeTimeline())
             case "goto_public":
+                self.set_loading()
                 self.post_message(GotoPublicTimeline())
             case "goto_hashtag":
                 self.app.push_screen(GotoHashtagScreen())
