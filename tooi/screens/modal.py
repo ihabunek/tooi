@@ -37,7 +37,7 @@ class ModalScreen(screen.ModalScreen):
     def compose(self) -> ComposeResult:
         yield Vertical(*self._compose(), classes="modal_container")
 
-    def _compose(self):
+    def _compose(self) -> ComposeResult:
         title = self.title()
         if title:
             yield Static(title, classes="modal_title")

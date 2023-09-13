@@ -35,7 +35,7 @@ class StatusDetail(VerticalScroll):
 
     status: Status
 
-    def __init__(self, status):
+    def __init__(self, status: Status):
         self.status = status
         super().__init__(id="status_detail")
 
@@ -65,7 +65,7 @@ class BoostedBy(Static):
     }
     """
 
-    def __init__(self, status):
+    def __init__(self, status: Status):
         self.status = status
         super().__init__()
 
@@ -147,7 +147,7 @@ class StatusMeta(Static):
 
     status: Status
 
-    def __init__(self, status):
+    def __init__(self, status: Status):
         self.status = status
         super().__init__(classes="meta")
 

@@ -7,7 +7,7 @@ from tooi import Context
 from tooi.api import request
 
 
-async def context(ctx: Context, status_id) -> Response:
+async def context(ctx: Context, status_id: str) -> Response:
     """
     View statuses above and below this status in the thread.
     https://docs.joinmastodon.org/methods/statuses/#context

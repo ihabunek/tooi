@@ -51,3 +51,4 @@ tooi = "tooi.cli:main"
 
 [tool.pyright]
 include = ["tooi"]
+typeCheckingMode = "strict"

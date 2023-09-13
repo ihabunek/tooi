@@ -4,11 +4,11 @@ Dataclasses which represent entities returned by the Mastodon API.
 
 import dataclasses
 
-from dataclasses import dataclass, is_dataclass
+from dataclasses import Field, dataclass, is_dataclass
 from datetime import date, datetime
 from functools import cached_property
 from markdownify import markdownify
-from typing import Dict, List, Optional, Type, TypeVar, Union, get_args, get_origin
+from typing import Any, Generator, Optional, Type, TypeVar, Union, get_args, get_origin
 from typing import get_type_hints
 
 from tooi.utils.datetime import parse_datetime
@@ -24,7 +24,7 @@ class AccountField:
     verified_at: Optional[datetime]
 
     @cached_property
-    def value_md(self):
+    def value_md(self) -> str:
         return markdownify(self.value)
 
 
@@ -56,8 +56,8 @@ class Account:
     header: str
     header_static: str
     locked: bool
-    fields: List[AccountField]
-    emojis: List[CustomEmoji]
+    fields: list[AccountField]
+    emojis: list[CustomEmoji]
     bot: bool
     group: bool
     discoverable: Optional[bool]
@@ -72,7 +72,7 @@ class Account:
     following_count: int
 
     @cached_property
-    def note_md(self):
+    def note_md(self) -> str:
         return markdownify(self.note)
 
 
@@ -140,10 +140,10 @@ class Poll:
     multiple: bool
     votes_count: int
     voters_count: Optional[int]
-    options: List[PollOption]
-    emojis: List[CustomEmoji]
+    options: list[PollOption]
+    emojis: list[CustomEmoji]
     voted: Optional[bool]
-    own_votes: Optional[List[int]]
+    own_votes: Optional[list[int]]
 
 
 @dataclass
@@ -167,7 +167,7 @@ class PreviewCard:
     blurhash: Optional[str]
 
     @cached_property
-    def markdown(self):
+    def markdown(self) -> str:
         return markdownify(self.html)
 
 
@@ -197,11 +197,11 @@ class Filter:
     """
     id: str
     title: str
-    context: List[str]
+    context: list[str]
     expires_at: Optional[datetime]
     filter_action: str
-    keywords: List[FilterKeyword]
-    statuses: List[FilterStatus]
+    keywords: list[FilterKeyword]
+    statuses: list[FilterStatus]
 
 
 @dataclass
@@ -210,7 +210,7 @@ class FilterResult:
     https://docs.joinmastodon.org/entities/FilterResult/
     """
     filter: Filter
-    keyword_matches: Optional[List[str]]
+    keyword_matches: Optional[list[str]]
     status_matches: Optional[str]
 
 
@@ -227,11 +227,11 @@ class Status:
     visibility: str
     sensitive: bool
     spoiler_text: str
-    media_attachments: List[MediaAttachment]
+    media_attachments: list[MediaAttachment]
     application: Optional[Application]
-    mentions: List[StatusMention]
-    tags: List[StatusTag]
-    emojis: List[CustomEmoji]
+    mentions: list[StatusMention]
+    tags: list[StatusTag]
+    emojis: list[CustomEmoji]
     reblogs_count: int
     favourites_count: int
     replies_count: int
@@ -249,14 +249,14 @@ class Status:
     muted: Optional[bool]
     bookmarked: Optional[bool]
     pinned: Optional[bool]
-    filtered: Optional[List[FilterResult]]
+    filtered: Optional[list[FilterResult]]
 
     @property
     def original(self) -> "Status":
         return self.reblog or self
 
     @cached_property
-    def content_md(self):
+    def content_md(self) -> str:
         return markdownify(self.content)
 
 
@@ -272,8 +272,8 @@ class Report:
     comment: str
     forwarded: bool
     created_at: datetime
-    status_ids: Optional[List[str]]
-    rule_ids: Optional[List[str]]
+    status_ids: Optional[list[str]]
+    rule_ids: Optional[list[str]]
     target_account: Account
 
 
@@ -311,7 +311,7 @@ class InstanceConfigurationStatuses:
 
 @dataclass
 class InstanceConfigurationMediaAttachments:
-    supported_mime_types: List[str]
+    supported_mime_types: list[str]
     image_size_limit: int
     image_matrix_limit: int
     video_size_limit: int
@@ -360,13 +360,13 @@ class Instance:
     urls: InstanceUrls
     stats: InstanceStats
     thumbnail: Optional[str]
-    languages: List[str]
+    languages: list[str]
     registrations: bool
     approval_required: bool
     invites_enabled: bool
     configuration: InstanceConfiguration
     contact_account: Optional[Account]
-    rules: List[Rule]
+    rules: list[Rule]
 
 
 @dataclass
@@ -411,12 +411,12 @@ class InstanceV2:
     description: str
     usage: Usage
     thumbnail: InstanceThumbnail
-    languages: List[str]
+    languages: list[str]
     # TODO: add v2 specific fields to configurationm
     configuration: InstanceConfiguration
     registrations: InstanceRegistrations
     contact: InstanceContact
-    rules: List[Rule]
+    rules: list[Rule]
 
 
 @dataclass
@@ -432,9 +432,9 @@ class ExtendedDescription:
 T = TypeVar("T")
 
 
-def from_dict(cls: Type[T], data: Dict) -> T:
+def from_dict(cls: Type[T], data: dict[Any, Any]) -> T:
     """Convert a nested dict into an instance of `cls`."""
-    def _fields():
+    def _fields() -> Generator[tuple[str, Any], None, None]:
         hints = get_type_hints(cls)
         for field in dataclasses.fields(cls):
             field_type = _prune_optional(hints[field.name])
@@ -445,7 +445,7 @@ def from_dict(cls: Type[T], data: Dict) -> T:
     return cls(**dict(_fields()))
 
 
-def _get_default_value(field):
+def _get_default_value(field: Field[Any]):
     if field.default is not dataclasses.MISSING:
         return field.default
 

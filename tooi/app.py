@@ -5,6 +5,7 @@ from tooi.api import statuses
 
 from tooi.api.instance import extended_description, server_information
 from tooi.api.timeline import home_timeline_generator, public_timeline_generator, tag_timeline_generator
+from tooi.api.timeline import StatusListGenerator
 from tooi.auth import Context, get_context
 from tooi.entities import ExtendedDescription, InstanceV2, Status, from_dict
 from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoPublicTimeline
@@ -102,7 +103,7 @@ class TooiApp(App):
         generator = tag_timeline_generator(self.ctx, message.hashtag)
         await self._switch_timeline(generator)
 
-    async def _switch_timeline(self, generator):
+    async def _switch_timeline(self, generator: StatusListGenerator):
         statuses = await anext(generator)
         screen = TimelineScreen(statuses, generator)
         # TODO: clear stack? how?

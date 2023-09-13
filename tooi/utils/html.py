@@ -4,7 +4,7 @@ import warnings
 from bs4 import BeautifulSoup
 
 
-def get_text(html):
+def get_text(html: str):
     """Converts html to text, strips all tags."""
 
     # Ignore warnings made by BeautifulSoup, if passed something that looks like

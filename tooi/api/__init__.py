@@ -41,7 +41,7 @@ async def get_error(response: Response) -> Tuple[Optional[str], Optional[str]]:
 
 class ResponseError(Exception):
     """Raised when the API retruns a response with status code >= 400."""
-    def __init__(self, status_code, error, description):
+    def __init__(self, status_code: int, error: str | None, description: str | None):
         self.status_code = status_code
         self.error = error
         self.description = description

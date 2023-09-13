@@ -38,7 +38,7 @@ def public_timeline_generator(ctx: Context, local=False, limit=40):
     return _timeline_generator(ctx, path, params)
 
 
-def tag_timeline_generator(ctx: Context, hashtag, local=False, limit=40):
+def tag_timeline_generator(ctx: Context, hashtag: str, local=False, limit=40):
     path = f"/api/v1/timelines/tag/{quote(hashtag)}"
     params = {"local": str_bool(local), "limit": limit}
     return _timeline_generator(ctx, path, params)
