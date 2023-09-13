@@ -22,12 +22,12 @@ class StatusList(ListView):
     current: Optional[Status]
     statuses: List[Status]
 
-    def __init__(self, statuses):
+    def __init__(self, statuses, *, initial_index: int = 0):
         self.statuses = statuses
-        self.current = statuses[0] if statuses else None
+        self.current = statuses[initial_index] if initial_index < len(statuses) else None
 
         items = [StatusListItem(s) for s in self.statuses]
-        super().__init__(*items, id="status_list")
+        super().__init__(*items, id="status_list", initial_index=initial_index)
 
     def update(self, next_statuses: List[Status]):
         self.statuses += next_statuses

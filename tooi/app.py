@@ -1,11 +1,12 @@
 from asyncio import gather
 from httpx import AsyncClient
 from textual.app import App, log
+from tooi.api import statuses
 
 from tooi.api.instance import extended_description, server_information
 from tooi.api.timeline import home_timeline_generator, public_timeline_generator, tag_timeline_generator
 from tooi.auth import Context, get_context
-from tooi.entities import ExtendedDescription, InstanceV2, from_dict
+from tooi.entities import ExtendedDescription, InstanceV2, Status, from_dict
 from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoPublicTimeline
 from tooi.screens.account import AccountScreen
 from tooi.screens.compose import ComposeScreen
@@ -60,7 +61,10 @@ class TooiApp(App):
         self.push_screen(GotoScreen())
 
     def action_quit(self):
-        self.exit()
+        if len(self.screen_stack) > 2:
+            self.pop_screen()
+        else:
+            self.exit()
 
     def action_help(self):
         self.push_screen(HelpScreen())
@@ -73,6 +77,17 @@ class TooiApp(App):
 
     def on_timeline_screen_show_source(self, message: TimelineScreen.ShowSource):
         self.push_screen(SourceScreen(message.status, message.title))
+
+    async def on_timeline_screen_show_thread(self, message: TimelineScreen.ShowThread):
+        # TODO: add footer message while loading statuses
+        response = await statuses.context(self.ctx, message.status.id)
+        data = response.json()
+        ancestors = [from_dict(Status, s) for s in data["ancestors"]]
+        descendants = [from_dict(Status, s) for s in data["descendants"]]
+        all_statuses = ancestors + [message.status] + descendants
+        initial_index = len(ancestors)
+        screen = TimelineScreen(all_statuses, title="thread", initial_index=initial_index)
+        self.push_screen(screen)
 
     async def on_goto_home_timeline(self, message: GotoHomeTimeline):
         # TODO: add footer message while loading statuses

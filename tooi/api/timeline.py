@@ -12,6 +12,7 @@ from tooi.api import request
 from tooi.entities import Status, from_dict
 from tooi.utils.string import str_bool
 
+StatusListGenerator = AsyncGenerator[List[Status], None]
 
 # def anon_public_timeline_generator(ctx, instance, local=False, limit=40):
 #     path = "/api/v1/timelines/public"
@@ -82,9 +83,6 @@ def list_timeline_generator(ctx: Context, list_id: str, limit: int = 20):
 #             response = await request(ctx, "GET", f"https://{instance}{path}", params=params)
 #             yield response.json
 #             path = _get_next_path(response.headers)
-
-
-StatusListGenerator = AsyncGenerator[List[Status], None]
 
 
 async def _timeline_generator(ctx: Context, path: Optional[str], params=None) -> StatusListGenerator:

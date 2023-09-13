@@ -17,11 +17,6 @@ from tooi.widgets.status_list import StatusList
 
 
 class TimelineScreen(Screen):
-    generator: StatusListGenerator
-    status_list: StatusList
-    status_detail: StatusDetail
-    fetching: bool
-
     BINDINGS = [
         Binding("a", "show_account", "Account"),
         Binding("s", "show_source", "Source"),
@@ -30,19 +25,26 @@ class TimelineScreen(Screen):
         Binding("right,l", "scroll_right", "Scroll Right", show=False),
     ]
 
-    def __init__(self, statuses, generator, *, title: str = "timeline"):
+    def __init__(
+        self,
+        statuses: list[Status],
+        generator: StatusListGenerator | None = None,
+        *,
+        title: str = "timeline",
+        initial_index: int = 0
+    ):
         super().__init__()
         self.generator = generator
         self.title = title
         self.fetching = False
 
-        status = statuses[0] if statuses else None
-        self.status_list = StatusList(statuses)
+        status = statuses[initial_index] if initial_index < len(statuses) else None
+        self.status_list = StatusList(statuses, initial_index=initial_index)
         self.status_detail = StatusDetail(status)
         self.status_bar = StatusBar()
 
     def compose(self):
-        yield Header("tooi | timeline")
+        yield Header(f"tooi | {self.title}")
         yield Horizontal(
             self.status_list,
             VerticalDivider(),
@@ -80,7 +82,7 @@ class TimelineScreen(Screen):
         self.query_one("StatusDetail").focus()
 
     async def maybe_fetch_next_batch(self):
-        if self.should_fetch():
+        if self.generator and self.should_fetch():
             self.fetching = True
             self.status_bar.update("[green]Loading statuses...[/]")
             # TODO: handle exceptions
