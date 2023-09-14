@@ -2,13 +2,12 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
 from textual.screen import ModalScreen
-from textual.widgets import Static
-from textual_textarea import TextArea
+from textual.widgets import Static, TextArea
 
 from tooi.widgets.header import Header
 
 
-class ComposeScreen(ModalScreen):
+class ComposeScreen(ModalScreen[None]):
     DEFAULT_CSS = """
     ComposeScreen {
         align: center middle;

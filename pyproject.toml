@@ -19,13 +19,12 @@ classifiers = [
 ]
 
 dependencies = [
-    "click~=8.0",
-    "beautifulsoup4~=4.0",
-    "textual~=0.36.0",
     # TODO: versions
-    "textual-textarea",
+    "beautifulsoup4",
+    "click",
     "httpx",
     "markdownify",
+    "textual@git+https://github.com/Textualize/textual.git@text-area",
 ]
 
 [tool.setuptools.packages.find]
