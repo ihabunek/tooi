@@ -14,9 +14,6 @@ class GotoScreen(ModalScreen[None]):
     }
     """
 
-    def title(self):
-        return "Go To"
-
     def compose_modal(self) -> ComposeResult:
         self.list_view = ListView(
             ListItem(Static("< Home timeline >"), id="goto_home"),
@@ -25,6 +22,7 @@ class GotoScreen(ModalScreen[None]):
         )
         self.status = Static("")
 
+        yield Static("Go to", classes="modal_title")
         yield self.list_view
         yield self.status
 
@@ -46,7 +44,7 @@ class GotoScreen(ModalScreen[None]):
                 self.set_loading()
                 self.post_message(GotoPublicTimeline())
             case "goto_hashtag":
-                self.app.push_screen(GotoHashtagScreen())
+                self.app.switch_screen(GotoHashtagScreen())
             case _:
                 log.error("Unknown selection")
 
@@ -62,12 +60,10 @@ class GotoHashtagScreen(ModalScreen[None]):
         Binding("escape", "quit", "Close"),
     ]
 
-    def title(self):
-        return "Enter hashtag"
-
     def compose_modal(self):
         self.input = Input(placeholder="Hash")
         self.status = Static("")
+        yield Static(" Enter hashtag:")
         yield self.input
         yield self.status
 

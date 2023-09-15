@@ -28,20 +28,11 @@ class ModalScreen(screen.ModalScreen[screen.ScreenResultType]):
     def __init__(self):
         super().__init__(classes="modal_screen")
 
-    def title(self) -> str | None:
-        return None
-
     def compose_modal(self) -> ComposeResult:
         raise NotImplementedError()
 
     def compose(self) -> ComposeResult:
-        yield Vertical(*self._compose(), classes="modal_container")
-
-    def _compose(self) -> ComposeResult:
-        title = self.title()
-        if title:
-            yield Static(title, classes="modal_title")
-        yield from self.compose_modal()
+        yield Vertical(*self.compose_modal(), classes="modal_container")
 
     def action_quit(self):
         self.app.pop_screen()
