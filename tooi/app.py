@@ -19,7 +19,7 @@ from tooi.screens.timeline import TimelineScreen
 from tooi.widgets.link import Link
 
 
-class TooiApp(App):
+class TooiApp(App[None]):
     client: AsyncClient
     ctx: Context
 
@@ -30,7 +30,7 @@ class TooiApp(App):
 
     BINDINGS = [
         ("?", "help", "Help"),
-        ("q", "quit", "Quit"),
+        ("q", "pop_or_quit", "Quit"),
         ("c", "compose", "Compose"),
         ("g", "goto", "Goto"),
     ]
@@ -61,7 +61,7 @@ class TooiApp(App):
     def action_goto(self):
         self.push_screen(GotoScreen())
 
-    def action_quit(self):
+    def action_pop_or_quit(self):
         if len(self.screen_stack) > 2:
             self.pop_screen()
         else:
