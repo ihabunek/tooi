@@ -12,7 +12,7 @@ from tooi.widgets.divider import VerticalDivider
 from tooi.widgets.header import Header
 from tooi.api.timeline import StatusListGenerator
 from tooi.widgets.status_bar import StatusBar
-from tooi.widgets.status_detail import StatusDetail
+from tooi.widgets.status_detail import StatusDetail, StatusDetailPlaceholder
 from tooi.widgets.status_list import StatusList
 
 
@@ -40,7 +40,7 @@ class TimelineScreen(Screen):
 
         status = statuses[initial_index] if initial_index < len(statuses) else None
         self.status_list = StatusList(statuses, initial_index=initial_index)
-        self.status_detail = StatusDetail(status)
+        self.status_detail = StatusDetail(status) if status else StatusDetailPlaceholder()
         self.status_bar = StatusBar()
 
     def compose(self):
@@ -76,10 +76,10 @@ class TimelineScreen(Screen):
             self.post_message(self.ShowThread(status, f"thread #{status.id}"))
 
     def action_scroll_left(self):
-        self.query_one("StatusList").focus()
+        self.query_one("#status_list").focus()
 
     def action_scroll_right(self):
-        self.query_one("StatusDetail").focus()
+        self.query_one("#status_detail").focus()
 
     async def maybe_fetch_next_batch(self):
         if self.generator and self.should_fetch():

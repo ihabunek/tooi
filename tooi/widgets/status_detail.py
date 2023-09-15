@@ -161,3 +161,20 @@ class StatusMeta(Static):
             f"{status.visibility.capitalize()}",
         ]
         return " · ".join(parts)
+
+
+class StatusDetailPlaceholder(Static, can_focus=True):
+    DEFAULT_CSS = """
+    #status_detail {
+        width: 2fr;
+        padding: 0 1;
+        color: gray;
+        height: 100%;
+    }
+    #status_detail:focus {
+        background: $panel;
+    }
+    """
+
+    def __init__(self):
+        super().__init__("No status selected", id="status_detail")
