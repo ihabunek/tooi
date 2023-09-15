@@ -19,7 +19,7 @@ from tooi.widgets.status_list import StatusList
 class TimelineScreen(Screen):
     BINDINGS = [
         Binding("a", "show_account", "Account"),
-        Binding("s", "show_source", "Source"),
+        Binding("u", "show_source", "Source"),
         Binding("t", "show_thread", "Thread"),
         Binding("left,h", "scroll_left", "Scroll Left", show=False),
         Binding("right,l", "scroll_right", "Scroll Right", show=False),
@@ -69,11 +69,11 @@ class TimelineScreen(Screen):
 
     def action_show_source(self):
         if status := self.status_list.current:
-            self.post_message(self.ShowSource(status, f"status #{status.id}"))
+            self.post_message(self.ShowSource(status))
 
     def action_show_thread(self):
         if status := self.status_list.current:
-            self.post_message(self.ShowThread(status, f"thread #{status.id}"))
+            self.post_message(self.ShowThread(status))
 
     def action_scroll_left(self):
         self.query_one("#status_list").focus()
@@ -104,13 +104,11 @@ class TimelineScreen(Screen):
             super().__init__()
 
     class ShowSource(Message):
-        def __init__(self, status: Status, title: str) -> None:
+        def __init__(self, status: Status) -> None:
             self.status = status
-            self.title = title
             super().__init__()
 
     class ShowThread(Message):
-        def __init__(self, status: Status, title: str) -> None:
+        def __init__(self, status: Status) -> None:
             self.status = status
-            self.title = title
             super().__init__()

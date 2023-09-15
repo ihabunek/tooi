@@ -70,14 +70,11 @@ class TooiApp(App):
     def action_help(self):
         self.push_screen(HelpScreen())
 
-    def show_source(self, obj, title):
-        self.push_screen(SourceScreen(obj, title))
-
     def on_timeline_screen_show_account(self, message: TimelineScreen.ShowAccount):
         self.push_screen(AccountScreen(message.account))
 
     def on_timeline_screen_show_source(self, message: TimelineScreen.ShowSource):
-        self.push_screen(SourceScreen(message.status, message.title))
+        self.push_screen(SourceScreen(message.status))
 
     async def on_timeline_screen_show_thread(self, message: TimelineScreen.ShowThread):
         # TODO: add footer message while loading statuses

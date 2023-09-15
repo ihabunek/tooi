@@ -1,4 +1,3 @@
-from typing import Optional
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import VerticalScroll
@@ -11,7 +10,7 @@ from tooi.widgets.header import Header
 class SourceScreen(Screen):
     DEFAULT_CSS = """
     SourceScreen Pretty {
-        margin: 1;
+        margin: 0 1;
     }
     """
 
@@ -22,14 +21,12 @@ class SourceScreen(Screen):
         Binding("h", "help", "Help", show=False),
     ]
 
-    def __init__(self, obj: object, title: Optional[str] = None):
+    def __init__(self, obj: object):
         super().__init__()
         self.obj = obj
-        self.title = title
 
     def compose(self) -> ComposeResult:
-        if self.title:
-            yield Header(f"tooi | {self.title}")
+        yield Header("tooi | source")
         yield VerticalScroll(Pretty(self.obj))
         yield Footer()
 
