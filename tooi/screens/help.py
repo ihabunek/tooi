@@ -8,7 +8,7 @@ from tooi.lorem import ALICE
 from tooi.widgets.header import Header
 
 
-class HelpScreen(Screen):
+class HelpScreen(Screen[None]):
     BINDINGS = [
         Binding("q", "quit", "Close"),
         # TODO: modal shows bindings defined in app, so hide this one

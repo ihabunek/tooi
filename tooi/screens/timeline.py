@@ -16,7 +16,7 @@ from tooi.widgets.status_detail import StatusDetail, StatusDetailPlaceholder
 from tooi.widgets.status_list import StatusList
 
 
-class TimelineScreen(Screen):
+class TimelineScreen(Screen[None]):
     BINDINGS = [
         Binding("a", "show_account", "Account"),
         Binding("u", "show_source", "Source"),

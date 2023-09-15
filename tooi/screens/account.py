@@ -12,7 +12,7 @@ from tooi.widgets.header import Header
 from tooi.widgets.markdown import Markdown
 
 
-class AccountScreen(Screen):
+class AccountScreen(Screen[None]):
     account: Account
 
     BINDINGS = [

@@ -4,7 +4,7 @@ from textual.widgets import Static
 from tooi import __version__
 
 
-class LoadingScreen(Screen):
+class LoadingScreen(Screen[None]):
     DEFAULT_CSS = """
         LoadingScreen {
             align: center middle;

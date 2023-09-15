@@ -5,7 +5,7 @@ from textual.containers import Vertical
 from textual.widgets import Static
 
 
-class ModalScreen(screen.ModalScreen):
+class ModalScreen(screen.ModalScreen[screen.ScreenResultType]):
     DEFAULT_CSS = """
     .modal_screen {
         align: center middle;

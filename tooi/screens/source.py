@@ -7,7 +7,7 @@ from textual.widgets import Footer, Pretty
 from tooi.widgets.header import Header
 
 
-class SourceScreen(Screen):
+class SourceScreen(Screen[None]):
     DEFAULT_CSS = """
     SourceScreen Pretty {
         margin: 0 1;

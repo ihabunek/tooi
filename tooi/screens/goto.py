@@ -7,7 +7,7 @@ from tooi.screens.modal import ModalScreen
 from tooi.widgets.list_view import ListView
 
 
-class GotoScreen(ModalScreen):
+class GotoScreen(ModalScreen[None]):
     DEFAULT_CSS = """
     GotoScreen ListView {
         height: auto;
@@ -51,7 +51,7 @@ class GotoScreen(ModalScreen):
                 log.error("Unknown selection")
 
 
-class GotoHashtagScreen(ModalScreen):
+class GotoHashtagScreen(ModalScreen[None]):
     DEFAULT_CSS = """
     GotoHashtagScreen Input {
         margin-top: 1;
