@@ -4,6 +4,7 @@ import webbrowser
 from asyncio import gather
 from httpx import AsyncClient
 from textual.app import App
+from textual.screen import ModalScreen
 from urllib.parse import urlparse
 
 from tooi.api import statuses
@@ -13,12 +14,14 @@ from tooi.api.timeline import StatusListGenerator
 from tooi.auth import Context, get_context
 from tooi.entities import ExtendedDescription, InstanceV2, Status, from_dict
 from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoPublicTimeline
+from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread
 from tooi.screens.account import AccountScreen
 from tooi.screens.compose import ComposeScreen
 from tooi.screens.goto import GotoScreen
 from tooi.screens.help import HelpScreen
 from tooi.screens.loading import LoadingScreen
 from tooi.screens.source import SourceScreen
+from tooi.screens.status_context import StatusMenuScreen
 from tooi.screens.timeline import TimelineScreen
 from tooi.widgets.link import Link
 
@@ -74,13 +77,21 @@ class TooiApp(App[None]):
     def action_help(self):
         self.push_screen(HelpScreen())
 
-    def on_timeline_screen_show_account(self, message: TimelineScreen.ShowAccount):
+    def close_modals(self):
+        while isinstance(self.screen, ModalScreen):
+            self.pop_screen()
+
+    def on_show_account(self, message: ShowAccount):
+        self.close_modals()
         self.push_screen(AccountScreen(message.account))
 
-    def on_timeline_screen_show_source(self, message: TimelineScreen.ShowSource):
+    def on_show_source(self, message: ShowSource):
         self.push_screen(SourceScreen(message.status))
 
-    async def on_timeline_screen_show_thread(self, message: TimelineScreen.ShowThread):
+    def on_show_status_menu(self, message: ShowStatusMenu):
+        self.push_screen(StatusMenuScreen(message.status))
+
+    async def on_show_thread(self, message: ShowThread):
         # TODO: add footer message while loading statuses
         response = await statuses.context(self.ctx, message.status.id)
         data = response.json()

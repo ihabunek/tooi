@@ -24,8 +24,8 @@ class ModalScreen(screen.ModalScreen[screen.ScreenResultType]):
         Binding("q", "quit", "Close"),
     ]
 
-    def __init__(self):
-        super().__init__(classes="modal_screen")
+    def __init__(self, *, id: str | None = None):
+        super().__init__(classes="modal_screen", id=id)
 
     def compose_modal(self) -> ComposeResult:
         raise NotImplementedError()

@@ -1,16 +1,17 @@
 import asyncio
+from textual.app import log
 
 from textual.binding import Binding
 from textual.containers import Horizontal
-from textual.message import Message
 from textual.screen import Screen
 from textual.widgets import Footer
-from tooi.entities import Account, Status
 
-from tooi.messages import StatusHighlighted
+from tooi.api.timeline import StatusListGenerator
+from tooi.entities import Status
+from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread
+from tooi.messages import StatusHighlighted, StatusSelected
 from tooi.widgets.divider import VerticalDivider
 from tooi.widgets.header import Header
-from tooi.api.timeline import StatusListGenerator
 from tooi.widgets.status_bar import StatusBar
 from tooi.widgets.status_detail import StatusDetail, StatusDetailPlaceholder
 from tooi.widgets.status_list import StatusList
@@ -63,17 +64,20 @@ class TimelineScreen(Screen[None]):
         self.query_one("Horizontal").mount(self.status_detail)
         asyncio.create_task(self.maybe_fetch_next_batch())
 
+    def on_status_selected(self, message: StatusSelected):
+        self.post_message(ShowStatusMenu(message.status))
+
     def action_show_account(self):
         if status := self.status_list.current:
-            self.post_message(self.ShowAccount(status.original.account))
+            self.post_message(ShowAccount(status.original.account))
 
     def action_show_source(self):
         if status := self.status_list.current:
-            self.post_message(self.ShowSource(status))
+            self.post_message(ShowSource(status))
 
     def action_show_thread(self):
         if status := self.status_list.current:
-            self.post_message(self.ShowThread(status))
+            self.post_message(ShowThread(status))
 
     def action_scroll_left(self):
         self.query_one("#status_list").focus()
@@ -97,18 +101,3 @@ class TimelineScreen(Screen[None]):
         if not self.fetching and self.status_list.index is not None:
             diff = self.status_list.count - self.status_list.index
             return diff < 10
-
-    class ShowAccount(Message):
-        def __init__(self, account: Account) -> None:
-            self.account = account
-            super().__init__()
-
-    class ShowSource(Message):
-        def __init__(self, status: Status) -> None:
-            self.status = status
-            super().__init__()
-
-    class ShowThread(Message):
-        def __init__(self, status: Status) -> None:
-            self.status = status
-            super().__init__()
