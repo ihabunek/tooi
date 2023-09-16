@@ -2,7 +2,6 @@ from textual import screen
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
-from textual.widgets import Static
 
 
 class ModalScreen(screen.ModalScreen[screen.ScreenResultType]):

@@ -1,7 +1,7 @@
-from markdownify import markdownify
 from textual import widgets
 from textual.binding import Binding
 
+from tooi.utils.markdown import markdownify
 from tooi.widgets.link import Link
 
 
@@ -25,7 +25,7 @@ class MarkdownContent(widgets.MarkdownViewer):
         markdown = markdownify(html)
         super().__init__(markdown, show_table_of_contents=False)
 
-    def _on_markdown_link_clicked(self, message: widgets.Markdown.LinkClicked):
+    async def _on_markdown_link_clicked(self, message: widgets.Markdown.LinkClicked) -> None:
         self.post_message(Link.Clicked(message.href))
         message.stop()
 

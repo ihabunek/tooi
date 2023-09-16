@@ -7,11 +7,11 @@ import dataclasses
 from dataclasses import Field, dataclass, is_dataclass
 from datetime import date, datetime
 from functools import cached_property
-from markdownify import markdownify
 from typing import Any, Generator, Optional, Type, TypeVar, Union, get_args, get_origin
 from typing import get_type_hints
 
 from tooi.utils.datetime import parse_datetime
+from tooi.utils.markdown import markdownify
 
 
 @dataclass
