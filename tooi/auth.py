@@ -1,3 +1,4 @@
+from typing import Any
 import httpx
 import json
 
@@ -14,7 +15,7 @@ def get_context():
     return _parse_config(config)
 
 
-def _parse_config(config):
+def _parse_config(config: dict[str, Any]):
     active_user = config["active_user"]
     user_data = config["users"][active_user]
     instance_data = config["apps"][user_data["instance"]]

@@ -4,66 +4,70 @@ https://docs.joinmastodon.org/methods/timelines/
 """
 import re
 
-from typing import AsyncGenerator, List, Mapping, Optional
+from typing import AsyncGenerator, List, Optional
 from urllib.parse import quote, urlparse
+
+from httpx import Headers
+from httpx._types import QueryParamTypes
 
 from tooi import Context
 from tooi.api import request
 from tooi.entities import Status, from_dict
 from tooi.utils.string import str_bool
 
+Params = Optional[QueryParamTypes]
 StatusListGenerator = AsyncGenerator[List[Status], None]
 
-# def anon_public_timeline_generator(ctx, instance, local=False, limit=40):
+# def anon_public_timeline_generator(ctx, instance, local: bool = False, limit: int = 40):
 #     path = "/api/v1/timelines/public"
 #     params = {"local": str_bool(local), "limit": limit}
 #     return _anon_timeline_generator(ctx, instance, path, params)
 
 
-# def anon_tag_timeline_generator(ctx, instance, hashtag, local=False, limit=40):
+# def anon_tag_timeline_generator(ctx, instance, hashtag, local: bool = False, limit: int = 40):
 #     path = f"/api/v1/timelines/tag/{quote(hashtag)}"
 #     params = {"local": str_bool(local), "limit": limit}
 #     return _anon_timeline_generator(ctx, instance, path, params)
 
 
-def home_timeline_generator(ctx: Context, limit=40):
+def home_timeline_generator(ctx: Context, limit: int = 40):
     path = "/api/v1/timelines/home"
     params = {"limit": limit}
     return _timeline_generator(ctx, path, params)
 
 
-def public_timeline_generator(ctx: Context, local=False, limit=40):
+def public_timeline_generator(ctx: Context, local: bool = False, limit: int = 40):
     path = "/api/v1/timelines/public"
     params = {"local": str_bool(local), "limit": limit}
     return _timeline_generator(ctx, path, params)
 
 
-def tag_timeline_generator(ctx: Context, hashtag: str, local=False, limit=40):
+def tag_timeline_generator(ctx: Context, hashtag: str, local: bool = False, limit: int = 40):
     path = f"/api/v1/timelines/tag/{quote(hashtag)}"
     params = {"local": str_bool(local), "limit": limit}
     return _timeline_generator(ctx, path, params)
 
 
-def bookmark_timeline_generator(ctx: Context, limit=40):
+def bookmark_timeline_generator(ctx: Context, limit: int = 40):
     path = "/api/v1/bookmarks"
     params = {"limit": limit}
     return _timeline_generator(ctx, path, params)
 
 
-def notification_timeline_generator(ctx: Context, limit=40):
+def notification_timeline_generator(ctx: Context, limit: int = 40):
     # exclude all but mentions and statuses
     exclude_types = ["follow", "favourite", "reblog", "poll", "follow_request"]
     params = {"exclude_types[]": exclude_types, "limit": limit}
     return _notification_timeline_generator(ctx, "/api/v1/notifications", params)
 
 
-def conversation_timeline_generator(ctx: Context, limit=40):
+def conversation_timeline_generator(ctx: Context, limit: int = 40):
     path = "/api/v1/conversations"
     params = {"limit": limit}
     return _conversation_timeline_generator(ctx, path, params)
 
 
-# def account_timeline_generator(ctx: Context, account_name: str, replies=False, reblogs=False, limit=40):
+# def account_timeline_generator(ctx: Context, account_name: str, replies=False, reblogs=False, limit: int = 40):
 #     account = await find_account(ctx, account_name)
 #     path = f"/api/v1/accounts/{account["id"]}/statuses"
 #     params = {"limit": limit, "exclude_replies": not replies, "exclude_reblogs": not reblogs}
@@ -85,28 +89,31 @@ def list_timeline_generator(ctx: Context, list_id: str, limit: int = 20):
 #             path = _get_next_path(response.headers)
 
 
-async def _timeline_generator(ctx: Context, path: Optional[str], params=None) -> StatusListGenerator:
-    while path:
-        response = await request(ctx, "GET", path, params=params)
+async def _timeline_generator(ctx: Context, path: str, params: Params = None) -> StatusListGenerator:
+    next_path = path
+    while next_path:
+        response = await request(ctx, "GET", next_path, params=params)
         yield [from_dict(Status, s) for s in response.json()]
-        path = _get_next_path(response.headers)
+        next_path = _get_next_path(response.headers)
 
 
-async def _notification_timeline_generator(ctx: Context, path: Optional[str], params=None):
-    while path:
-        response = await request(ctx, "GET", path, params=params)
+async def _notification_timeline_generator(ctx: Context, path: str, params: Params = None) -> StatusListGenerator:
+    next_path = path
+    while next_path:
+        response = await request(ctx, "GET", next_path, params=params)
         yield [n["status"] for n in response.json() if n["status"]]
-        path = _get_next_path(response.headers)
+        next_path = _get_next_path(response.headers)
 
 
-async def _conversation_timeline_generator(ctx, path, params=None):
-    while path:
-        response = await request(ctx, "GET", path, params=params)
+async def _conversation_timeline_generator(ctx: Context, path: str, params: Params = None)  -> StatusListGenerator:
+    next_path = path
+    while next_path:
+        response = await request(ctx, "GET", next_path, params=params)
         yield [c["last_status"] for c in response.json() if c["last_status"]]
-        path = _get_next_path(response.headers)
+        next_path = _get_next_path(response.headers)
 
 
-def _get_next_path(headers: Mapping[str, str]) -> str | None:
+def _get_next_path(headers: Headers) -> str | None:
     """Given timeline response headers, returns the path to the next batch"""
     links = headers.get("Link", "")
     matches = re.match(r'<([^>]+)>; rel="next"', links)

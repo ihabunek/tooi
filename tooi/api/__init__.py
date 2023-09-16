@@ -3,13 +3,13 @@ import time
 
 from httpx import Response
 from tooi import Context
-from typing import Optional, Tuple
-
+from tooi.api.types import RequestParams
+from typing import Optional, Tuple, Unpack
 
 logger = logging.getLogger(__name__)
 
 
-async def request(ctx: Context, method: str, url: str, **kwargs) -> Response:
+async def request(ctx: Context, method: str, url: str, **kwargs: Unpack[RequestParams]) -> Response:
     start = time.time()
     logger.info(f"--> {method} {url}")
 

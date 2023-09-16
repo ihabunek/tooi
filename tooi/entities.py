@@ -455,7 +455,7 @@ def _get_default_value(field: Field[Any]):
     return None
 
 
-def _convert(field_type, value):
+def _convert(field_type: Type[Any], value: Any) -> Any:
     if value is None:
         return None
 
@@ -478,7 +478,7 @@ def _convert(field_type, value):
     raise ValueError(f"Not implemented for type '{field_type}'")
 
 
-def _prune_optional(field_type):
+def _prune_optional(field_type: Type[Any]):
     """For `Optional[<type>]` returns the encapsulated `<type>`."""
     if get_origin(field_type) == Union:
         args = get_args(field_type)

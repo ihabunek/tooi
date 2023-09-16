@@ -6,10 +6,16 @@ class Link(Static):
     url: str
     title: str | None
 
-    def __init__(self, url: str, title: str | None = None, **kwargs):
+    def __init__(
+        self,
+        url: str,
+        title: str | None = None,
+        classes: str | None = None,
+        disabled: bool = False,
+    ):
         self.url = url
         self.title = title
-        super().__init__(**kwargs)
+        super().__init__(classes=classes, disabled=disabled)
 
     def render(self):
         return f"[@click='on_click']{self.title or self.url}[/]"
