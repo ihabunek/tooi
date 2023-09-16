@@ -1,8 +1,12 @@
+import re
+import webbrowser
+
 from asyncio import gather
 from httpx import AsyncClient
-from textual.app import App, log
-from tooi.api import statuses
+from textual.app import App
+from urllib.parse import urlparse
 
+from tooi.api import statuses
 from tooi.api.instance import extended_description, server_information
 from tooi.api.timeline import home_timeline_generator, public_timeline_generator, tag_timeline_generator
 from tooi.api.timeline import StatusListGenerator
@@ -106,6 +110,20 @@ class TooiApp(App[None]):
         # TODO: clear stack? how?
         self.switch_screen(screen)
 
-    def on_link_clicked(self, message: Link.Clicked):
-        # TODO: handle links
-        log(f"Link clicked: {message.url=}, {message.title=}")
+    async def _push_timeline(self, generator: StatusListGenerator):
+        statuses = await anext(generator)
+        screen = TimelineScreen(statuses, generator)
+        # TODO: clear stack? how?
+        self.push_screen(screen)
+
+    async def on_link_clicked(self, message: Link.Clicked):
+        parsed = urlparse(message.url)
+
+        # Hashtag
+        if m := re.match(r"/tags/(\w+)", parsed.path):
+            hashtag = m.group(1)
+            generator = tag_timeline_generator(self.ctx, hashtag)
+            await self._push_timeline(generator)
+
+        # TODO: improve link handling
+        webbrowser.open(message.url)
