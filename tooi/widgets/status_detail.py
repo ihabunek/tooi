@@ -8,6 +8,7 @@ from tooi.utils.datetime import format_datetime
 from tooi.widgets.account import AccountHeader
 from tooi.widgets.link import Link
 from tooi.widgets.markdown import Markdown
+from tooi.widgets.poll import Poll
 
 
 class StatusDetail(VerticalScroll):
@@ -47,6 +48,9 @@ class StatusDetail(VerticalScroll):
 
         yield AccountHeader(status.account)
         yield Markdown(status.content_md, classes="status_content")
+
+        if status.poll:
+            yield Poll(status.poll)
 
         if status.card:
             yield StatusCard(status)
