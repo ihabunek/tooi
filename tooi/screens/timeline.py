@@ -1,5 +1,4 @@
 import asyncio
-from textual.app import log
 
 from textual.binding import Binding
 from textual.containers import Horizontal

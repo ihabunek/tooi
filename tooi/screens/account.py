@@ -34,9 +34,7 @@ class AccountScreen(Screen[None]):
 
 class AccountDetail(VerticalScroll):
     DEFAULT_CSS = """
-    #account_detail {
-        margin: 1 1;
-    }
+    #account_detail {}
     #account_note {
         margin: 0;
         margin-top: 1;
@@ -45,7 +43,7 @@ class AccountDetail(VerticalScroll):
 
     def __init__(self, account: Account):
         self.account = account
-        super().__init__(classes="account_detail")
+        super().__init__(id="account_detail")
 
     def compose(self):
         account = self.account

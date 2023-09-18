@@ -11,7 +11,6 @@ from tooi.api import statuses
 from tooi.api.instance import extended_description, server_information
 from tooi.api.timeline import home_timeline_generator, public_timeline_generator, tag_timeline_generator
 from tooi.api.timeline import StatusListGenerator
-from tooi.auth import Context, get_context
 from tooi.entities import ExtendedDescription, InstanceV2, Status, from_dict
 from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoPublicTimeline
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread
@@ -28,7 +27,6 @@ from tooi.widgets.link import Link
 
 class TooiApp(App[None]):
     client: AsyncClient
-    ctx: Context
 
     TITLE = "tooi"
     SUB_TITLE = "1.0.0"
@@ -42,18 +40,14 @@ class TooiApp(App[None]):
         ("g", "goto", "Goto"),
     ]
 
-    def __init__(self):
-        super().__init__()
-        self.ctx = get_context()
-
     async def on_mount(self):
         self.push_screen("loading")
 
-        generator = home_timeline_generator(self.ctx)
+        generator = home_timeline_generator()
         statuses, instance, description = await gather(
             anext(generator),
-            server_information(self.ctx),
-            extended_description(self.ctx),
+            server_information(),
+            extended_description(),
         )
 
         self.instance = from_dict(InstanceV2, instance.json())
@@ -93,7 +87,7 @@ class TooiApp(App[None]):
 
     async def on_show_thread(self, message: ShowThread):
         # TODO: add footer message while loading statuses
-        response = await statuses.context(self.ctx, message.status.id)
+        response = await statuses.context(message.status.id)
         data = response.json()
         ancestors = [from_dict(Status, s) for s in data["ancestors"]]
         descendants = [from_dict(Status, s) for s in data["descendants"]]
@@ -104,15 +98,15 @@ class TooiApp(App[None]):
 
     async def on_goto_home_timeline(self, message: GotoHomeTimeline):
         # TODO: add footer message while loading statuses
-        generator = home_timeline_generator(self.ctx)
+        generator = home_timeline_generator()
         await self._switch_timeline(generator)
 
     async def on_goto_public_timeline(self, message: GotoPublicTimeline):
-        generator = public_timeline_generator(self.ctx)
+        generator = public_timeline_generator()
         await self._switch_timeline(generator)
 
     async def on_goto_hashtag_timeline(self, message: GotoHashtagTimeline):
-        generator = tag_timeline_generator(self.ctx, message.hashtag)
+        generator = tag_timeline_generator(message.hashtag)
         await self._switch_timeline(generator)
 
     async def _switch_timeline(self, generator: StatusListGenerator):
@@ -133,7 +127,7 @@ class TooiApp(App[None]):
         # Hashtag
         if m := re.match(r"/tags/(\w+)", parsed.path):
             hashtag = m.group(1)
-            generator = tag_timeline_generator(self.ctx, hashtag)
+            generator = tag_timeline_generator(hashtag)
             await self._push_timeline(generator)
 
         # TODO: improve link handling

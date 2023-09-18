@@ -1,6 +1,7 @@
 from rich.text import Text
 from textual.widgets import ListItem, Static
 
+from tooi import context
 from tooi.entities import Status
 from tooi.messages import StatusHighlighted, StatusSelected
 from tooi.utils.datetime import format_datetime
@@ -56,12 +57,12 @@ class StatusListItem(ListItem, can_focus=True):
         self.status = status
 
     def compose(self):
-        instance = self.app.instance
+        ctx = context.get()
         status = self.status.original
 
         dttm = format_datetime(status.created_at)
         acct = status.account.acct
-        acct = acct if "@" in acct else f"{acct}@{instance.domain}"
+        acct = acct if "@" in acct else f"{acct}@{ctx.domain}"
 
         # TODO: this does not allow for CSS customization, look into alternatives
         # see: https://github.com/Textualize/textual/discussions/1183

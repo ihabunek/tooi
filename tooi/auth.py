@@ -19,6 +19,7 @@ def _parse_config(config: dict[str, Any]):
     active_user = config["active_user"]
     user_data = config["users"][active_user]
     instance_data = config["apps"][user_data["instance"]]
+    domain = instance_data["instance"]
     base_url = instance_data["base_url"]
     access_token = user_data["access_token"]
 
@@ -28,7 +29,7 @@ def _parse_config(config: dict[str, Any]):
         headers={"Authorization": f"Bearer {access_token}"},
     )
 
-    return Context(active_user, base_url, access_token, client)
+    return Context(active_user, domain, base_url, access_token, client)
 
 
 def _load_config():

@@ -91,9 +91,7 @@ class StatusCard(Widget):
     }
     """
 
-    status: Status
-
-    def __init__(self, status):
+    def __init__(self, status: Status):
         self.status = status
         super().__init__(classes="card")
 
