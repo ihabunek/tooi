@@ -5,13 +5,13 @@ from asyncio import gather
 from httpx import AsyncClient
 from textual.app import App
 from textual.screen import ModalScreen
+from tooi import load_context
 from urllib.parse import urlparse
 
 from tooi.api import statuses
-from tooi.api.instance import extended_description, server_information_v2
 from tooi.api.timeline import home_timeline_generator, public_timeline_generator, tag_timeline_generator
 from tooi.api.timeline import StatusListGenerator
-from tooi.entities import ExtendedDescription, InstanceV2, Status, from_dict
+from tooi.entities import Status, from_dict
 from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoPublicTimeline
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread
 from tooi.screens.account import AccountScreen
@@ -44,14 +44,7 @@ class TooiApp(App[None]):
         self.push_screen("loading")
 
         generator = home_timeline_generator()
-        statuses, instance, description = await gather(
-            anext(generator),
-            server_information_v2(),
-            extended_description(),
-        )
-
-        self.instance = from_dict(InstanceV2, instance.json())
-        self.description = from_dict(ExtendedDescription, description.json())
+        statuses, _ = await gather(anext(generator), load_context())
 
         screen = TimelineScreen(statuses, generator)
         self.switch_screen(screen)

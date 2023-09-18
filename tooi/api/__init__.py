@@ -19,7 +19,6 @@ async def request(method: str, url: str, **kwargs: Unpack[RequestParams]) -> Res
 
     if response.is_success:
         logger.info(f"<-- {method} {url} HTTP {response.status_code} {duration_ms}ms")
-
         return response
 
     error, description = await get_error(response)
