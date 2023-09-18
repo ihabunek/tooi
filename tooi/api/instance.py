@@ -9,6 +9,14 @@ from tooi.api import request
 async def server_information() -> Response:
     """
     Obtain general information about the server.
+    https://docs.joinmastodon.org/methods/instance/#v1
+    """
+    return await request("GET", "/api/v1/instance")
+
+
+async def server_information_v2() -> Response:
+    """
+    Obtain general information about the server.
     https://docs.joinmastodon.org/methods/instance/#v2
     """
     return await request("GET", "/api/v2/instance")

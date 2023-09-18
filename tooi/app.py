@@ -8,7 +8,7 @@ from textual.screen import ModalScreen
 from urllib.parse import urlparse
 
 from tooi.api import statuses
-from tooi.api.instance import extended_description, server_information
+from tooi.api.instance import extended_description, server_information_v2
 from tooi.api.timeline import home_timeline_generator, public_timeline_generator, tag_timeline_generator
 from tooi.api.timeline import StatusListGenerator
 from tooi.entities import ExtendedDescription, InstanceV2, Status, from_dict
@@ -46,7 +46,7 @@ class TooiApp(App[None]):
         generator = home_timeline_generator()
         statuses, instance, description = await gather(
             anext(generator),
-            server_information(),
+            server_information_v2(),
             extended_description(),
         )
 
