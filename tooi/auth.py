@@ -3,7 +3,7 @@ import httpx
 import json
 
 from os import path
-from tooi import Context
+from tooi.context import Context
 
 
 CONFIG_PATH = path.expanduser("~/.config/toot/config.json")

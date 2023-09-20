@@ -1,7 +1,7 @@
 from rich.text import Text
 from textual.widgets import ListItem, Static
 
-from tooi import context
+from tooi.context import context
 from tooi.entities import Status
 from tooi.messages import StatusHighlighted, StatusSelected
 from tooi.utils.datetime import format_datetime

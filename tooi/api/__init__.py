@@ -2,7 +2,7 @@ import logging
 import time
 
 from httpx import Response
-from tooi import context
+from tooi.context import context
 from tooi.api.types import RequestParams
 from typing import Optional, Tuple, Unpack
 

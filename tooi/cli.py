@@ -2,7 +2,7 @@ import click
 import logging
 
 from textual.logging import TextualHandler
-from tooi import context
+from tooi.context import context
 from tooi.app import TooiApp
 from tooi.auth import get_context
 

@@ -5,7 +5,7 @@ from asyncio import gather
 from httpx import AsyncClient
 from textual.app import App
 from textual.screen import ModalScreen
-from tooi import load_context
+from tooi.context import load_context
 from urllib.parse import urlparse
 
 from tooi.api import statuses
