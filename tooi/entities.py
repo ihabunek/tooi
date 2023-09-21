@@ -427,6 +427,10 @@ class ExtendedDescription:
     updated_at: datetime
     content: str
 
+    @cached_property
+    def content_md(self) -> str:
+        return markdownify(self.content)
+
 
 # Generic data class instance
 T = TypeVar("T")

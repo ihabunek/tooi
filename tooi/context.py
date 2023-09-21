@@ -22,8 +22,8 @@ context: ContextVar[Context] = ContextVar("context")
 
 # Current instance info
 instance: ContextVar[Instance] = ContextVar("instance")
-instance_v2: ContextVar[InstanceV2] = ContextVar("instance_v2")
-extended_description: ContextVar[ExtendedDescription] = ContextVar("extended_description")
+instance_v2: ContextVar[InstanceV2 | None] = ContextVar("instance_v2", default=None)
+extended_description: ContextVar[ExtendedDescription | None] = ContextVar("extended_description", default=None)
 
 
 async def load_context():
@@ -38,6 +38,8 @@ async def load_context():
 
     if isinstance(instance_resp, Response):
         instance.set(from_dict(Instance, instance_resp.json()))
+    else:
+        raise instance_resp
 
     if isinstance(instance_v2_resp, Response):
         instance_v2.set(from_dict(InstanceV2, instance_v2_resp.json()))
