@@ -5,3 +5,6 @@ ListView > ListItem {
 ListView:focus > ListItem.--highlight {
     background: $primary;
 }
+
+.show { display: block; }
+.hide { display: none; }

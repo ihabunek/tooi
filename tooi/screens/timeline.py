@@ -23,6 +23,7 @@ class TimelineScreen(Screen[None]):
         Binding("t", "show_thread", "Thread"),
         Binding("left,h", "scroll_left", "Scroll Left", show=False),
         Binding("right,l", "scroll_right", "Scroll Right", show=False),
+        Binding("s", "show_sensitive", "Show Sensitive", show=False),
     ]
 
     def __init__(
@@ -37,6 +38,7 @@ class TimelineScreen(Screen[None]):
         self.generator = generator
         self.title = title
         self.fetching = False
+        self.revealed_ids: set[str] = set()
 
         status = statuses[initial_index] if initial_index < len(statuses) else None
         self.status_list = StatusList(statuses, initial_index=initial_index)
@@ -59,12 +61,18 @@ class TimelineScreen(Screen[None]):
         # called only once, so updating needs to be implemented manually.
         # See: https://github.com/Textualize/textual/discussions/1683
         self.status_detail.remove()
-        self.status_detail = StatusDetail(message.status)
+        revealed = message.status.original.id in self.revealed_ids
+        self.status_detail = StatusDetail(message.status, revealed=revealed)
         self.query_one("Horizontal").mount(self.status_detail)
         asyncio.create_task(self.maybe_fetch_next_batch())
 
     def on_status_selected(self, message: StatusSelected):
         self.post_message(ShowStatusMenu(message.status))
+
+    def action_show_sensitive(self):
+        if isinstance(self.status_detail, StatusDetail) and self.status_detail.sensitive:
+            self.revealed_ids.add(self.status_detail.status.original.id)
+            self.status_detail.reveal()
 
     def action_show_account(self):
         if status := self.status_list.current:

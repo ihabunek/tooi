@@ -1,5 +1,6 @@
+from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import VerticalScroll
+from textual.containers import Vertical, VerticalScroll
 from textual.widget import Widget
 from textual.widgets import Static
 
@@ -23,6 +24,22 @@ class StatusDetail(VerticalScroll):
     .status_content {
         margin-top: 1;
     }
+    .status_sensitive {
+        display: none;
+        height: auto;
+    }
+    .status_revealed {
+        display: none;
+        height: auto;
+    }
+    .spoiler_text {
+        margin-top: 1;
+    }
+    .sensitive_notice {
+        margin-top: 1;
+        color: red;
+        border: solid red;
+    }
     """
 
     BINDINGS = [
@@ -34,11 +51,11 @@ class StatusDetail(VerticalScroll):
         Binding("pagedown", "page_down", "Page Down", show=False),
     ]
 
-    status: Status
-
-    def __init__(self, status: Status):
-        self.status = status
+    def __init__(self, status: Status, revealed: bool = False):
         super().__init__(id="status_detail")
+        self.status = status
+        self.sensitive = status.original.sensitive
+        self.revealed = revealed
 
     def compose(self):
         status = self.status.original
@@ -46,7 +63,31 @@ class StatusDetail(VerticalScroll):
         if self.status.reblog:
             yield BoostedBy(self.status)
 
+        hide_sensitive = self.sensitive and not self.revealed
+        sensitive_classes = "status_sensitive " + ("show" if hide_sensitive else "hide")
+        revealed_classes = "status_revealed " + ("hide" if hide_sensitive else "show")
+
         yield AccountHeader(status.account)
+        yield Vertical(*self.compose_sensitive(status), classes=sensitive_classes)
+        yield Vertical(*self.compose_revealed(status), classes=revealed_classes)
+        yield StatusMeta(status)
+
+    def reveal(self):
+        if self.sensitive and not self.revealed:
+            self.query_one(".status_sensitive").styles.display = "none"
+            self.query_one(".status_revealed").styles.display = "block"
+            self.revealed = True
+
+    def compose_sensitive(self, status: Status) -> ComposeResult:
+        if status.spoiler_text:
+            yield Static(status.spoiler_text, classes="spoiler_text")
+
+        yield Static("Marked as sensitive. Press S to view.", classes="sensitive_notice")
+
+    def compose_revealed(self, status: Status) -> ComposeResult:
+        if status.spoiler_text:
+            yield Static(status.spoiler_text, classes="spoiler_text")
+
         yield Markdown(status.content_md, classes="status_content")
 
         if status.poll:
@@ -57,8 +98,6 @@ class StatusDetail(VerticalScroll):
 
         for attachment in status.original.media_attachments:
             yield StatusMediaAttachment(attachment)
-
-        yield StatusMeta(status)
 
 
 class BoostedBy(Static):
@@ -180,3 +219,6 @@ class StatusDetailPlaceholder(Static, can_focus=True):
 
     def __init__(self):
         super().__init__("No status selected", id="status_detail")
+
+    def show_sensitive(self):
+        pass
