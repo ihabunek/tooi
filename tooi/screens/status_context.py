@@ -9,14 +9,14 @@ from tooi.widgets.list_view import ListView
 
 class StatusMenuScreen(ModalScreen[None]):
     DEFAULT_CSS = """
-    #status_context_screen ListView {
+    StatusMenuScreen ListView {
         height: auto;
     }
     """
 
     def __init__(self, status: Status):
         self.status = status
-        super().__init__(id="status_context_screen")
+        super().__init__()
 
     def compose_modal(self):
         yield Static(f"Status #{self.status.id}", classes="modal_title")

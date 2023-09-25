@@ -87,10 +87,10 @@ class TimelineScreen(Screen[None]):
             self.post_message(ShowThread(status))
 
     def action_scroll_left(self):
-        self.query_one("#status_list").focus()
+        self.query_one("StatusList").focus()
 
     def action_scroll_right(self):
-        self.query_one("#status_detail").focus()
+        self.query_one("StatusDetail").focus()
 
     async def maybe_fetch_next_batch(self):
         if self.generator and self.should_fetch():

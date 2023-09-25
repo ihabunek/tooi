@@ -12,11 +12,11 @@ class StatusList(ListView):
     current: Status | None
 
     DEFAULT_CSS = """
-    #status_list {
+    StatusList {
         width: 1fr;
         min-width: 20;
     }
-    #status_list:focus-within {
+    StatusList:focus-within {
         background: $panel;
     }
     """
@@ -26,7 +26,7 @@ class StatusList(ListView):
         self.current = statuses[initial_index] if initial_index < len(statuses) else None
 
         items = [StatusListItem(s) for s in self.statuses]
-        super().__init__(*items, id="status_list", initial_index=initial_index)
+        super().__init__(*items, initial_index=initial_index)
 
     def update(self, next_statuses: list[Status]):
         self.statuses += next_statuses

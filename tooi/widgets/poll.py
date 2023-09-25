@@ -11,7 +11,7 @@ from tooi.utils.datetime import format_datetime
 
 class Poll(Widget):
     DEFAULT_CSS = """
-    .poll {
+    Poll {
         border: round white;
         height: auto;
         padding: 0 1;
@@ -34,8 +34,7 @@ class Poll(Widget):
 
     def __init__(self, poll: PollEntity):
         self.poll = poll
-
-        super().__init__(classes="poll")
+        super().__init__()
 
     def compose(self):
         for idx, option in enumerate(self.poll.options):

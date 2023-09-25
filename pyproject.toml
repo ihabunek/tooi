@@ -24,7 +24,7 @@ dependencies = [
     "click",
     "httpx",
     "markdownify",
-    "textual@git+https://github.com/Textualize/textual.git@text-area",
+    "textual>=0.38.1",
 ]
 
 [tool.setuptools.packages.find]

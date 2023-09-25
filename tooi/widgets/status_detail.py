@@ -14,12 +14,15 @@ from tooi.widgets.poll import Poll
 
 class StatusDetail(VerticalScroll):
     DEFAULT_CSS = """
-    #status_detail {
+    StatusDetail {
         width: 2fr;
         padding: 0 1;
     }
-    #status_detail:focus {
+    StatusDetail:focus {
         background: $panel;
+    }
+    .status_header {
+        height: auto;
     }
     .status_content {
         margin-top: 1;
@@ -52,7 +55,7 @@ class StatusDetail(VerticalScroll):
     ]
 
     def __init__(self, status: Status, revealed: bool = False):
-        super().__init__(id="status_detail")
+        super().__init__()
         self.status = status
         self.sensitive = status.original.sensitive
         self.revealed = revealed
@@ -67,7 +70,7 @@ class StatusDetail(VerticalScroll):
         sensitive_classes = "status_sensitive " + ("show" if hide_sensitive else "hide")
         revealed_classes = "status_revealed " + ("hide" if hide_sensitive else "show")
 
-        yield AccountHeader(status.account)
+        yield AccountHeader(status.account, classes="status_header")
         yield Vertical(*self.compose_sensitive(status), classes=sensitive_classes)
         yield Vertical(*self.compose_revealed(status), classes=revealed_classes)
         yield StatusMeta(status)
@@ -118,21 +121,21 @@ class BoostedBy(Static):
 
 class StatusCard(Widget):
     DEFAULT_CSS = """
-    .card {
+    StatusCard {
         border: round white;
         padding: 0 1;
         height: auto;
         margin-top: 1;
     }
 
-    .card > .title {
+    .title {
         text-style: bold;
     }
     """
 
     def __init__(self, status: Status):
         self.status = status
-        super().__init__(classes="card")
+        super().__init__()
 
     def compose(self):
         card = self.status.original.card
@@ -155,12 +158,12 @@ class StatusCard(Widget):
 
 class StatusMediaAttachment(Widget):
     DEFAULT_CSS = """
-    .media_attachment {
+    StatusMediaAttachment {
         border-top: ascii gray;
         height: auto;
     }
 
-    .media_attachment > .title {
+    .title {
         text-style: bold;
     }
     """
@@ -169,7 +172,7 @@ class StatusMediaAttachment(Widget):
 
     def __init__(self, attachment: MediaAttachment):
         self.attachment = attachment
-        super().__init__(classes="media_attachment")
+        super().__init__()
 
     def compose(self):
         yield Static(f"Media attachment ({self.attachment.type})", classes="title")
@@ -180,17 +183,15 @@ class StatusMediaAttachment(Widget):
 
 class StatusMeta(Static):
     DEFAULT_CSS = """
-    .meta {
+    StatusMeta {
         color: gray;
         border-top: ascii gray;
     }
     """
 
-    status: Status
-
     def __init__(self, status: Status):
         self.status = status
-        super().__init__(classes="meta")
+        super().__init__()
 
     def render(self):
         status = self.status.original
@@ -206,19 +207,16 @@ class StatusMeta(Static):
 
 class StatusDetailPlaceholder(Static, can_focus=True):
     DEFAULT_CSS = """
-    #status_detail {
+    StatusDetailPlaceholder {
         width: 2fr;
         padding: 0 1;
         color: gray;
         height: 100%;
     }
-    #status_detail:focus {
+    StatusDetailPlaceholder:focus {
         background: $panel;
     }
     """
 
     def __init__(self):
-        super().__init__("No status selected", id="status_detail")
-
-    def show_sensitive(self):
-        pass
+        super().__init__("No status selected")

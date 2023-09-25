@@ -6,7 +6,7 @@ from textual.containers import Vertical
 
 class ModalScreen(screen.ModalScreen[screen.ScreenResultType]):
     DEFAULT_CSS = """
-    .modal_screen {
+    ModalScreen {
         align: center middle;
     }
     .modal_container {
@@ -25,7 +25,7 @@ class ModalScreen(screen.ModalScreen[screen.ScreenResultType]):
     ]
 
     def __init__(self, *, id: str | None = None):
-        super().__init__(classes="modal_screen", id=id)
+        super().__init__(id=id)
 
     def compose_modal(self) -> ComposeResult:
         raise NotImplementedError()

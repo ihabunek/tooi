@@ -5,7 +5,7 @@ from tooi.entities import Account
 
 class AccountHeader(Widget):
     DEFAULT_CSS = """
-    .account_header {
+    AccountHeader {
         height: auto;
     }
     .account_acct {
@@ -16,8 +16,8 @@ class AccountHeader(Widget):
     }
     """
 
-    def __init__(self, account: Account):
-        super().__init__(classes="account_header")
+    def __init__(self, account: Account, *, classes: str | None = None):
+        super().__init__(classes=classes)
         self.account = account
 
     def compose(self):

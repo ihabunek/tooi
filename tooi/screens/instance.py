@@ -1,17 +1,12 @@
 from textual.app import ComposeResult
-from textual.containers import Vertical, VerticalScroll
+from textual.containers import VerticalScroll
 from textual.screen import Screen
-from textual.widgets import Markdown, Pretty, Static
+from textual.widgets import Markdown, Static
 
 from tooi.entities import ExtendedDescription, Instance, InstanceV2
 
 
 class InstanceScreen(Screen[None]):
-    DEFAULT_CSS = """
-    #instance_screen {
-    }
-    """
-
     def __init__(
         self,
         *,
@@ -22,7 +17,7 @@ class InstanceScreen(Screen[None]):
         self.instance = instance
         self.instance_v2 = instance_v2
         self.description = description
-        super().__init__(id="instance_screen")
+        super().__init__()
 
     def compose(self) -> ComposeResult:
         yield VerticalScroll(*self.compose_items())

@@ -34,7 +34,6 @@ class AccountScreen(Screen[None]):
 
 class AccountDetail(VerticalScroll):
     DEFAULT_CSS = """
-    #account_detail {}
     #account_note {
         margin: 0;
         margin-top: 1;
@@ -43,7 +42,7 @@ class AccountDetail(VerticalScroll):
 
     def __init__(self, account: Account):
         self.account = account
-        super().__init__(id="account_detail")
+        super().__init__()
 
     def compose(self):
         account = self.account
@@ -56,7 +55,7 @@ class AccountDetail(VerticalScroll):
 
 class AccountField(Widget):
     DEFAULT_CSS = """
-    .account_field {
+    AccountField {
         height: auto;
     }
     .account_field_name {
@@ -69,7 +68,7 @@ class AccountField(Widget):
 
     def __init__(self, field: entities.AccountField):
         self.field = field
-        super().__init__(classes="account_field")
+        super().__init__()
 
     def compose(self):
         yield Static(self.field.name, classes="account_field_name")
