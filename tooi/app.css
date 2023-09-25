@@ -8,3 +8,8 @@ ListView:focus > ListItem.--highlight {
 
 .show { display: block; }
 .hide { display: none; }
+/*
+TextArea {
+    background: blue;
+}
+*/
