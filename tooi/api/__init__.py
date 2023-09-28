@@ -31,12 +31,10 @@ async def get_error(response: Response) -> Tuple[Optional[str], Optional[str]]:
     See: https://docs.joinmastodon.org/entities/error/
     """
     try:
-        data = await response.json()
+        data = response.json()
         return data.get("error"), data.get("error_description")
     except Exception:
-        pass
-
-    return None, None
+        return None, None
 
 
 class ResponseError(Exception):
