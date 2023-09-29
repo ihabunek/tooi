@@ -7,11 +7,11 @@ import dataclasses
 from dataclasses import Field, dataclass, is_dataclass
 from datetime import date, datetime
 from functools import cached_property
+from html2text import html2text
 from typing import Any, Generator, Optional, Type, TypeVar, Union, get_args, get_origin
 from typing import get_type_hints
 
 from tooi.utils.datetime import parse_datetime
-from tooi.utils.markdown import markdownify
 
 
 @dataclass
@@ -25,7 +25,7 @@ class AccountField:
 
     @cached_property
     def value_md(self) -> str:
-        return markdownify(self.value)
+        return html2text(self.value, bodywidth=0)
 
 
 @dataclass
@@ -73,7 +73,7 @@ class Account:
 
     @cached_property
     def note_md(self) -> str:
-        return markdownify(self.note)
+        return html2text(self.note, bodywidth=0)
 
 
 @dataclass
@@ -168,7 +168,7 @@ class PreviewCard:
 
     @cached_property
     def markdown(self) -> str:
-        return markdownify(self.html)
+        return html2text(self.html, bodywidth=0)
 
 
 @dataclass
@@ -257,7 +257,7 @@ class Status:
 
     @cached_property
     def content_md(self) -> str:
-        return markdownify(self.content)
+        return html2text(self.content, bodywidth=0)
 
 
 @dataclass
@@ -429,7 +429,7 @@ class ExtendedDescription:
 
     @cached_property
     def content_md(self) -> str:
-        return markdownify(self.content)
+        return html2text(self.content, bodywidth=0)
 
 
 # Generic data class instance

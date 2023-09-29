@@ -23,7 +23,7 @@ dependencies = [
     "beautifulsoup4",
     "click",
     "httpx",
-    "markdownify",
+    "html2text",
     "textual>=0.38.1",
 ]
 
