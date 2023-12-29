@@ -2,7 +2,7 @@ import logging
 import time
 
 from httpx import Response
-from tooi.context import context
+from tooi.context import get_context
 from tooi.api.types import RequestParams
 from typing import Optional, Tuple, Unpack
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 async def request(method: str, url: str, **kwargs: Unpack[RequestParams]) -> Response:
-    ctx = context.get()
+    ctx = get_context()
     start = time.time()
     logger.info(f"--> {method} {url}")
 

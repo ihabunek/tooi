@@ -1,11 +1,10 @@
 import httpx
 
-from asyncio import gather
-from contextvars import ContextVar
 from dataclasses import dataclass
-from httpx import Response
+from threading import local
 
-from tooi.entities import ExtendedDescription, Instance, InstanceV2, from_dict
+
+_local = local()
 
 
 @dataclass
@@ -17,32 +16,9 @@ class Context:
     client: httpx.AsyncClient
 
 
-# Auth context
-context: ContextVar[Context] = ContextVar("context")
-
-# Current instance info
-instance: ContextVar[Instance] = ContextVar("instance")
-instance_v2: ContextVar[InstanceV2 | None] = ContextVar("instance_v2", default=None)
-extended_description: ContextVar[ExtendedDescription | None] = ContextVar("extended_description", default=None)
+def set_context(context: Context) -> None:
+    _local.context = context
 
 
-async def load_context():
-    from tooi.api import instance as inst
-
-    instance_resp, instance_v2_resp, description_resp = await gather(
-        inst.server_information(),
-        inst.server_information_v2(),
-        inst.extended_description(),
-        return_exceptions=True
-    )
-
-    if isinstance(instance_resp, Response):
-        instance.set(from_dict(Instance, instance_resp.json()))
-    else:
-        raise instance_resp
-
-    if isinstance(instance_v2_resp, Response):
-        instance_v2.set(from_dict(InstanceV2, instance_v2_resp.json()))
-
-    if isinstance(description_resp, Response):
-        extended_description.set(from_dict(ExtendedDescription, description_resp.json()))
+def get_context() -> Context:
+    return _local.context

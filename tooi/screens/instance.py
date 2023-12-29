@@ -2,21 +2,15 @@ from textual.app import ComposeResult
 from textual.containers import VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Markdown, Static
-
+from tooi.data.instance import InstanceData
 from tooi.entities import ExtendedDescription, Instance, InstanceV2
 
 
 class InstanceScreen(Screen[None]):
-    def __init__(
-        self,
-        *,
-        instance: Instance | None = None,
-        instance_v2: InstanceV2 | None = None,
-        description: ExtendedDescription | None = None,
-    ):
-        self.instance = instance
-        self.instance_v2 = instance_v2
-        self.description = description
+    def __init__(self, data: InstanceData):
+        self.instance = data.instance
+        self.instance_v2 = data.instance_v2
+        self.extended_description = data.extended_description
         super().__init__()
 
     def compose(self) -> ComposeResult:
@@ -29,8 +23,8 @@ class InstanceScreen(Screen[None]):
         elif self.instance:
             yield from self.compose_instance(self.instance)
 
-        if self.description:
-            yield from self.compose_description(self.description)
+        if self.extended_description:
+            yield from self.compose_description(self.extended_description)
 
     def compose_instance_v2(self, instance: InstanceV2):
         yield Static(instance.title)
@@ -48,6 +42,7 @@ class InstanceScreen(Screen[None]):
             yield Static(f"* {rule.text}")
 
     def compose_instance(self, instance: Instance):
+        # TODO: implement this
         yield Static("TODO: Intance goes here")
 
     def compose_description(self, description: ExtendedDescription):

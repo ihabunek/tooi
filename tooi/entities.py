@@ -11,6 +11,8 @@ from html2text import html2text
 from typing import Any, Generator, Optional, Type, TypeVar, Union, get_args, get_origin
 from typing import get_type_hints
 
+from httpx import Response
+
 from tooi.utils.datetime import parse_datetime
 
 
@@ -447,6 +449,10 @@ def from_dict(cls: Type[T], data: dict[Any, Any]) -> T:
             yield field.name, _convert(field_type, value)
 
     return cls(**dict(_fields()))
+
+
+def from_response(cls: Type[T], response: Response) -> T:
+    return from_dict(cls, response.json())
 
 
 def _get_default_value(field: Field[Any]):

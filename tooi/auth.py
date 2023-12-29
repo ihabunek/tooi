@@ -10,7 +10,7 @@ CONFIG_PATH = path.expanduser("~/.config/toot/config.json")
 
 
 # TODO: uses toot config
-def get_context():
+def get_context() -> Context:
     config = _load_config()
     return _parse_config(config)
 

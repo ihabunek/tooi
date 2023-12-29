@@ -1,16 +1,15 @@
-from asyncio import gather
 import re
 import webbrowser
 
 from httpx import AsyncClient
-from textual.app import App, log
+from textual.app import App
 from textual.screen import ModalScreen
 from urllib.parse import urlparse
 
-from tooi import context
 from tooi.api import statuses
 from tooi.api.timeline import home_timeline_generator, public_timeline_generator, tag_timeline_generator
 from tooi.api.timeline import StatusListGenerator
+from tooi.data.instance import get_instance_info
 from tooi.entities import Status, from_dict
 from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoPublicTimeline
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread
@@ -44,14 +43,8 @@ class TooiApp(App[None]):
 
     async def on_mount(self):
         self.push_screen("loading")
-
         generator = home_timeline_generator()
-
-        # TODO: using `gather` to load these in parallel causes context not to
-        # be populated, but awaiting them sequentially works, investigate why.
         statuses = await anext(generator)
-        await context.load_context()
-
         screen = TimelineScreen(statuses, generator)
         self.switch_screen(screen)
 
@@ -61,12 +54,10 @@ class TooiApp(App[None]):
     def action_goto(self):
         self.push_screen(GotoScreen())
 
-    def action_show_instance(self):
-        screen = InstanceScreen(
-            instance=context.instance.get(),
-            instance_v2=context.instance_v2.get(),
-            description=context.extended_description.get(),
-        )
+    async def action_show_instance(self):
+        # TODO: loading indicator?
+        info = await get_instance_info()
+        screen = InstanceScreen(info)
         self.push_screen(screen)
 
     def action_pop_or_quit(self):

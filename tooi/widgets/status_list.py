@@ -1,7 +1,7 @@
 from rich.text import Text
 from textual.widgets import ListItem, Static
 
-from tooi.context import context
+from tooi.context import get_context
 from tooi.entities import Status
 from tooi.messages import StatusHighlighted, StatusSelected
 from tooi.utils.datetime import format_datetime
@@ -57,7 +57,7 @@ class StatusListItem(ListItem, can_focus=True):
         self.status = status
 
     def compose(self):
-        ctx = context.get()
+        ctx = get_context()
         status = self.status.original
 
         dttm = format_datetime(status.created_at)
