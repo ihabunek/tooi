@@ -1,6 +1,7 @@
 import re
 import webbrowser
 
+from asyncio import gather
 from textual.app import App
 from textual.screen import ModalScreen
 from urllib.parse import urlparse
@@ -8,7 +9,7 @@ from urllib.parse import urlparse
 from tooi.api import statuses
 from tooi.api.timeline import home_timeline_generator, public_timeline_generator, tag_timeline_generator
 from tooi.api.timeline import StatusListGenerator
-from tooi.data.instance import get_instance_info
+from tooi.data.instance import InstanceInfo, get_instance_info
 from tooi.entities import Status, from_dict
 from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoPublicTimeline
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread
@@ -41,20 +42,24 @@ class TooiApp(App[None]):
     async def on_mount(self):
         self.push_screen("loading")
         generator = home_timeline_generator()
-        statuses = await anext(generator)
+
+        statuses, instance_info = await gather(
+            anext(generator),
+            get_instance_info(),
+        )
+
+        self.instance_info: InstanceInfo = instance_info
         screen = TimelineScreen(statuses, generator)
         self.switch_screen(screen)
 
     def action_compose(self):
-        self.push_screen(ComposeScreen())
+        self.push_screen(ComposeScreen(self.instance_info))
 
     def action_goto(self):
         self.push_screen(GotoScreen())
 
     async def action_show_instance(self):
-        # TODO: loading indicator?
-        info = await get_instance_info()
-        screen = InstanceScreen(info)
+        screen = InstanceScreen(self.instance_info)
         self.push_screen(screen)
 
     def action_pop_or_quit(self):

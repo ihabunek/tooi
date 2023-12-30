@@ -2,12 +2,12 @@ from textual.app import ComposeResult
 from textual.containers import VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Markdown, Static
-from tooi.data.instance import InstanceData
+from tooi.data.instance import InstanceInfo
 from tooi.entities import ExtendedDescription, Instance, InstanceV2
 
 
 class InstanceScreen(Screen[None]):
-    def __init__(self, data: InstanceData):
+    def __init__(self, data: InstanceInfo):
         self.instance = data.instance
         self.instance_v2 = data.instance_v2
         self.extended_description = data.extended_description

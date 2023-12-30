@@ -5,14 +5,13 @@ from tooi.api import instance
 from tooi.entities import ExtendedDescription, Instance, InstanceV2, from_response
 
 
-class InstanceData(NamedTuple):
+class InstanceInfo(NamedTuple):
     instance: Instance | None
     instance_v2: InstanceV2 | None
     extended_description: ExtendedDescription | None
 
 
-# TODO: cache instance info
-async def get_instance_info() -> InstanceData:
+async def get_instance_info() -> InstanceInfo:
     instance_resp, instance_v2_resp, description_resp = await gather(
         instance.server_information(),
         instance.server_information_v2(),
@@ -33,4 +32,4 @@ async def get_instance_info() -> InstanceData:
     if isinstance(description_resp, Response):
         extended_description = from_response(ExtendedDescription, description_resp)
 
-    return InstanceData(instance_v1, instance_v2, extended_description)
+    return InstanceInfo(instance_v1, instance_v2, extended_description)
