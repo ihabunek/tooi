@@ -1,7 +1,6 @@
 import re
 import webbrowser
 
-from httpx import AsyncClient
 from textual.app import App
 from textual.screen import ModalScreen
 from urllib.parse import urlparse
@@ -26,8 +25,6 @@ from tooi.widgets.link import Link
 
 
 class TooiApp(App[None]):
-    client: AsyncClient
-
     TITLE = "tooi"
     SUB_TITLE = "1.0.0"
     SCREENS = {"loading": LoadingScreen()}
