@@ -38,11 +38,6 @@ class StatusDetail(VerticalScroll):
     .spoiler_text {
         margin-top: 1;
     }
-    .sensitive_notice {
-        margin-top: 1;
-        color: red;
-        border: solid red;
-    }
     """
 
     BINDINGS = [
@@ -85,7 +80,7 @@ class StatusDetail(VerticalScroll):
         if status.spoiler_text:
             yield Static(status.spoiler_text, classes="spoiler_text")
 
-        yield Static("Marked as sensitive. Press S to view.", classes="sensitive_notice")
+        yield StatusSensitiveNotice()
 
     def compose_revealed(self, status: Status) -> ComposeResult:
         if status.spoiler_text:
@@ -220,3 +215,17 @@ class StatusDetailPlaceholder(Static, can_focus=True):
 
     def __init__(self):
         super().__init__("No status selected")
+
+
+class StatusSensitiveNotice(Static):
+    DEFAULT_CSS = """
+    StatusSensitiveNotice {
+        margin-top: 1;
+        padding-left: 1;
+        color: red;
+        border: round red;
+    }
+    """
+
+    def __init__(self):
+        super().__init__("Marked as sensitive. Press S to view.")
