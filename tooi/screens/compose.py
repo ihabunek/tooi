@@ -3,9 +3,10 @@ from enum import StrEnum, auto
 from typing import cast
 
 from textual.app import ComposeResult
+from textual.message import Message
 from textual.reactive import Reactive, reactive
 from textual.widgets import Static, TextArea
-from tooi.api import ResponseError, statuses
+from tooi.api import statuses
 from tooi.data.instance import InstanceInfo
 
 from tooi.screens.modal import ModalScreen
@@ -29,6 +30,9 @@ class ComposeScreen(ModalScreen[None]):
         width: 80;
         height: 22;
     }
+    #cw_text_area {
+        margin-bottom: 1;
+    }
     """
 
     def __init__(self, instance_info: InstanceInfo):
@@ -37,15 +41,16 @@ class ComposeScreen(ModalScreen[None]):
         super().__init__()
 
     def compose_modal(self) -> ComposeResult:
-        self.text_area = ComposeTextArea()
-        self.text_area.show_line_numbers = False
+        self.text_area = ComposeTextArea(id="compose_text_area")
 
         self.visibility_menu_item = MenuItem("visibility", f"Visibility: {self.visibility}")
         self.post_menu_item = MenuItem("post", "Post status")
         self.cancel_menu_item = MenuItem("cancel", "Cancel")
+        self.toggle_cw_menu_item = MenuItem("add_cw", "Add content warning")
         self.status = Static(id="compose_status")
 
         self.menu = Menu(
+            self.toggle_cw_menu_item,
             self.visibility_menu_item,
             self.post_menu_item,
             self.cancel_menu_item,
@@ -58,6 +63,13 @@ class ComposeScreen(ModalScreen[None]):
         yield self.character_count
         yield self.menu
         yield self.status
+
+    def on_compose_text_area_focus_next(self, message: "ComposeTextArea.FocusNext"):
+        self.app.action_focus_next()
+
+    def on_compose_text_area_focus_previous(self, message: "ComposeTextArea.FocusPrevious"):
+        if message.from_id != "compose_text_area":
+            self.app.action_focus_previous()
 
     def action_quit(self):
         self.app.pop_screen()
@@ -73,7 +85,11 @@ class ComposeScreen(ModalScreen[None]):
         self.set_status("Posting...", "text-muted")
 
         try:
-            await statuses.post(self.text_area.text, visibility=self.visibility)
+            await statuses.post(
+                self.text_area.text,
+                visibility=self.visibility,
+                spoiler_text=self.content_warning.text,
+            )
             self.set_status("Status posted", "text-success")
             await asyncio.sleep(0.5)
             self.dismiss()
@@ -96,10 +112,33 @@ class ComposeScreen(ModalScreen[None]):
                 self.app.push_screen(SelectVisibilityModal(), self.set_visibility)
             case "post":
                 asyncio.create_task(self.post_status())
+            case "add_cw":
+                self.add_content_warning()
+            case "remove_cw":
+                self.remove_content_warning()
             case "cancel":
                 self.dismiss()
             case _:
                 pass
+
+    def add_content_warning(self):
+        self.toggle_cw_menu_item.code = "remove_cw"
+        self.toggle_cw_menu_item.update("Remove content warning")
+
+        self.content_warning = ComposeTextArea(id="cw_text_area")
+        self.vertical.mount(
+            Static("Content warning:", id="cw_label"),
+            self.content_warning,
+            after=self.query_one("ComposeCharacterCount")
+        )
+
+    def remove_content_warning(self):
+        self.toggle_cw_menu_item.code = "add_cw"
+        self.toggle_cw_menu_item.update("Add content warning")
+        self.query_one("#cw_label").remove()
+        self.query_one("#cw_text_area").remove()
+        self.content_warning.text = ""
+
 
     def set_visibility(self, visibility: Visibility):
         self.visibility = visibility
@@ -111,20 +150,62 @@ class ComposeScreen(ModalScreen[None]):
 
 
 class ComposeTextArea(TextArea):
+    # TODO: not sure how to highlight a textarea by changing the background color
+    # currently employing borders which take up some room.
     DEFAULT_CSS = """
     ComposeTextArea {
         height: auto;
         max-height: 15;
     }
+    ComposeTextArea {
+        border: round gray;
+    }
+
+    ComposeTextArea:focus {
+        border: round white;
+    }
     """
 
+    def __init__(
+        self,
+        show_line_numbers = False,
+        id: str | None = None,
+        classes: str | None = None,
+        disabled: bool = False,
+    ):
+        super().__init__(id=id, classes=classes, disabled=disabled)
+        self.show_line_numbers = show_line_numbers
+
     def action_cursor_down(self, select: bool = False) -> None:
-        """If on last line, focus next widget. Allows moving down beyond textarea."""
+        """If on last line, focus next widget. Allows moving down below textarea."""
         target = self.get_cursor_down_location()
         if self.cursor_location == target:
-            self.app.action_focus_next()
+            self.post_message(self.FocusNext(self.id))
         else:
             super().action_cursor_down(select)
+
+    def action_cursor_up(self, select: bool = False) -> None:
+        """If on first line, focus previous widget. Allows moving up above textarea."""
+        target = self.get_cursor_up_location()
+        if self.cursor_location == target:
+            self.post_message(self.FocusPrevious(self.id))
+        else:
+            super().action_cursor_up(select)
+
+    class FocusPrevious(Message):
+        """Emitted when pressing UP when on first item"""
+
+        def __init__(self, from_id: str | None):
+            self.from_id = from_id
+            super().__init__()
+
+    class FocusNext(Message):
+        """Emitted when pressing DOWN on the last item"""
+
+        def __init__(self, from_id: str | None):
+            self.from_id = from_id
+            super().__init__()
+
 
 
 class SelectVisibilityModal(ModalScreen[Visibility]):

@@ -31,7 +31,8 @@ class ModalScreen(screen.ModalScreen[screen.ScreenResultType]):
         raise NotImplementedError()
 
     def compose(self) -> ComposeResult:
-        yield Vertical(*self.compose_modal(), classes="modal_container")
+        self.vertical = Vertical(*self.compose_modal(), classes="modal_container")
+        yield self.vertical
 
     def action_quit(self):
         self.app.pop_screen()

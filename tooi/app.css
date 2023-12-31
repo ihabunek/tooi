@@ -11,6 +11,8 @@ ListView:focus > ListItem.--highlight {
 .show { display: block; }
 .hide { display: none; }
 
+.remove { visibility: hidden; display: none; }
+
 .text-success { color: $success }
 .text-error { color: $error }
 .text-muted { color: $text-muted }
