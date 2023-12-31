@@ -1,7 +1,3 @@
-ListView {
-    height: auto;
-}
-
 ListView > ListItem {
     background: transparent;
 }
