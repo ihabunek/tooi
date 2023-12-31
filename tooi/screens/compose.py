@@ -25,9 +25,6 @@ class ComposeScreen(ModalScreen[None]):
     ComposeScreen {
         align: center middle;
     }
-    Menu {
-        margin-top: 1;
-    }
     #compose_dialog {
         width: 80;
         height: 22;
@@ -45,11 +42,13 @@ class ComposeScreen(ModalScreen[None]):
 
         self.visibility_menu_item = MenuItem("visibility", f"Visibility: {self.visibility}")
         self.post_menu_item = MenuItem("post", "Post status")
+        self.cancel_menu_item = MenuItem("cancel", "Cancel")
         self.status = Static(id="compose_status")
 
         self.menu = Menu(
             self.visibility_menu_item,
             self.post_menu_item,
+            self.cancel_menu_item,
         )
 
         self.character_count = ComposeCharacterCount(self.instance_info, self.text_area.text)
@@ -78,11 +77,8 @@ class ComposeScreen(ModalScreen[None]):
             self.set_status("Status posted", "text-success")
             await asyncio.sleep(0.5)
             self.dismiss()
-        except ResponseError as ex:
-            self.set_status(f"{ex}", "text-error")
         except Exception as ex:
             self.set_status(f"{ex}", "text-error")
-        finally:
             self.enable()
             self.menu.focus()
 
@@ -100,6 +96,8 @@ class ComposeScreen(ModalScreen[None]):
                 self.app.push_screen(SelectVisibilityModal(), self.set_visibility)
             case "post":
                 asyncio.create_task(self.post_status())
+            case "cancel":
+                self.dismiss()
             case _:
                 pass
 
