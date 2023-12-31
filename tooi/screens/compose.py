@@ -3,8 +3,10 @@ from enum import StrEnum, auto
 from typing import cast
 
 from textual.app import ComposeResult
+from textual.reactive import Reactive, reactive
 from textual.widgets import Static, TextArea
 from tooi.api import ResponseError, statuses
+from tooi.data.instance import InstanceInfo
 
 from tooi.screens.modal import ModalScreen
 from tooi.widgets.header import Header
@@ -32,8 +34,9 @@ class ComposeScreen(ModalScreen[None]):
     }
     """
 
-    def __init__(self, visibility: Visibility = Visibility.Public):
-        self.visibility = visibility
+    def __init__(self, instance_info: InstanceInfo):
+        self.instance_info = instance_info
+        self.visibility = Visibility.Public
         super().__init__()
 
     def compose_modal(self) -> ComposeResult:
@@ -49,8 +52,11 @@ class ComposeScreen(ModalScreen[None]):
             self.post_menu_item,
         )
 
+        self.character_count = ComposeCharacterCount(self.instance_info, self.text_area.text)
+
         yield Header("Compose toot")
         yield self.text_area
+        yield self.character_count
         yield self.menu
         yield self.status
 
@@ -59,6 +65,9 @@ class ComposeScreen(ModalScreen[None]):
 
     def on_menu_focus_previous(self):
         self.focus_previous()
+
+    def on_text_area_changed(self, message: TextArea.Changed):
+        self.character_count.update_chars(message.text_area.text)
 
     async def post_status(self):
         self.disable()
@@ -144,3 +153,32 @@ def visibility_label(visibilty: Visibility):
             return "Private - Visible to followers only, and to any mentioned users."
         case Visibility.Direct:
             return "Direct - Visible only to mentioned users."
+
+
+class ComposeCharacterCount(Static):
+    chars: Reactive[int] = reactive(0)
+
+    DEFAULT_CSS = """
+    ComposeCharacterCount {
+        text-align: right;
+        color: gray;
+    }
+    ComposeCharacterCount.warning {
+        color: red;
+    }
+    """
+
+    def __init__(self, instance_info: InstanceInfo, text: str):
+        self.chars = len(text)
+        self.max_chars = instance_info.status_config.max_characters
+        super().__init__()
+
+    def update_chars(self, text: str):
+        self.chars = len(text)
+        if self.chars > self.max_chars:
+            self.add_class("warning")
+        else:
+            self.remove_class("warning")
+
+    def render(self):
+        return f"{self.chars}/{self.max_chars}"

@@ -1,14 +1,27 @@
 from asyncio import gather
-from typing import NamedTuple
+from dataclasses import dataclass
 from httpx import Response
 from tooi.api import instance
-from tooi.entities import ExtendedDescription, Instance, InstanceV2, from_response
+from tooi.entities import ExtendedDescription, Instance, InstanceStatusConfguration, InstanceV2, from_response
 
 
-class InstanceInfo(NamedTuple):
+@dataclass
+class InstanceInfo():
     instance: Instance | None
     instance_v2: InstanceV2 | None
     extended_description: ExtendedDescription | None
+
+    @property
+    def status_config(self) -> InstanceStatusConfguration:
+        if self.instance_v2:
+            return self.instance_v2.configuration.statuses
+        else:
+            # Mastodon default values
+            return InstanceStatusConfguration(
+                max_characters=500,
+                max_media_attachments=4,
+                characters_reserved_per_url=23,
+            )
 
 
 async def get_instance_info() -> InstanceInfo:

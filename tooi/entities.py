@@ -305,14 +305,14 @@ class InstanceStats:
 
 
 @dataclass
-class InstanceConfigurationStatuses:
+class InstanceStatusConfguration:
     max_characters: int
     max_media_attachments: int
     characters_reserved_per_url: int
 
 
 @dataclass
-class InstanceConfigurationMediaAttachments:
+class InstanceMediaAttachmentConfiguration:
     supported_mime_types: list[str]
     image_size_limit: int
     image_matrix_limit: int
@@ -322,7 +322,7 @@ class InstanceConfigurationMediaAttachments:
 
 
 @dataclass
-class InstanceConfigurationPolls:
+class InstancePollConfiguration:
     max_options: int
     max_characters_per_option: int
     min_expiration: int
@@ -334,9 +334,9 @@ class InstanceConfiguration:
     """
     https://docs.joinmastodon.org/entities/V1_Instance/#configuration
     """
-    statuses: InstanceConfigurationStatuses
-    media_attachments: InstanceConfigurationMediaAttachments
-    polls: InstanceConfigurationPolls
+    statuses: InstanceStatusConfguration
+    media_attachments: InstanceMediaAttachmentConfiguration
+    polls: InstancePollConfiguration
 
 
 @dataclass
