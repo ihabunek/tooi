@@ -21,5 +21,6 @@ class AccountHeader(Widget):
         self.account = account
 
     def compose(self):
-        yield Static(self.account.acct, classes="account_acct")
-        yield Static(self.account.display_name, classes="account_name")
+        yield Static(f"@{self.account.acct}", classes="account_acct")
+        if self.account.display_name:
+            yield Static(self.account.display_name, classes="account_name")
