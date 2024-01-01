@@ -27,6 +27,9 @@ dependencies = [
     "textual>=0.38.1",
 ]
 
+[tool.setuptools.package-data]
+tooi = ["app.css"]
+
 [project.optional-dependencies]
 dev = [
     "build",
