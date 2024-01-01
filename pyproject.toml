@@ -27,10 +27,6 @@ dependencies = [
     "textual>=0.38.1",
 ]
 
-[tool.setuptools.packages.find]
-include = ["tooi"]
-
-
 [project.optional-dependencies]
 dev = [
     "build",
