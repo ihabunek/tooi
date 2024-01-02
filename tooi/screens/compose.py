@@ -137,8 +137,6 @@ class ComposeScreen(ModalScreen[None]):
         self.toggle_cw_menu_item.update("Add content warning")
         self.query_one("#cw_label").remove()
         self.query_one("#cw_text_area").remove()
-        self.content_warning.text = ""
-
 
     def set_visibility(self, visibility: Visibility):
         self.visibility = visibility

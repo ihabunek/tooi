@@ -27,6 +27,9 @@ dependencies = [
     "textual>=0.38.1",
 ]
 
+[tool.setuptools.packages.find]
+exclude = ["tmp"]
+
 [tool.setuptools.package-data]
 tooi = ["app.css"]
 
