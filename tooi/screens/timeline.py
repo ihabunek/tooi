@@ -59,7 +59,7 @@ class TimelineScreen(Screen[None]):
 
     def make_status_detail(self, status):
         revealed = (self.context.config.always_show_sensitive or
-                    message.status.original.id in self.revealed_ids)
+                    status.original.id in self.revealed_ids)
         return StatusDetail(status, revealed=revealed)
 
     def on_status_highlighted(self, message: StatusHighlighted):
