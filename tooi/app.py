@@ -7,8 +7,8 @@ from textual.screen import ModalScreen
 from urllib.parse import urlparse
 
 from tooi.api import statuses
-from tooi.api.timeline import home_timeline_generator, public_timeline_generator, tag_timeline_generator
-from tooi.api.timeline import StatusListGenerator
+from tooi.api.timeline import home_timeline_generator, public_timeline_generator
+from tooi.api.timeline import tag_timeline_generator, StatusListGenerator
 from tooi.data.instance import InstanceInfo, get_instance_info
 from tooi.entities import Status, from_dict
 from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoPublicTimeline

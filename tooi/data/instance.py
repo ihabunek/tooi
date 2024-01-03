@@ -2,7 +2,8 @@ from asyncio import gather
 from dataclasses import dataclass
 from httpx import Response
 from tooi.api import instance
-from tooi.entities import ExtendedDescription, Instance, InstanceStatusConfguration, InstanceV2, from_response
+from tooi.entities import ExtendedDescription, Instance, InstanceStatusConfguration, InstanceV2
+from tooi.entities import from_response
 
 
 @dataclass

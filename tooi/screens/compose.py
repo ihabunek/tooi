@@ -164,7 +164,7 @@ class ComposeTextArea(TextArea):
 
     def __init__(
         self,
-        show_line_numbers = False,
+        show_line_numbers=False,
         id: str | None = None,
         classes: str | None = None,
         disabled: bool = False,
@@ -201,7 +201,6 @@ class ComposeTextArea(TextArea):
         def __init__(self, from_id: str | None):
             self.from_id = from_id
             super().__init__()
-
 
 
 class SelectVisibilityModal(ModalScreen[Visibility]):

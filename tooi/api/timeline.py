@@ -104,7 +104,7 @@ async def _notification_timeline_generator(path: str, params: Params = None) -> 
         next_path = _get_next_path(response.headers)
 
 
-async def _conversation_timeline_generator(path: str, params: Params = None)  -> StatusListGenerator:
+async def _conversation_timeline_generator(path: str, params: Params = None) -> StatusListGenerator:
     next_path = path
     while next_path:
         response = await request("GET", next_path, params=params)
