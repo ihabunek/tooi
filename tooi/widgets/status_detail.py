@@ -86,6 +86,9 @@ class StatusDetail(VerticalScroll):
         if status.spoiler_text:
             yield Static(status.spoiler_text, classes="spoiler_text")
 
+        if status.sensitive:
+            yield StatusSensitiveOpenedNotice()
+
         yield Markdown(status.content_md, classes="status_content")
 
         if status.poll:
@@ -229,3 +232,17 @@ class StatusSensitiveNotice(Static):
 
     def __init__(self):
         super().__init__("Marked as sensitive. Press S to view.")
+
+
+class StatusSensitiveOpenedNotice(Static):
+    DEFAULT_CSS = """
+    StatusSensitiveOpenedNotice {
+        margin-top: 1;
+        padding-left: 1;
+        color: yellow;
+        border: round yellow;
+    }
+    """
+
+    def __init__(self):
+        super().__init__("Marked as sensitive.")
