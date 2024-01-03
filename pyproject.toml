@@ -27,8 +27,15 @@ dependencies = [
     "textual>=0.38.1",
 ]
 
-[tool.setuptools.packages.find]
-exclude = ["tmp"]
+[tool.setuptools]
+packages = [
+    "tooi",
+    "tooi.api",
+    "tooi.data",
+    "tooi.screens",
+    "tooi.utils",
+    "tooi.widgets",
+]
 
 [tool.setuptools.package-data]
 tooi = ["app.css"]
