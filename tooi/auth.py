@@ -2,20 +2,29 @@ from typing import Any
 import httpx
 import json
 
+from dataclasses import dataclass
 from os import path
-from tooi.context import Context
 
 
-CONFIG_PATH = path.expanduser("~/.config/toot/config.json")
+AUTH_CONTEXT_PATH = path.expanduser("~/.config/toot/config.json")
+
+
+@dataclass
+class AuthContext:
+    acct: str
+    domain: str
+    base_url: str
+    access_token: str
+    client: httpx.AsyncClient
 
 
 # TODO: uses toot config
-def get_context() -> Context:
-    config = _load_config()
-    return _parse_config(config)
+def load_auth_context() -> AuthContext:
+    actx = _read_auth_context()
+    return _parse_auth_context(actx)
 
 
-def _parse_config(config: dict[str, Any]):
+def _parse_auth_context(config: dict[str, Any]):
     active_user = config["active_user"]
     user_data = config["users"][active_user]
     instance_data = config["apps"][user_data["instance"]]
@@ -29,12 +38,12 @@ def _parse_config(config: dict[str, Any]):
         headers={"Authorization": f"Bearer {access_token}"},
     )
 
-    return Context(active_user, domain, base_url, access_token, client)
+    return AuthContext(active_user, domain, base_url, access_token, client)
 
 
-def _load_config():
-    if path.exists(CONFIG_PATH):
-        with open(CONFIG_PATH) as f:
+def _read_auth_context():
+    if path.exists(AUTH_CONTEXT_PATH):
+        with open(AUTH_CONTEXT_PATH) as f:
             return json.load(f)
 
-    raise ValueError(f"Config file not found at: {CONFIG_PATH}")
+    raise ValueError(f"Authentication config file not found at: {AUTH_CONTEXT_PATH}")

@@ -14,7 +14,7 @@ async def request(method: str, url: str, **kwargs: Unpack[RequestParams]) -> Res
     start = time.time()
     logger.info(f"--> {method} {url}")
 
-    response = await ctx.client.request(method, url, **kwargs)
+    response = await ctx.auth.client.request(method, url, **kwargs)
     duration_ms = int(1000 * (time.time() - start))
 
     if response.is_success:

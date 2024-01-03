@@ -62,7 +62,7 @@ class StatusListItem(ListItem, can_focus=True):
 
         dttm = format_datetime(status.created_at)
         acct = status.account.acct
-        acct = acct if "@" in acct else f"{acct}@{ctx.domain}"
+        acct = acct if "@" in acct else f"{acct}@{ctx.auth.domain}"
 
         # TODO: this does not allow for CSS customization, look into alternatives
         # see: https://github.com/Textualize/textual/discussions/1183
