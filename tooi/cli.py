@@ -7,8 +7,14 @@ from tooi.app import TooiApp
 
 
 @click.command()
-def tooi():
+@click.option(
+    "-S", "--always-show-sensitive",
+    is_flag=True,
+    help="Expand toots with content warnings automatically"
+)
+def tooi(always_show_sensitive: bool):
     ctx = create_context()
+    ctx.config.always_show_sensitive = always_show_sensitive
     set_context(ctx)
 
     app = TooiApp()

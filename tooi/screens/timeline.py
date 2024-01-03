@@ -6,6 +6,7 @@ from textual.screen import Screen
 from textual.widgets import Footer
 
 from tooi.api.timeline import StatusListGenerator
+from ..context import get_context
 from tooi.entities import Status
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread
 from tooi.messages import StatusHighlighted, StatusSelected
@@ -35,6 +36,7 @@ class TimelineScreen(Screen[None]):
         initial_index: int = 0
     ):
         super().__init__()
+        self.context = get_context()
         self.generator = generator
         self.title = title
         self.fetching = False
@@ -42,7 +44,7 @@ class TimelineScreen(Screen[None]):
 
         status = statuses[initial_index] if initial_index < len(statuses) else None
         self.status_list = StatusList(statuses, initial_index=initial_index)
-        self.status_detail = StatusDetail(status) if status else StatusDetailPlaceholder()
+        self.status_detail = self.make_status_detail(status) if status else StatusDetailPlaceholder()
         self.status_bar = StatusBar()
 
     def compose(self):
@@ -55,14 +57,18 @@ class TimelineScreen(Screen[None]):
         yield Footer()
         yield self.status_bar
 
+    def make_status_detail(self, status):
+        revealed = (self.context.config.always_show_sensitive or
+                    message.status.original.id in self.revealed_ids)
+        return StatusDetail(status, revealed=revealed)
+
     def on_status_highlighted(self, message: StatusHighlighted):
         # TODO: This is slow, try updating the existing StatusDetail instead of
         # creating a new one. This requires some fiddling since compose() is
         # called only once, so updating needs to be implemented manually.
         # See: https://github.com/Textualize/textual/discussions/1683
         self.status_detail.remove()
-        revealed = message.status.original.id in self.revealed_ids
-        self.status_detail = StatusDetail(message.status, revealed=revealed)
+        self.status_detail = self.make_status_detail(message.status)
         self.query_one("Horizontal").mount(self.status_detail)
         asyncio.create_task(self.maybe_fetch_next_batch())
 

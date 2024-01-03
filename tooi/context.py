@@ -11,7 +11,7 @@ _local = local()
 
 @dataclass
 class Configuration:
-    pass
+    always_show_sensitive: bool = False
 
 
 @dataclass
