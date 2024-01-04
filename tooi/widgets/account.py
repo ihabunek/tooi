@@ -1,5 +1,7 @@
 from textual.widget import Widget
 from textual.widgets import Static
+
+from tooi.context import get_context
 from tooi.entities import Account
 
 
@@ -21,6 +23,11 @@ class AccountHeader(Widget):
         self.account = account
 
     def compose(self):
-        yield Static(f"@{self.account.acct}", classes="account_acct")
+        ctx = get_context()
+
+        acct = self.account.acct
+        acct = acct if "@" in acct else f"{acct}@{ctx.auth.domain}"
+
+        yield Static(f"@{acct}", classes="account_acct")
         if self.account.display_name:
             yield Static(self.account.display_name, classes="account_name")
