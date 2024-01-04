@@ -1,5 +1,6 @@
 from rich.text import Text
-from textual.widgets import ListItem, Static
+from textual.widgets import ListItem, Static, Label
+from textual.containers import Horizontal
 
 from tooi.context import get_context
 from tooi.entities import Status
@@ -52,21 +53,44 @@ class StatusList(ListView):
 class StatusListItem(ListItem, can_focus=True):
     status: Status
 
+    DEFAULT_CSS = """
+    StatusListItem {
+        layout: horizontal;
+        width: auto;
+    }
+
+    Label {
+        width: 1fr;
+    }
+
+    .status_list_acct {
+        color: green;
+        width: auto;
+        padding-left: 1;
+    }
+
+    .status_list_flags {
+        padding-left: 1;
+    }
+    """
+
     def __init__(self, status: Status):
         super().__init__(classes="status_list_item")
         self.status = status
 
     def compose(self):
         ctx = get_context()
-        status = self.status.original
+        status = self.status
+        original = status.original
 
-        dttm = format_datetime(status.created_at)
-        acct = status.account.acct
+        flags = " "
+        if status.reblog:
+            flags = "R"
+
+        timestamp = format_datetime(status.created_at)
+        acct = original.account.acct
         acct = acct if "@" in acct else f"{acct}@{ctx.auth.domain}"
 
-        # TODO: this does not allow for CSS customization, look into alternatives
-        # see: https://github.com/Textualize/textual/discussions/1183
-        text = Text.from_markup(f"{dttm}  [green]{acct}[/]", overflow="ellipsis")
-        text.no_wrap = True
-
-        yield Static(text)
+        yield Label(timestamp, classes="status_list_timestamp")
+        yield Label(flags, classes="status_list_flags")
+        yield Label(acct, classes="status_list_acct")

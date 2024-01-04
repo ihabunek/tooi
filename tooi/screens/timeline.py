@@ -53,6 +53,7 @@ class TimelineScreen(Screen[None]):
             self.status_list,
             VerticalDivider(),
             self.status_detail,
+            id="main_window"
         )
         yield Footer()
         yield self.status_bar
@@ -69,7 +70,7 @@ class TimelineScreen(Screen[None]):
         # See: https://github.com/Textualize/textual/discussions/1683
         self.status_detail.remove()
         self.status_detail = self.make_status_detail(message.status)
-        self.query_one("Horizontal").mount(self.status_detail)
+        self.query_one("#main_window").mount(self.status_detail)
         asyncio.create_task(self.maybe_fetch_next_batch())
 
     def on_status_selected(self, message: StatusSelected):
