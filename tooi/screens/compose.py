@@ -153,12 +153,10 @@ class ComposeTextArea(TextArea):
     DEFAULT_CSS = """
     ComposeTextArea {
         height: auto;
+        min-height: 4;
         max-height: 15;
-    }
-    ComposeTextArea {
         border: round gray;
     }
-
     ComposeTextArea:focus {
         border: round white;
     }
