@@ -87,7 +87,7 @@ class TooiApp(App[None]):
 
     async def on_show_thread(self, message: ShowThread):
         # TODO: add footer message while loading statuses
-        response = await statuses.context(message.status.id)
+        response = await statuses.context(message.status.original.id)
         data = response.json()
         ancestors = [from_dict(Status, s) for s in data["ancestors"]]
         descendants = [from_dict(Status, s) for s in data["descendants"]]
