@@ -28,3 +28,10 @@ async def extended_description() -> Response:
     https://docs.joinmastodon.org/methods/instance/#extended_description
     """
     return await request("GET", "/api/v1/instance/extended_description")
+
+async def user_preferences() -> Response:
+    """
+    Fetch the user's server-side preferences for this instance.
+    https://docs.joinmastodon.org/methods/preferences/
+    """
+    return await request("GET", "/api/v1/preferences")

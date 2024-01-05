@@ -11,6 +11,7 @@ class InstanceInfo():
     instance: Instance | None
     instance_v2: InstanceV2 | None
     extended_description: ExtendedDescription | None
+    user_preferences: dict | None
 
     @property
     def status_config(self) -> InstanceStatusConfguration:
@@ -26,16 +27,19 @@ class InstanceInfo():
 
 
 async def get_instance_info() -> InstanceInfo:
-    instance_resp, instance_v2_resp, description_resp = await gather(
-        instance.server_information(),
-        instance.server_information_v2(),
-        instance.extended_description(),
-        return_exceptions=True
-    )
+    instance_resp, instance_v2_resp, description_resp, user_preferences_resp = (
+        await gather(
+            instance.server_information(),
+            instance.server_information_v2(),
+            instance.extended_description(),
+            instance.user_preferences(),
+            return_exceptions=True
+        ))
 
     instance_v1 = None
     instance_v2 = None
     extended_description = None
+    user_preferences = {}
 
     if isinstance(instance_resp, Response):
         instance_v1 = from_response(Instance, instance_resp)
@@ -46,4 +50,8 @@ async def get_instance_info() -> InstanceInfo:
     if isinstance(description_resp, Response):
         extended_description = from_response(ExtendedDescription, description_resp)
 
-    return InstanceInfo(instance_v1, instance_v2, extended_description)
+    if isinstance(user_preferences_resp, Response):
+        user_preferences = user_preferences_resp.json()
+
+    return InstanceInfo(instance_v1, instance_v2, extended_description,
+                        user_preferences)
