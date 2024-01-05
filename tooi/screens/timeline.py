@@ -34,7 +34,8 @@ class TimelineScreen(Screen[None]):
         generator: StatusListGenerator | None = None,
         *,
         title: str = "timeline",
-        initial_index: int = 0
+        initial_index: int = 0,
+        always_show_sensitive: bool = False,
     ):
         super().__init__()
         self.context = get_context()
@@ -42,6 +43,7 @@ class TimelineScreen(Screen[None]):
         self.title = title
         self.fetching = False
         self.revealed_ids: set[str] = set()
+        self.always_show_sensitive = always_show_sensitive
 
         status = statuses[initial_index] if initial_index < len(statuses) else None
         self.status_list = StatusList(statuses, initial_index=initial_index)
@@ -60,7 +62,7 @@ class TimelineScreen(Screen[None]):
         yield self.status_bar
 
     def make_status_detail(self, status):
-        revealed = (self.context.config.always_show_sensitive or
+        revealed = (self.always_show_sensitive or
                     status.original.id in self.revealed_ids)
         return StatusDetail(status, revealed=revealed)
 

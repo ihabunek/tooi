@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 from tooi.api import statuses
 from tooi.api.timeline import home_timeline_generator, public_timeline_generator
 from tooi.api.timeline import tag_timeline_generator, StatusListGenerator
+from tooi.context import get_context
 from tooi.data.instance import InstanceInfo, get_instance_info
 from tooi.entities import Status, from_dict
 from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoPublicTimeline
@@ -42,6 +43,7 @@ class TooiApp(App[None]):
 
     async def on_mount(self):
         self.push_screen("loading")
+        self.context = get_context()
         generator = home_timeline_generator()
 
         statuses, instance_info = await gather(
@@ -49,8 +51,16 @@ class TooiApp(App[None]):
             get_instance_info(),
         )
 
+        if self.context.config.always_show_sensitive is not None:
+            self.always_show_sensitive = self.context.config.always_show_sensitive
+        else:
+            self.always_show_sensitive = (
+                    instance_info.user_preferences.get('reading:expand:spoilers',
+                                                       False))
+
         self.instance_info: InstanceInfo = instance_info
-        screen = TimelineScreen(statuses, generator)
+        screen = TimelineScreen(statuses, generator,
+                                always_show_sensitive=self.always_show_sensitive)
         self.switch_screen(screen)
 
     def action_compose(self):
@@ -97,7 +107,10 @@ class TooiApp(App[None]):
         descendants = [from_dict(Status, s) for s in data["descendants"]]
         all_statuses = ancestors + [message.status] + descendants
         initial_index = len(ancestors)
-        screen = TimelineScreen(all_statuses, title="thread", initial_index=initial_index)
+        screen = TimelineScreen(all_statuses,
+                                title="thread",
+                                initial_index=initial_index,
+                                always_show_sensitive=self.always_show_sensitive)
         self.push_screen(screen)
 
     async def on_goto_home_timeline(self, message: GotoHomeTimeline):
@@ -115,13 +128,15 @@ class TooiApp(App[None]):
 
     async def _switch_timeline(self, generator: StatusListGenerator):
         statuses = await anext(generator)
-        screen = TimelineScreen(statuses, generator)
+        screen = TimelineScreen(statuses, generator,
+                                always_show_sensitive=self.always_show_sensitive)
         # TODO: clear stack? how?
         self.switch_screen(screen)
 
     async def _push_timeline(self, generator: StatusListGenerator):
         statuses = await anext(generator)
-        screen = TimelineScreen(statuses, generator)
+        screen = TimelineScreen(statuses, generator,
+                                always_show_sensitive=self.always_show_sensitive)
         # TODO: clear stack? how?
         self.push_screen(screen)
 
