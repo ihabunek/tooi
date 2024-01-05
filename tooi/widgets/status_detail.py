@@ -7,6 +7,7 @@ from textual.widgets import Static
 from tooi.entities import MediaAttachment, Status
 from tooi.utils.datetime import format_datetime
 from tooi.widgets.account import AccountHeader
+from tooi.widgets.image import HalfblockImage
 from tooi.widgets.link import Link
 from tooi.widgets.markdown import Markdown
 from tooi.widgets.poll import Poll
@@ -177,6 +178,8 @@ class StatusMediaAttachment(Widget):
         if self.attachment.description:
             yield Static(self.attachment.description)
         yield Link(self.attachment.url)
+        if self.attachment.type == "image":
+            yield HalfblockImage(self.attachment)
 
 
 class StatusMeta(Static):
