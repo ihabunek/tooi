@@ -2,7 +2,7 @@
 Statuses API
 https://docs.joinmastodon.org/methods/statuses/
 """
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from httpx import Response
 from uuid import uuid4
 from tooi.api import request
@@ -22,6 +22,7 @@ async def post(
     visibility: Visibility = Visibility.Public,
     sensitive: bool = False,
     spoiler_text: str | None = None,
+    in_reply_to: Optional[str] = None,
 ) -> Response:
     # Idempotency key assures the same status is not posted multiple times
     # if the request is retried.
@@ -32,6 +33,7 @@ async def post(
         "visibility": visibility,
         "sensitive": sensitive,
         "spoiler_text": spoiler_text,
+        "in_reply_to_id": in_reply_to,
     })
 
     return await request("POST", "/api/v1/statuses", headers=headers, json=payload)

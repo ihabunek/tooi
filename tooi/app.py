@@ -13,6 +13,7 @@ from tooi.data.instance import InstanceInfo, get_instance_info
 from tooi.entities import Status, from_dict
 from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoPublicTimeline
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread
+from tooi.messages import StatusReply
 from tooi.screens.account import AccountScreen
 from tooi.screens.compose import ComposeScreen
 from tooi.screens.goto import GotoScreen
@@ -84,6 +85,9 @@ class TooiApp(App[None]):
 
     def on_show_status_menu(self, message: ShowStatusMenu):
         self.push_screen(StatusMenuScreen(message.status))
+
+    def on_status_reply(self, message: StatusReply):
+        self.push_screen(ComposeScreen(self.instance_info, message.status))
 
     async def on_show_thread(self, message: ShowThread):
         # TODO: add footer message while loading statuses

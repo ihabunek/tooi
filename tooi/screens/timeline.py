@@ -9,7 +9,7 @@ from tooi.api.timeline import StatusListGenerator
 from ..context import get_context
 from tooi.entities import Status
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread
-from tooi.messages import StatusHighlighted, StatusSelected
+from tooi.messages import StatusHighlighted, StatusSelected, StatusReply
 from tooi.widgets.divider import VerticalDivider
 from tooi.widgets.header import Header
 from tooi.widgets.status_bar import StatusBar
@@ -22,6 +22,7 @@ class TimelineScreen(Screen[None]):
         Binding("a", "show_account", "Account"),
         Binding("u", "show_source", "Source"),
         Binding("t", "show_thread", "Thread"),
+        Binding("r", "status_reply", "Reply"),
         Binding("left,h", "scroll_left", "Scroll Left", show=False),
         Binding("right,l", "scroll_right", "Scroll Right", show=False),
         Binding("s", "show_sensitive", "Show Sensitive", show=False),
@@ -92,6 +93,10 @@ class TimelineScreen(Screen[None]):
     def action_show_thread(self):
         if status := self.status_list.current:
             self.post_message(ShowThread(status))
+
+    def action_status_reply(self):
+        if status := self.status_list.current:
+            self.post_message(StatusReply(status))
 
     def action_scroll_left(self):
         self.query_one("StatusList").focus()

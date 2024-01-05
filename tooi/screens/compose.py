@@ -1,6 +1,6 @@
 import asyncio
 from enum import StrEnum, auto
-from typing import cast
+from typing import Optional, cast
 
 from textual.app import ComposeResult
 from textual.message import Message
@@ -12,6 +12,7 @@ from tooi.data.instance import InstanceInfo
 from tooi.screens.modal import ModalScreen
 from tooi.widgets.header import Header
 from tooi.widgets.menu import Menu, MenuItem
+from tooi.entities import Status
 
 
 class Visibility(StrEnum):
@@ -35,13 +36,30 @@ class ComposeScreen(ModalScreen[None]):
     }
     """
 
-    def __init__(self, instance_info: InstanceInfo):
+    def __init__(self,
+                 instance_info: InstanceInfo,
+                 in_reply_to: Optional[Status] = None):
         self.instance_info = instance_info
-        self.visibility = Visibility.Public
+        self.in_reply_to = in_reply_to
+        self.content_warning = None
+
+        if in_reply_to:
+            self.visibility = in_reply_to.original.visibility
+        else:
+            self.visibility = Visibility.Public
+
         super().__init__()
 
     def compose_modal(self) -> ComposeResult:
-        self.text_area = ComposeTextArea(id="compose_text_area")
+        if self.in_reply_to:
+            initial_text = f"@{self.in_reply_to.original.account.acct} "
+        else:
+            initial_text = None
+
+        self.text_area = ComposeTextArea(id="compose_text_area",
+                                         initial_text=initial_text)
+        if initial_text:
+            self.text_area.cursor_location = (0, len(initial_text))
 
         self.visibility_menu_item = MenuItem("visibility", f"Visibility: {self.visibility}")
         self.post_menu_item = MenuItem("post", "Post status")
@@ -88,7 +106,10 @@ class ComposeScreen(ModalScreen[None]):
             await statuses.post(
                 self.text_area.text,
                 visibility=self.visibility,
-                spoiler_text=self.content_warning.text,
+                spoiler_text=(self.content_warning.text if self.content_warning
+                              else None),
+                in_reply_to=(self.in_reply_to.original.id if self.in_reply_to
+                             else None)
             )
             self.set_status("Status posted", "text-success")
             await asyncio.sleep(0.5)
@@ -164,12 +185,13 @@ class ComposeTextArea(TextArea):
 
     def __init__(
         self,
+        initial_text=None,
         show_line_numbers=False,
         id: str | None = None,
         classes: str | None = None,
         disabled: bool = False,
     ):
-        super().__init__(id=id, classes=classes, disabled=disabled)
+        super().__init__(text = (initial_text or ""), id=id, classes=classes, disabled=disabled)
         self.show_line_numbers = show_line_numbers
 
     def action_cursor_down(self, select: bool = False) -> None:
@@ -243,9 +265,9 @@ class ComposeCharacterCount(Static):
     """
 
     def __init__(self, instance_info: InstanceInfo, text: str):
+        super().__init__()
         self.chars = len(text)
         self.max_chars = instance_info.status_config.max_characters
-        super().__init__()
 
     def update_chars(self, text: str):
         self.chars = len(text)

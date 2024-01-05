@@ -54,3 +54,6 @@ class ShowThread(StatusMessage):
 
 class ShowStatusMenu(StatusMessage):
     pass
+
+class StatusReply(StatusMessage):
+    pass
