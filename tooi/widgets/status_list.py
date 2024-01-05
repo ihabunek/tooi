@@ -61,6 +61,11 @@ class StatusListItem(ListItem, can_focus=True):
 
     Label {
         width: 1fr;
+        align: left middle;
+    }
+
+    .status_list_timestamp {
+        width: auto;
     }
 
     .status_list_acct {
@@ -70,6 +75,7 @@ class StatusListItem(ListItem, can_focus=True):
     }
 
     .status_list_flags {
+        width: 2;
         padding-left: 1;
     }
     """
