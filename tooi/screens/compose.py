@@ -46,7 +46,8 @@ class ComposeScreen(ModalScreen[None]):
         if in_reply_to:
             self.visibility = in_reply_to.original.visibility
         else:
-            self.visibility = Visibility.Public
+            self.visibility = instance_info.user_preferences.get(
+                    'posting:default:visibility', Visibility.Public)
 
         super().__init__()
 
