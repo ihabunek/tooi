@@ -1,11 +1,10 @@
 import sys
 import os
 
-from typing import Optional, Type, TypeVar
 from functools import lru_cache
 from os.path import exists, join, expanduser
-
 from tomlkit import parse
+from typing import Any, Optional, Type, TypeVar
 
 
 DISABLE_SETTINGS = False
@@ -34,7 +33,7 @@ def get_settings_path():
     return join(get_config_dir(), TOOI_SETTINGS_FILE_NAME)
 
 
-def _load_settings() -> dict:
+def _load_settings() -> dict[str, Any]:
     # Used for testing without config file
     if DISABLE_SETTINGS:
         return {}
@@ -73,7 +72,7 @@ def get_setting(key: str, type: Type[T], default: Optional[T] = None) -> Optiona
     return _get_setting(settings, key.split("."), type, default)
 
 
-def _get_setting(dct, keys, type: Type, default=None):
+def _get_setting(dct: Any, keys: list[str], type: Type[T], default: T | None = None) -> T | None:
     if len(keys) == 0:
         if isinstance(dct, type):
             return dct
