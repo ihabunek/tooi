@@ -70,8 +70,6 @@ def get_setting(key: str, type: Type[T], default: Optional[T] = None) -> Optiona
     inside the `[commands.post]` section.
     """
     settings = get_settings()
-    print(key)
-    sys.exit(1)
     return _get_setting(settings, key.split("."), type, default)
 
 
