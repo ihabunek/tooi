@@ -30,7 +30,11 @@ class GotoHomeTimeline(Message):
     pass
 
 
-class GotoPublicTimeline(Message):
+class GotoLocalTimeline(Message):
+    pass
+
+
+class GotoFederatedTimeline(Message):
     pass
 
 

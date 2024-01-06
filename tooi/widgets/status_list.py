@@ -30,6 +30,12 @@ class StatusList(ListView):
         self.current = None
         self.update(statuses, initial_status_id)
 
+    def replace(self, next_statuses: list[Status], focus_status: Optional[str]):
+        self.statuses = []
+        self.clear()
+        self.current = None
+        self.update(next_statuses, focus_status)
+
     def update(self,
                next_statuses: list[Status],
                focus_status: Optional[str]):

@@ -5,7 +5,7 @@ from textual.containers import Horizontal
 from textual.screen import Screen
 from textual.widgets import Footer
 
-from tooi.api.timeline import StatusListGenerator
+from tooi.api.timeline import Timeline, StatusListGenerator
 from ..context import get_context
 from tooi.entities import Status
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread
@@ -30,7 +30,7 @@ class TimelineScreen(Screen[None]):
 
     def __init__(
         self,
-        generator: StatusListGenerator,
+        timeline: Timeline,
         *,
         title: str = "timeline",
         initial_status_id: str = None,
@@ -38,7 +38,8 @@ class TimelineScreen(Screen[None]):
     ):
         super().__init__()
         self.context = get_context()
-        self.generator = generator
+        self.timeline = timeline
+        self.generator = None
         self.title = title
         self.fetching = False
         self.revealed_ids: set[str] = set()
@@ -51,9 +52,7 @@ class TimelineScreen(Screen[None]):
         self.status_bar = StatusBar()
 
     async def on_mount(self, message):
-        statuses = await anext(self.generator)
-        self.status_list.update(statuses, self.initial_status_id)
-        self.query_one("#main_window").mount(self.status_detail)
+        await self.refresh_timeline()
 
     def compose(self):
         yield Header(f"tooi | {self.title}")
@@ -70,6 +69,12 @@ class TimelineScreen(Screen[None]):
         revealed = (self.always_show_sensitive or
                     status.original.id in self.revealed_ids)
         return StatusDetail(status, revealed=revealed)
+
+    async def refresh_timeline(self):
+        self.generator = self.timeline.create_generator()
+        statuses = await anext(self.generator)
+        self.status_list.replace(statuses, self.initial_status_id)
+        self.query_one("#main_window").mount(self.status_detail)
 
     def on_status_highlighted(self, message: StatusHighlighted):
         # TODO: This is slow, try updating the existing StatusDetail instead of

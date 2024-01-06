@@ -2,8 +2,8 @@ from textual.app import ComposeResult, log
 from textual.binding import Binding
 from textual.widgets import Input, ListItem, Static
 
-from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoPublicTimeline
-from tooi.messages import ShowHashtagPicker
+from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoLocalTimeline
+from tooi.messages import GotoFederatedTimeline, ShowHashtagPicker
 from tooi.screens.modal import ModalScreen
 from tooi.widgets.list_view import ListView
 
@@ -18,7 +18,8 @@ class GotoScreen(ModalScreen[None]):
     def compose_modal(self) -> ComposeResult:
         self.list_view = ListView(
             ListItem(Static("< Home timeline >"), id="goto_home"),
-            ListItem(Static("< Public timeline >"), id="goto_public"),
+            ListItem(Static("< Local timeline >"), id="goto_local"),
+            ListItem(Static("< Federated timeline >"), id="goto_federated"),
             ListItem(Static("< Hashtag timeline >"), id="goto_hashtag"),
         )
         self.status = Static("")
@@ -36,8 +37,10 @@ class GotoScreen(ModalScreen[None]):
         match message.item.id:
             case "goto_home":
                 self.dismiss(GotoHomeTimeline())
-            case "goto_public":
-                self.dismiss(GotoPublicTimeline())
+            case "goto_local":
+                self.dismiss(GotoLocalTimeline())
+            case "goto_federated":
+                self.dismiss(GotoFederatedTimeline())
             case "goto_hashtag":
                 self.dismiss(ShowHashtagPicker())
             case _:

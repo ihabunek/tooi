@@ -5,6 +5,7 @@ https://docs.joinmastodon.org/methods/timelines/
 import re
 
 from typing import AsyncGenerator, List, Optional
+from abc import ABC, abstractmethod
 from urllib.parse import quote, urlparse
 
 from httpx import Headers
@@ -27,6 +28,64 @@ StatusListGenerator = AsyncGenerator[List[Status], None]
 #     path = f"/api/v1/timelines/tag/{quote(hashtag)}"
 #     params = {"local": str_bool(local), "limit": limit}
 #     return _anon_timeline_generator(instance, path, params)
+
+
+class Timeline(ABC):
+    """
+    Base class for a timeline.
+    """
+    @abstractmethod
+    def create_generator(self, limit: int = 40):
+        ...
+
+class HomeTimeline(Timeline):
+    def init(self):
+        super().__init__()
+
+    def create_generator(self, limit: int = 40):
+        return home_timeline_generator(limit)
+
+
+class LocalTimeline(Timeline):
+    def init(self):
+        super().__init__()
+
+    def create_generator(self, limit: int = 40):
+        return public_timeline_generator(local=True, limit=limit)
+
+
+class FederatedTimeline(Timeline):
+    def init(self):
+        super().__init__()
+
+    def create_generator(self, limit: int = 40):
+        return public_timeline_generator(local=False, limit=limit)
+
+
+class TagTimeline(Timeline):
+    def __init__(self, hashtag: str, local: bool = False):
+        super().__init__()
+        self._local = local
+        self._hashtag = hashtag
+
+    @property
+    def hashtag(self) -> str:
+        return self._hashtag
+
+    @property
+    def local(self) -> bool:
+        return self._local
+
+    def create_generator(self, limit: int = 40):
+        return tag_timeline_generator(self.hashtag, self.local, limit)
+
+
+class ContextTimeline(Timeline):
+    def __init__(self, status: Status):
+        self._status = status
+
+    def create_generator(self, limit: int = 40):
+        return context_timeline_generator(self._status, limit)
 
 
 def home_timeline_generator(limit: int = 40):
