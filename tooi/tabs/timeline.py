@@ -7,6 +7,7 @@ from textual.widgets import TabPane
 from tooi.api.timeline import Timeline
 from tooi.context import get_context
 from tooi.data.instance import InstanceInfo
+from tooi.entities import Status
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread
 from tooi.messages import StatusHighlighted, StatusSelected, StatusReply
 from tooi.widgets.status_bar import StatusBar
@@ -72,7 +73,7 @@ class TimelineTab(TabPane):
         )
         yield self.status_bar
 
-    def make_status_detail(self, status):
+    def make_status_detail(self, status: Status):
         revealed = (self.always_show_sensitive or
                     status.original.id in self.revealed_ids)
         return StatusDetail(status, revealed=revealed)

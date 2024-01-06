@@ -3,7 +3,7 @@ from textual.binding import Binding
 from textual.screen import Screen
 from textual.widgets import TabPane, TabbedContent, Footer
 
-from tooi.api.timeline import HomeTimeline
+from tooi.api.timeline import HomeTimeline, Timeline
 from tooi.data.instance import InstanceInfo
 from tooi.tabs.timeline import TimelineTab
 from tooi.widgets.header import Header
@@ -46,7 +46,7 @@ class MainScreen(Screen[None]):
             yield TimelineTab(self.instance_info, HomeTimeline())
         yield Footer()
 
-    async def open_timeline_tab(self, timeline, initial_focus: str | None = None):
+    async def open_timeline_tab(self, timeline: Timeline, initial_focus: str | None = None):
         tab = TimelineTab(self.instance_info, timeline, initial_focus=initial_focus)
         tc = self.query_one(TabbedContent)
         await tc.add_pane(tab)

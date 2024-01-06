@@ -39,7 +39,7 @@ class Timeline(ABC):
         ...
 
     @abstractproperty
-    def name(self):
+    def name(self) -> str:
         ...
 
 
