@@ -1,15 +1,15 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "toot-tooi"
-version = "0.1.0"
 authors = [{ name="Ivan Habunek", email="ivan@habunek.com" }]
 description = "Mastodon terminal user interface"
 readme = "README.md"
 license = { file="LICENSE" }
 requires-python = ">=3.8"
+dynamic = ["version"]
 
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -37,6 +37,8 @@ packages = [
     "tooi.utils",
     "tooi.widgets",
 ]
+
+[tool.setuptools_scm]
 
 [tool.setuptools.package-data]
 tooi = ["app.css"]
