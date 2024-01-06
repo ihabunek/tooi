@@ -29,6 +29,7 @@ async def extended_description() -> Response:
     """
     return await request("GET", "/api/v1/instance/extended_description")
 
+
 async def user_preferences() -> Response:
     """
     Fetch the user's server-side preferences for this instance.

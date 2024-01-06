@@ -38,6 +38,7 @@ class Timeline(ABC):
     def create_generator(self, limit: int = 40) -> StatusListGenerator:
         ...
 
+
 class HomeTimeline(Timeline):
     def init(self):
         super().__init__()
