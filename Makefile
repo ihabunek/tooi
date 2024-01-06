@@ -9,3 +9,6 @@ publish :
 
 clean:
 	rm -rf build dist
+
+lint:
+	flake8

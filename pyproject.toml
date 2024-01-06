@@ -43,6 +43,7 @@ tooi = ["app.css"]
 [project.optional-dependencies]
 dev = [
     "build",
+    "flake8",
     "mypy",
     "pyright",
     "textual-dev",
