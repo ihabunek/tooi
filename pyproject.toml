@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tooi"
-version = "0.0.1"
+name = "toot-tooi"
+version = "0.1.0"
 authors = [{ name="Ivan Habunek", email="ivan@habunek.com" }]
 description = "Mastodon terminal user interface"
 readme = "README.md"
