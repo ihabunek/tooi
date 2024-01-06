@@ -34,6 +34,10 @@ class GotoPublicTimeline(Message):
     pass
 
 
+class ShowHashtagPicker(Message):
+    pass
+
+
 class GotoHashtagTimeline(Message):
     def __init__(self, hashtag: str) -> None:
         super().__init__()

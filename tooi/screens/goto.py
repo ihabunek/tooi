@@ -3,6 +3,7 @@ from textual.binding import Binding
 from textual.widgets import Input, ListItem, Static
 
 from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoPublicTimeline
+from tooi.messages import ShowHashtagPicker
 from tooi.screens.modal import ModalScreen
 from tooi.widgets.list_view import ListView
 
@@ -26,27 +27,22 @@ class GotoScreen(ModalScreen[None]):
         yield self.list_view
         yield self.status
 
-    def set_loading(self):
-        self.list_view.disabled = True
-        self.status.update("[green]Loading...[/]")
-
     def on_list_view_selected(self, message: ListView.Selected):
         message.stop()
 
         if not message.item:
-            return
+            self.dismiss(None)
 
         match message.item.id:
             case "goto_home":
-                self.set_loading()
-                self.post_message(GotoHomeTimeline())
+                self.dismiss(GotoHomeTimeline())
             case "goto_public":
-                self.set_loading()
-                self.post_message(GotoPublicTimeline())
+                self.dismiss(GotoPublicTimeline())
             case "goto_hashtag":
-                self.app.switch_screen(GotoHashtagScreen())
+                self.dismiss(ShowHashtagPicker())
             case _:
                 log.error("Unknown selection")
+                self.dismiss(None)
 
 
 class GotoHashtagScreen(ModalScreen[None]):
@@ -72,6 +68,6 @@ class GotoHashtagScreen(ModalScreen[None]):
         if value:
             self.input.disabled = True
             self.status.update(" [green]Looking up hashtag...[/]")
-            self.post_message(GotoHashtagTimeline(value))
+            self.dismiss(value)
         else:
             self.status.update(" [red]Enter a hash tag value.[/]")

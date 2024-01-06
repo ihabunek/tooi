@@ -9,15 +9,16 @@ from urllib.parse import urlparse
 from tooi.api import statuses
 from tooi.api.timeline import home_timeline_generator, public_timeline_generator
 from tooi.api.timeline import tag_timeline_generator, StatusListGenerator
+from tooi.api.timeline import context_timeline_generator
 from tooi.context import get_context
 from tooi.data.instance import InstanceInfo, get_instance_info
 from tooi.entities import Status, from_dict
 from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoPublicTimeline
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread
-from tooi.messages import StatusReply
+from tooi.messages import ShowHashtagPicker, StatusReply
 from tooi.screens.account import AccountScreen
 from tooi.screens.compose import ComposeScreen
-from tooi.screens.goto import GotoScreen
+from tooi.screens.goto import GotoScreen, GotoHashtagScreen
 from tooi.screens.help import HelpScreen
 from tooi.screens.instance import InstanceScreen
 from tooi.screens.loading import LoadingScreen
@@ -46,10 +47,7 @@ class TooiApp(App[None]):
         self.context = get_context()
         generator = home_timeline_generator()
 
-        statuses, instance_info = await gather(
-            anext(generator),
-            get_instance_info(),
-        )
+        instance_info = await get_instance_info()
 
         if self.context.config.always_show_sensitive is not None:
             self.always_show_sensitive = self.context.config.always_show_sensitive
@@ -59,7 +57,7 @@ class TooiApp(App[None]):
                                                        False))
 
         self.instance_info: InstanceInfo = instance_info
-        screen = TimelineScreen(statuses, generator,
+        screen = TimelineScreen(generator,
                                 always_show_sensitive=self.always_show_sensitive)
         self.switch_screen(screen)
 
@@ -67,7 +65,11 @@ class TooiApp(App[None]):
         self.push_screen(ComposeScreen(self.instance_info))
 
     def action_goto(self):
-        self.push_screen(GotoScreen())
+        def _goto_done(action):
+            if action is not None:
+                self.post_message(action)
+
+        self.push_screen(GotoScreen(), _goto_done)
 
     async def action_show_instance(self):
         screen = InstanceScreen(self.instance_info)
@@ -99,17 +101,19 @@ class TooiApp(App[None]):
     def on_status_reply(self, message: StatusReply):
         self.push_screen(ComposeScreen(self.instance_info, message.status))
 
+    async def on_show_hashtag_picker(self, message: ShowHashtagPicker):
+        def _show_hashtag(hashtag: str):
+            if hashtag is not None:
+                self.post_message(GotoHashtagTimeline(hashtag))
+
+        self.push_screen(GotoHashtagScreen(), _show_hashtag)
+
     async def on_show_thread(self, message: ShowThread):
         # TODO: add footer message while loading statuses
-        response = await statuses.context(message.status.original.id)
-        data = response.json()
-        ancestors = [from_dict(Status, s) for s in data["ancestors"]]
-        descendants = [from_dict(Status, s) for s in data["descendants"]]
-        all_statuses = ancestors + [message.status] + descendants
-        initial_index = len(ancestors)
-        screen = TimelineScreen(all_statuses,
+        generator = context_timeline_generator(message.status.original)
+        screen = TimelineScreen(generator,
                                 title="thread",
-                                initial_index=initial_index,
+                                initial_status_id=message.status.original.id,
                                 always_show_sensitive=self.always_show_sensitive)
         self.push_screen(screen)
 
@@ -127,17 +131,13 @@ class TooiApp(App[None]):
         await self._switch_timeline(generator)
 
     async def _switch_timeline(self, generator: StatusListGenerator):
-        statuses = await anext(generator)
-        screen = TimelineScreen(statuses, generator,
+        screen = TimelineScreen(generator,
                                 always_show_sensitive=self.always_show_sensitive)
-        # TODO: clear stack? how?
         self.switch_screen(screen)
 
     async def _push_timeline(self, generator: StatusListGenerator):
-        statuses = await anext(generator)
-        screen = TimelineScreen(statuses, generator,
+        screen = TimelineScreen(generator,
                                 always_show_sensitive=self.always_show_sensitive)
-        # TODO: clear stack? how?
         self.push_screen(screen)
 
     async def on_link_clicked(self, message: Link.Clicked):

@@ -30,11 +30,10 @@ class TimelineScreen(Screen[None]):
 
     def __init__(
         self,
-        statuses: list[Status],
-        generator: StatusListGenerator | None = None,
+        generator: StatusListGenerator,
         *,
         title: str = "timeline",
-        initial_index: int = 0,
+        initial_status_id: str = None,
         always_show_sensitive: bool = False,
     ):
         super().__init__()
@@ -44,11 +43,17 @@ class TimelineScreen(Screen[None]):
         self.fetching = False
         self.revealed_ids: set[str] = set()
         self.always_show_sensitive = always_show_sensitive
+        self.initial_status_id = initial_status_id
 
-        status = statuses[initial_index] if initial_index < len(statuses) else None
-        self.status_list = StatusList(statuses, initial_index=initial_index)
-        self.status_detail = self.make_status_detail(status) if status else StatusDetailPlaceholder()
+        # Start with an empty status list while we wait to load statuses.
+        self.status_list = StatusList([])
+        self.status_detail = StatusDetailPlaceholder()
         self.status_bar = StatusBar()
+
+    async def on_mount(self, message):
+        statuses = await anext(self.generator)
+        self.status_list.update(statuses, self.initial_status_id)
+        self.query_one("#main_window").mount(self.status_detail)
 
     def compose(self):
         yield Header(f"tooi | {self.title}")

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from rich.text import Text
 from textual.widgets import ListItem, Static, Label
 from textual.containers import Horizontal
@@ -22,17 +24,32 @@ class StatusList(ListView):
     }
     """
 
-    def __init__(self, statuses: list[Status], *, initial_index: int = 0):
-        self.statuses = statuses
-        self.current = statuses[initial_index] if initial_index < len(statuses) else None
+    def __init__(self, statuses: list[Status], *, initial_status_id: str = None):
+        super().__init__()
+        self.statuses = []
+        self.current = None
+        self.update(statuses, initial_status_id)
 
-        items = [StatusListItem(s) for s in self.statuses]
-        super().__init__(*items, initial_index=initial_index)
+    def update(self,
+               next_statuses: list[Status],
+               focus_status: Optional[str]):
 
-    def update(self, next_statuses: list[Status]):
         self.statuses += next_statuses
+        i = len(self.statuses)
+
         for status in next_statuses:
             self.mount(StatusListItem(status))
+            if status.id == focus_status:
+                self.index = i
+                self.current = status
+            i += 1
+
+        if self.current is None and len(self.statuses) > 0:
+            self.index = 0
+            self.current = self.statuses[0]
+
+        if self.current is not None:
+            self.post_message(StatusHighlighted(self.current))
 
     @property
     def count(self):

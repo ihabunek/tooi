@@ -10,7 +10,7 @@ from urllib.parse import quote, urlparse
 from httpx import Headers
 from httpx._types import QueryParamTypes
 
-from tooi.api import request
+from tooi.api import request, statuses
 from tooi.entities import Status, from_dict
 from tooi.utils.string import str_bool
 
@@ -86,6 +86,15 @@ def list_timeline_generator(list_id: str, limit: int = 20):
 #             response = await request("GET", f"https://{instance}{path}", params=params)
 #             yield response.json
 #             path = _get_next_path(response.headers)
+
+
+async def context_timeline_generator(status: Status, limit: int = 40):
+    response = await statuses.context(status.original.id)
+    data = response.json()
+    ancestors = [from_dict(Status, s) for s in data["ancestors"]]
+    descendants = [from_dict(Status, s) for s in data["descendants"]]
+    all_statuses = ancestors + [status] + descendants
+    yield all_statuses
 
 
 async def _timeline_generator(path: str, params: Params = None) -> StatusListGenerator:
