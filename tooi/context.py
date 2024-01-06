@@ -1,5 +1,3 @@
-import httpx
-
 from dataclasses import dataclass
 from threading import local
 from typing import Optional

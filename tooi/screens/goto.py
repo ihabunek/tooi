@@ -2,7 +2,7 @@ from textual.app import ComposeResult, log
 from textual.binding import Binding
 from textual.widgets import Input, ListItem, Static
 
-from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoLocalTimeline
+from tooi.messages import GotoHomeTimeline, GotoLocalTimeline
 from tooi.messages import GotoFederatedTimeline, ShowHashtagPicker
 from tooi.screens.modal import ModalScreen
 from tooi.widgets.list_view import ListView

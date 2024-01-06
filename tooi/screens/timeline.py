@@ -5,9 +5,8 @@ from textual.containers import Horizontal
 from textual.screen import Screen
 from textual.widgets import Footer
 
-from tooi.api.timeline import Timeline, StatusListGenerator
-from ..context import get_context
-from tooi.entities import Status
+from tooi.api.timeline import Timeline
+from tooi.context import get_context
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread
 from tooi.messages import StatusHighlighted, StatusSelected, StatusReply
 from tooi.widgets.divider import VerticalDivider

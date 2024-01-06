@@ -1,8 +1,5 @@
+from textual.widgets import ListItem, Label
 from typing import Optional
-
-from rich.text import Text
-from textual.widgets import ListItem, Static, Label
-from textual.containers import Horizontal
 
 from tooi.context import get_context
 from tooi.entities import Status

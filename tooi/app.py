@@ -1,18 +1,14 @@
 import re
 import webbrowser
 
-from asyncio import gather
 from textual.app import App
 from textual.screen import ModalScreen
 from urllib.parse import urlparse
 
-from tooi.api import statuses
-from tooi.api.timeline import StatusListGenerator
 from tooi.api.timeline import Timeline, HomeTimeline, LocalTimeline, TagTimeline
 from tooi.api.timeline import FederatedTimeline, ContextTimeline
 from tooi.context import get_context
 from tooi.data.instance import InstanceInfo, get_instance_info
-from tooi.entities import Status, from_dict
 from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoLocalTimeline
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread
 from tooi.messages import ShowHashtagPicker, StatusReply, GotoFederatedTimeline
