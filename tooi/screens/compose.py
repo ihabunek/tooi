@@ -56,8 +56,7 @@ class ComposeScreen(ModalScreen[None]):
         else:
             initial_text = ""
 
-        self.text_area = ComposeTextArea(id="compose_text_area",
-                                         initial_text=initial_text)
+        self.text_area = ComposeTextArea(id="compose_text_area", initial_text=initial_text)
         if initial_text:
             self.text_area.cursor_location = (0, len(initial_text))
 
@@ -106,10 +105,8 @@ class ComposeScreen(ModalScreen[None]):
             await statuses.post(
                 self.text_area.text,
                 visibility=self.visibility,
-                spoiler_text=(self.content_warning.text if self.content_warning
-                              else None),
-                in_reply_to=(self.in_reply_to.original.id if self.in_reply_to
-                             else None)
+                spoiler_text=self.content_warning.text if self.content_warning else None,
+                in_reply_to=self.in_reply_to.original.id if self.in_reply_to else None
             )
             self.set_status("Status posted", "text-success")
             await asyncio.sleep(0.5)
