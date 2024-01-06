@@ -97,7 +97,6 @@ class TooiApp(App[None]):
 
     async def on_show_thread(self, message: ShowThread):
         # TODO: add footer message while loading statuses
-        print("on_show_thread")
         timeline = ContextTimeline(message.status.original)
         await self.tabs.open_timeline_tab(timeline, initial_focus=message.status.original.id)
 
