@@ -72,7 +72,6 @@ class TooiApp(App[None]):
     async def action_refresh_timeline(self):
         # TODO: Should have a better way to do this than isinstance().
         if isinstance(self.screen, TimelineScreen):
-            print("refreshing")
             await self.screen.refresh_timeline()
 
     async def action_show_instance(self):
