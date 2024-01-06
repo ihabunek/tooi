@@ -1,3 +1,4 @@
+import click
 import sys
 import os
 
@@ -47,8 +48,7 @@ def _load_settings() -> dict[str, Any]:
         try:
             settings = parse(f.read())
         except Exception as exc:
-            print(f"cannot load settings from '{path}': {str(exc)}", file=sys.stderr)
-            sys.exit(1)
+            raise click.ClickException(f"Cannot load settings from '{path}': {str(exc)}")
 
         return settings
 
