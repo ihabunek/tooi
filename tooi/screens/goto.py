@@ -1,5 +1,6 @@
 from textual.app import ComposeResult, log
 from textual.binding import Binding
+from textual.message import Message
 from textual.widgets import Input, ListItem, Static
 
 from tooi.messages import GotoHomeTimeline, GotoLocalTimeline
@@ -8,7 +9,7 @@ from tooi.screens.modal import ModalScreen
 from tooi.widgets.list_view import ListView
 
 
-class GotoScreen(ModalScreen[None]):
+class GotoScreen(ModalScreen[Message | None]):
     DEFAULT_CSS = """
     GotoScreen ListView {
         height: auto;
@@ -48,7 +49,7 @@ class GotoScreen(ModalScreen[None]):
                 self.dismiss(None)
 
 
-class GotoHashtagScreen(ModalScreen[None]):
+class GotoHashtagScreen(ModalScreen[str]):
     DEFAULT_CSS = """
     GotoHashtagScreen Input {
         margin-top: 1;

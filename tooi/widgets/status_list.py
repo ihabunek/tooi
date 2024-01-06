@@ -10,6 +10,7 @@ from tooi.widgets.list_view import ListView
 
 class StatusList(ListView):
     current: Status | None
+    statuses: list[Status]
 
     DEFAULT_CSS = """
     StatusList {
@@ -21,7 +22,7 @@ class StatusList(ListView):
     }
     """
 
-    def __init__(self, statuses: list[Status], *, initial_status_id: str = None):
+    def __init__(self, statuses: list[Status], *, initial_status_id: str | None = None):
         super().__init__()
         self.statuses = []
         self.current = None

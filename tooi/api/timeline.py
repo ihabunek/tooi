@@ -35,7 +35,7 @@ class Timeline(ABC):
     Base class for a timeline.
     """
     @abstractmethod
-    def create_generator(self, limit: int = 40):
+    def create_generator(self, limit: int = 40) -> StatusListGenerator:
         ...
 
 class HomeTimeline(Timeline):
