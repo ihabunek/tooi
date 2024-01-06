@@ -54,7 +54,7 @@ class ComposeScreen(ModalScreen[None]):
         if self.in_reply_to:
             initial_text = f"@{self.in_reply_to.original.account.acct} "
         else:
-            initial_text = None
+            initial_text = ""
 
         self.text_area = ComposeTextArea(id="compose_text_area",
                                          initial_text=initial_text)
@@ -185,13 +185,13 @@ class ComposeTextArea(TextArea):
 
     def __init__(
         self,
-        initial_text=None,
+        initial_text="",
         show_line_numbers=False,
         id: str | None = None,
         classes: str | None = None,
         disabled: bool = False,
     ):
-        super().__init__(text = (initial_text or ""), id=id, classes=classes, disabled=disabled)
+        super().__init__(text=initial_text, id=id, classes=classes, disabled=disabled)
         self.show_line_numbers = show_line_numbers
 
     def action_cursor_down(self, select: bool = False) -> None:
