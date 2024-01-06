@@ -25,6 +25,7 @@ dependencies = [
     "httpx",
     "html2text",
     "textual>=0.38.1",
+    "tomlkit",
     "pillow",
 ]
 
