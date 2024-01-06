@@ -34,6 +34,7 @@ packages = [
     "tooi.api",
     "tooi.data",
     "tooi.screens",
+    "tooi.tabs",
     "tooi.utils",
     "tooi.widgets",
 ]

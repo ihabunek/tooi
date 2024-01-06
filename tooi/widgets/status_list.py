@@ -1,5 +1,4 @@
 from textual.widgets import ListItem, Label
-from typing import Optional
 
 from tooi.context import get_context
 from tooi.entities import Status
@@ -16,37 +15,30 @@ class StatusList(ListView):
     StatusList {
         width: 1fr;
         min-width: 20;
+        border: solid $accent;
     }
     StatusList:focus-within {
         background: $panel;
     }
     """
 
-    def __init__(self, statuses: list[Status], *, initial_status_id: str | None = None):
+    def __init__(self, statuses: list[Status]):
         super().__init__()
         self.statuses = []
         self.current = None
-        self.update(statuses, initial_status_id)
+        self.update(statuses)
 
-    def replace(self, next_statuses: list[Status], focus_status: Optional[str]):
+    def replace(self, next_statuses: list[Status]):
         self.statuses = []
         self.clear()
         self.current = None
-        self.update(next_statuses, focus_status)
+        self.update(next_statuses)
 
-    def update(self,
-               next_statuses: list[Status],
-               focus_status: Optional[str]):
-
+    def update(self, next_statuses: list[Status]):
         self.statuses += next_statuses
-        i = len(self.statuses)
 
         for status in next_statuses:
             self.mount(StatusListItem(status))
-            if status.id == focus_status:
-                self.index = i
-                self.current = status
-            i += 1
 
         if self.current is None and len(self.statuses) > 0:
             self.index = 0
@@ -54,6 +46,12 @@ class StatusList(ListView):
 
         if self.current is not None:
             self.post_message(StatusHighlighted(self.current))
+
+    def focus_status(self, status_id: str):
+        for i, status in enumerate(self.statuses):
+            if status.id == status_id:
+                self.index = i
+                self.current = status
 
     @property
     def count(self):

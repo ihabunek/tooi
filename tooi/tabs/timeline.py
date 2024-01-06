@@ -2,21 +2,19 @@ import asyncio
 
 from textual.binding import Binding
 from textual.containers import Horizontal
-from textual.screen import Screen
-from textual.widgets import Footer
+from textual.widgets import TabPane
 
 from tooi.api.timeline import Timeline
 from tooi.context import get_context
+from tooi.data.instance import InstanceInfo
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread
 from tooi.messages import StatusHighlighted, StatusSelected, StatusReply
-from tooi.widgets.divider import VerticalDivider
-from tooi.widgets.header import Header
 from tooi.widgets.status_bar import StatusBar
 from tooi.widgets.status_detail import StatusDetail, StatusDetailPlaceholder
 from tooi.widgets.status_list import StatusList
 
 
-class TimelineScreen(Screen[None]):
+class TimelineTab(TabPane):
     BINDINGS = [
         Binding("a", "show_account", "Account"),
         Binding("u", "show_source", "Source"),
@@ -29,39 +27,49 @@ class TimelineScreen(Screen[None]):
 
     def __init__(
         self,
+        instance_info: InstanceInfo,
         timeline: Timeline,
         *,
-        title: str = "timeline",
-        initial_status_id: str = None,
-        always_show_sensitive: bool = False,
+        initial_focus: str | None = None,
+        title: str | None = None,
+        id: str | None = None,
     ):
-        super().__init__()
+        super().__init__(title or timeline.name)
+
         self.context = get_context()
         self.timeline = timeline
         self.generator = None
-        self.title = title
         self.fetching = False
         self.revealed_ids: set[str] = set()
-        self.always_show_sensitive = always_show_sensitive
-        self.initial_status_id = initial_status_id
+        self.initial_focus = initial_focus
+
+        if self.context.config.always_show_sensitive is not None:
+            self.always_show_sensitive = self.context.config.always_show_sensitive
+        else:
+            self.always_show_sensitive = (
+                    instance_info.user_preferences.get('reading:expand:spoilers',
+                                                       False))
 
         # Start with an empty status list while we wait to load statuses.
         self.status_list = StatusList([])
         self.status_detail = StatusDetailPlaceholder()
         self.status_bar = StatusBar()
 
+    def on_show(self, message):
+        self.status_list.focus()
+
     async def on_mount(self, message):
+        self.status_detail.focus()
         await self.refresh_timeline()
+        if self.initial_focus:
+            self.status_list.focus_status(self.initial_focus)
 
     def compose(self):
-        yield Header(f"tooi | {self.title}")
         yield Horizontal(
             self.status_list,
-            VerticalDivider(),
             self.status_detail,
             id="main_window"
         )
-        yield Footer()
         yield self.status_bar
 
     def make_status_detail(self, status):
@@ -69,10 +77,13 @@ class TimelineScreen(Screen[None]):
                     status.original.id in self.revealed_ids)
         return StatusDetail(status, revealed=revealed)
 
+    def focus_status(self, status_id: str):
+        self.status_list.focus_status(status_id)
+
     async def refresh_timeline(self):
         self.generator = self.timeline.create_generator()
         statuses = await anext(self.generator)
-        self.status_list.replace(statuses, self.initial_status_id)
+        self.status_list.replace(statuses)
         self.query_one("#main_window").mount(self.status_detail)
 
     def on_status_highlighted(self, message: StatusHighlighted):

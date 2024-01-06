@@ -5,7 +5,7 @@ https://docs.joinmastodon.org/methods/timelines/
 import re
 
 from typing import AsyncGenerator, List, Optional
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 from urllib.parse import quote, urlparse
 
 from httpx import Headers
@@ -38,6 +38,10 @@ class Timeline(ABC):
     def create_generator(self, limit: int = 40) -> StatusListGenerator:
         ...
 
+    @abstractproperty
+    def name(self):
+        ...
+
 
 class HomeTimeline(Timeline):
     def init(self):
@@ -45,6 +49,10 @@ class HomeTimeline(Timeline):
 
     def create_generator(self, limit: int = 40):
         return home_timeline_generator(limit)
+
+    @property
+    def name(self):
+        return "Home"
 
 
 class LocalTimeline(Timeline):
@@ -54,6 +62,10 @@ class LocalTimeline(Timeline):
     def create_generator(self, limit: int = 40):
         return public_timeline_generator(local=True, limit=limit)
 
+    @property
+    def name(self):
+        return "Local"
+
 
 class FederatedTimeline(Timeline):
     def init(self):
@@ -62,20 +74,36 @@ class FederatedTimeline(Timeline):
     def create_generator(self, limit: int = 40):
         return public_timeline_generator(local=False, limit=limit)
 
+    @property
+    def name(self):
+        return "Federated"
+
 
 class TagTimeline(Timeline):
     def __init__(self, hashtag: str, local: bool = False):
         super().__init__()
         self._local = local
+
+        if len(hashtag) == 0:
+            raise (ValueError("TagTimeline: tag is empty"))
+
+        # Normalise the hashtag to not begin with a hash
+        if hashtag[0] == '#':
+            hashtag = hashtag[1:]
+
         self._hashtag = hashtag
 
     @property
     def hashtag(self) -> str:
-        return self._hashtag
+        return '#' + self._hashtag
 
     @property
     def local(self) -> bool:
         return self._local
+
+    @property
+    def name(self) -> str:
+        return self.hashtag
 
     def create_generator(self, limit: int = 40):
         return tag_timeline_generator(self.hashtag, self.local, limit)
@@ -87,6 +115,10 @@ class ContextTimeline(Timeline):
 
     def create_generator(self, limit: int = 40):
         return context_timeline_generator(self._status, limit)
+
+    @property
+    def name(self):
+        return "Thread"
 
 
 def home_timeline_generator(limit: int = 40):
