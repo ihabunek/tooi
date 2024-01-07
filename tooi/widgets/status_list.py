@@ -15,7 +15,7 @@ class StatusList(ListView):
     StatusList {
         width: 1fr;
         min-width: 20;
-        border: solid $accent;
+        border-right: solid $accent;
     }
     StatusList:focus-within {
         background: $panel;
