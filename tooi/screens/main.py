@@ -15,8 +15,21 @@ class MainScreen(Screen[None]):
     """
 
     DEFAULT_CSS = """
-    TabbedContent {
-        margin: 0 0 0 0;
+    Tabs {
+        height: 2;
+
+        #tabs-list {
+           min-height: 1;
+        }
+
+        Tab {
+            height: 1;
+            padding: 0 2 0 2;
+        }
+    }
+
+    TabPane {
+        padding: 0;
     }
     """
 
