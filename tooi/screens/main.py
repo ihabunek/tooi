@@ -5,6 +5,7 @@ from textual.widgets import TabPane, TabbedContent, Footer
 
 from tooi.api.timeline import HomeTimeline, Timeline
 from tooi.data.instance import InstanceInfo
+from tooi.tabs.search import SearchTab
 from tooi.tabs.timeline import TimelineTab
 from tooi.widgets.header import Header
 
@@ -46,6 +47,7 @@ class MainScreen(Screen[None]):
         Binding("8", "select_tab(8)"),
         Binding("9", "select_tab(9)"),
         Binding("0", "select_tab(10)"),
+        Binding("/", "open_search_tab", "Search"),
     ]
 
     def __init__(self, instance_info: InstanceInfo):
@@ -78,3 +80,12 @@ class MainScreen(Screen[None]):
     async def action_refresh_timeline(self):
         tc = self.query_one(TabbedContent)
         await tc.get_pane(tc.active).refresh_timeline()
+
+    async def action_open_search_tab(self):
+        tab = SearchTab("Search")
+        await self.tc.add_pane(tab)
+        self.tc.active = tab.id
+
+    @property
+    def tc(self) -> TabbedContent:
+        return self.query_one(TabbedContent)

@@ -434,6 +434,36 @@ class ExtendedDescription:
         return html2text(self.content, bodywidth=0)
 
 
+@dataclass
+class TagHistory:
+    """
+    Usage statistics for given days (typically the past week).
+    https://docs.joinmastodon.org/entities/Tag/#history
+    """
+    day: str
+    uses: str
+    accounts: str
+
+
+@dataclass
+class Tag:
+    """
+    Represents a hashtag used within the content of a status.
+    https://docs.joinmastodon.org/entities/Tag/
+    """
+    name: str
+    url: str
+    history: list[TagHistory]
+    following: Optional[bool]
+
+
+@dataclass
+class SearchResults:
+    accounts: list[Account]
+    hashtags: list[Tag]
+    statuses: list[Status]
+
+
 # Generic data class instance
 T = TypeVar("T")
 
