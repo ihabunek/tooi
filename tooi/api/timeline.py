@@ -12,6 +12,7 @@ from httpx import Headers
 from httpx._types import QueryParamTypes
 
 from tooi.api import request, statuses
+from tooi.api.accounts import get_account_by_name
 from tooi.data.events import Event, StatusEvent, MentionEvent, NewFollowerEvent, ReblogEvent
 from tooi.data.events import FavouriteEvent
 from tooi.data.instance import InstanceInfo
@@ -80,6 +81,42 @@ class LocalTimeline(Timeline):
 
     def create_generator(self, limit: int = 40):
         return public_timeline_generator(self.instance, local=True, limit=limit)
+
+
+class AccountTimeline(Timeline):
+    """
+    AccountTimeline loads events from the given account's timeline.
+    This timeline only ever returns events of type StatusEvent.
+    This requires the account id; to fetch based on a username use AccountTimeline.from_name.
+    """
+    def __init__(self,
+                 instance: InstanceInfo,
+                 title: str,
+                 account_id: str,
+                 replies=True,
+                 reblogs=True):
+        super().__init__(title, instance)
+        self.account_id = account_id
+        self.replies = replies
+        self.reblogs = reblogs
+
+    @staticmethod
+    async def from_name(
+            instance: InstanceInfo,
+            account_name: str,
+            replies: bool = True,
+            reblogs: bool = True):
+        account = await get_account_by_name(account_name)
+        return AccountTimeline(instance, account_name, account.id, replies, reblogs)
+
+    def create_generator(self, limit: int = 40):
+        path = f"/api/v1/accounts/{self.account_id}/statuses"
+        params = {
+            "limit": limit,
+            "exclude_replies": not self.replies,
+            "exclude_reblogs": not self.reblogs
+        }
+        return _status_generator(self.instance, path, params)
 
 
 class FederatedTimeline(Timeline):
@@ -202,13 +239,6 @@ def bookmark_timeline_generator(instance: InstanceInfo, limit: int = 40):
 #    path = "/api/v1/conversations"
 #    params = {"limit": limit}
 #    return _conversation_timeline_generator(path, params)
-
-
-# def account_timeline_generator(account_name: str, replies=False, reblogs=False, limit: int = 40):
-#     account = await find_account(account_name)
-#     path = f"/api/v1/accounts/{account["id"]}/statuses"
-#     params = {"limit": limit, "exclude_replies": not replies, "exclude_reblogs": not reblogs}
-#     return _timeline_generator(path, params)
 
 
 # def list_timeline_generator(list_id: str, limit: int = 20):

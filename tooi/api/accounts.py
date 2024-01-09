@@ -4,6 +4,24 @@ https://docs.joinmastodon.org/methods/accounts/
 """
 from httpx import Response
 from tooi.api import request
+from tooi.entities import Account, from_dict
+
+
+async def get_account_by_id(account_id: str) -> Account:
+    """Look up an account by database id and return its info."""
+    path = "/api/v1/accounts/{account_id}"
+
+    response = await request("GET", path)
+    return from_dict(Account, response.json())
+
+
+async def get_account_by_name(account_name: str) -> Account:
+    """Look up an account by name and return its info."""
+    path = "/api/v1/accounts/lookup"
+    params = {"acct": account_name}
+
+    response = await request("GET", path, params=params)
+    return from_dict(Account, response.json())
 
 
 async def verify_credentials() -> Response:

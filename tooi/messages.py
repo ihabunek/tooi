@@ -37,6 +37,10 @@ class GotoHomeTimeline(Message):
     pass
 
 
+class GotoPersonalTimeline(Message):
+    pass
+
+
 class GotoLocalTimeline(Message):
     pass
 

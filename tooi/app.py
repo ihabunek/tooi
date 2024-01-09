@@ -5,13 +5,14 @@ from textual.app import App
 from textual.screen import ModalScreen
 from urllib.parse import urlparse
 
-from tooi.api.timeline import Timeline, HomeTimeline, LocalTimeline, TagTimeline
+from tooi.api.timeline import Timeline, HomeTimeline, LocalTimeline, TagTimeline, AccountTimeline
 from tooi.api.timeline import FederatedTimeline, ContextTimeline, NotificationTimeline
 from tooi.context import get_context
 from tooi.data.instance import get_instance_info
 from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoLocalTimeline
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread, ShowNotifications
 from tooi.messages import ShowHashtagPicker, StatusReply, GotoFederatedTimeline
+from tooi.messages import GotoPersonalTimeline
 from tooi.screens.account import AccountScreen
 from tooi.screens.compose import ComposeScreen
 from tooi.screens.goto import GotoScreen, GotoHashtagScreen
@@ -103,6 +104,10 @@ class TooiApp(App[None]):
     async def on_goto_home_timeline(self, message: GotoHomeTimeline):
         # TODO: add footer message while loading statuses
         await self._open_timeline(HomeTimeline(self.instance))
+
+    async def on_goto_personal_timeline(self, message: GotoPersonalTimeline):
+        timeline = await AccountTimeline.from_name(self.instance, self.context.auth.acct)
+        await self._open_timeline(timeline)
 
     async def on_goto_local_timeline(self, message: GotoLocalTimeline):
         await self._open_timeline(LocalTimeline(self.instance))
