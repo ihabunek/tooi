@@ -2,12 +2,13 @@ from httpx import TimeoutException
 from textual import on, work
 from textual.containers import Container, Vertical, VerticalScroll
 from textual.widget import Widget
-from textual.widgets import Input, Rule, Static, TabPane
+from textual.widgets import Input, ListItem, ListView, Rule, Static, TabPane
 
 from tooi.api import ResponseError
 from tooi.api.search import search
-from tooi.entities import SearchResults, from_dict
-from tooi.widgets.link import Link
+from tooi.entities import Account, SearchResults, Status, Tag, from_dict
+from tooi.messages import GotoHashtagTimeline, ShowAccount, ShowThread
+from tooi.utils.html import get_text
 
 
 class SearchTab(TabPane):
@@ -49,13 +50,10 @@ class SearchTab(TabPane):
         results.mount(widget)
 
 
-class SearchResultsList(VerticalScroll):
+class SearchResultsList(VerticalScroll, can_focus=False):
     DEFAULT_CSS = """
     SearchResultsList {
         padding: 0 1;
-    }
-    Link {
-        padding-left: 2;
     }
     """
 
@@ -64,20 +62,64 @@ class SearchResultsList(VerticalScroll):
         super().__init__()
 
     def compose(self):
+        if (
+            not self.results.accounts and
+            not self.results.hashtags and
+            not self.results.statuses
+        ):
+            yield Static("No results found")
+
         if self.results.accounts:
-            yield Static("\nAccounts:")
-            for account in self.results.accounts:
-                yield Link(account.url, f"@{account.acct}")
+            yield Static("Accounts:")
+            with ResultList():
+                for account in self.results.accounts:
+                    yield AccountItem(account)
 
         if self.results.hashtags:
-            yield Static("\nHashtags:")
-            for tag in self.results.hashtags:
-                yield Link(tag.url, f"#{tag.name}")
+            yield Static("Hashtags:")
+            with ResultList():
+                for tag in self.results.hashtags:
+                    yield TagItem(tag)
 
         if self.results.statuses:
-            yield Static("\nStatuses:")
-            for status in self.results.statuses:
-                if status.url:
-                    yield Link(status.url, f"#{status.id}")
-                else:
-                    yield Static(f"#{status.id}")
+            yield Static("Statuses:")
+            with ResultList():
+                for status in self.results.statuses:
+                    yield StatusItem(status)
+
+
+class ResultList(ListView):
+    DEFAULT_CSS = """
+    ResultList {
+        margin-bottom: 1;
+    }
+    """
+
+    @on(ListView.Selected)
+    def on_selected(self, message: ListView.Selected):
+        if isinstance(message.item, AccountItem):
+            self.post_message(ShowAccount(message.item.account))
+        if isinstance(message.item, StatusItem):
+            self.post_message(ShowThread(message.item.status))
+        if isinstance(message.item, TagItem):
+            self.post_message(GotoHashtagTimeline(message.item.tag.name))
+
+
+class AccountItem(ListItem):
+    def __init__(self, account: Account):
+        self.account = account
+        super().__init__(Static(f"< @{account.acct} >"))
+
+
+class StatusItem(ListItem):
+    def __init__(self, status: Status):
+        self.status = status
+        excerpt = get_text(status.content).replace("\n", " ")[:50] + "…"
+        label = f"#{status.id} @{status.account.acct}\n  {excerpt}"
+        super().__init__(Static(f"< @{label} >"))
+
+
+class TagItem(ListItem):
+    def __init__(self, tag: Tag):
+        self.tag = tag
+        super().__init__(Static(f"< #{tag.name} >"))
