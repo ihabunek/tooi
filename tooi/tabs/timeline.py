@@ -81,7 +81,7 @@ class TimelineTab(TabPane):
         return make_event_detail(event)
 
     async def refresh_timeline(self):
-        self.generator = self.timeline.create_generator()
+        self.generator = self.timeline.fetch()
         events = await anext(self.generator)
         self.event_list.replace(events)
         self.query_one("#main_window").mount(self.event_detail)

@@ -64,7 +64,7 @@ class Timeline(ABC):
         self.name = name
 
     @abstractmethod
-    def create_generator(self, limit: int | None = None) -> EventGenerator:
+    def fetch(self, limit: int | None = None) -> EventGenerator:
         ...
 
 
@@ -95,7 +95,7 @@ class HomeTimeline(StatusTimeline):
     def __init__(self, instance: InstanceInfo):
         super().__init__("Home", instance)
 
-    def create_generator(self, limit: int | None = None):
+    def fetch(self, limit: int | None = None):
         return self.status_generator("/api/v1/timelines/home", limit=limit)
 
 
@@ -117,7 +117,7 @@ class LocalTimeline(PublicTimeline):
     def __init__(self, instance: InstanceInfo):
         super().__init__("Local", instance, True)
 
-    def create_generator(self, limit: int | None = None):
+    def fetch(self, limit: int | None = None):
         return self.public_timeline_generator(limit=limit)
 
 
@@ -129,7 +129,7 @@ class FederatedTimeline(PublicTimeline):
     def __init__(self, instance: InstanceInfo):
         super().__init__("Federated", instance, False)
 
-    def create_generator(self, limit: int | None = None):
+    def fetch(self, limit: int | None = None):
         return self.public_timeline_generator(limit=limit)
 
 
@@ -159,7 +159,7 @@ class AccountTimeline(StatusTimeline):
         account = await get_account_by_name(account_name)
         return AccountTimeline(instance, account_name, account.id, replies, reblogs)
 
-    def create_generator(self, limit: int | None = None):
+    def fetch(self, limit: int | None = None):
         path = f"/api/v1/accounts/{self.account_id}/statuses"
         params = {
             "exclude_replies": not self.replies,
@@ -201,7 +201,7 @@ class NotificationTimeline(Timeline):
         async for events in fetch_timeline(self.instance, path, params, limit):
             yield [e for e in map(self.make_notification_event, events) if e is not None]
 
-    def create_generator(self, limit: int | None = None):
+    def fetch(self, limit: int | None = None):
         # TODO: not included: follow_request, poll, update, admin.sign_up, admin.report
         types = ["mention", "status", "reblog", "favourite", "follow"]
         params = {"types[]": types}
@@ -226,7 +226,7 @@ class TagTimeline(StatusTimeline):
         self.hashtag = hashtag
         super().__init__(f"#{self.hashtag}", instance)
 
-    def create_generator(self, limit: int = 40):
+    def fetch(self, limit: int = 40):
         path = f"/api/v1/timelines/tag/{quote(self.hashtag)}"
         return self.status_generator(path, limit=limit)
 
@@ -248,7 +248,7 @@ class ContextTimeline(Timeline):
         all_statuses = ancestors + [status] + descendants
         yield [StatusEvent(self.instance, s) for s in all_statuses]
 
-    def create_generator(self, limit: int | None = None):
+    def fetch(self, limit: int | None = None):
         return self.context_timeline_generator(self._status, limit)
 
 
