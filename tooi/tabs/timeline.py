@@ -65,7 +65,7 @@ class TimelineTab(TabPane):
 
     async def on_mount(self, message):
         self.event_detail.focus()
-        await self.refresh_timeline()
+        await self.fetch_timeline()
         if self.initial_focus:
             self.event_list.focus_event(self.initial_focus)
 
@@ -81,6 +81,21 @@ class TimelineTab(TabPane):
         return make_event_detail(event)
 
     async def refresh_timeline(self):
+        # Handle timelines that don't support updating.
+        if not hasattr(self.timeline, 'update'):
+            await self.fetch_timeline()
+            return
+
+        newevents = []
+
+        async for eventslist in self.timeline.update():
+            newevents += eventslist
+
+        # The updates are returned in inverse chronological order, so reverse them before adding.
+        newevents.reverse()
+        self.event_list.prepend_events(newevents)
+
+    async def fetch_timeline(self):
         self.generator = self.timeline.fetch()
         events = await anext(self.generator)
         self.event_list.replace(events)
@@ -151,7 +166,7 @@ class TimelineTab(TabPane):
             # TODO: handle exceptions
             try:
                 next_events = await anext(self.generator)
-                self.event_list.update(next_events)
+                self.event_list.append_events(next_events)
             finally:
                 self.fetching = False
                 self.status_bar.update()

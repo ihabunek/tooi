@@ -31,19 +31,31 @@ class EventList(ListView):
         super().__init__()
         self.events = []
         self.current = None
-        self.update(events)
+        self.append_events(events)
 
     def replace(self, next_events: list[Event]):
-        self.events = []
         self.clear()
         self.current = None
-        self.update(next_events)
+        self.append_events(next_events)
 
-    def update(self, next_events: list[Event]):
+    def append_events(self, next_events: list[Event]):
         self.events += next_events
 
         for event in next_events:
             self.mount(EventListItem(event))
+
+        if self.current is None and len(self.events) > 0:
+            self.index = 0
+            self.current = self.events[0]
+
+        if self.current is not None:
+            self.post_message(EventHighlighted(self.current))
+
+    def prepend_events(self, next_events: list[Event]):
+        self.events = next_events + self.events
+
+        for event in next_events:
+            self.mount(EventListItem(event), before=0)
 
         if self.current is None and len(self.events) > 0:
             self.index = 0
