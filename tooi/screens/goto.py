@@ -3,7 +3,7 @@ from textual.binding import Binding
 from textual.message import Message
 from textual.widgets import Input, ListItem, Static
 
-from tooi.messages import GotoHomeTimeline, GotoLocalTimeline
+from tooi.messages import GotoHomeTimeline, GotoLocalTimeline, ShowNotifications
 from tooi.messages import GotoFederatedTimeline, ShowHashtagPicker
 from tooi.screens.modal import ModalScreen
 from tooi.widgets.list_view import ListView
@@ -21,6 +21,7 @@ class GotoScreen(ModalScreen[Message | None]):
             ListItem(Static("< Home timeline >"), id="goto_home"),
             ListItem(Static("< Local timeline >"), id="goto_local"),
             ListItem(Static("< Federated timeline >"), id="goto_federated"),
+            ListItem(Static("< Notifications >"), id="goto_notifications"),
             ListItem(Static("< Hashtag timeline >"), id="goto_hashtag"),
         )
         self.status = Static("")
@@ -44,6 +45,8 @@ class GotoScreen(ModalScreen[Message | None]):
                 self.dismiss(GotoFederatedTimeline())
             case "goto_hashtag":
                 self.dismiss(ShowHashtagPicker())
+            case "goto_notifications":
+                self.dismiss(ShowNotifications())
             case _:
                 log.error("Unknown selection")
                 self.dismiss(None)

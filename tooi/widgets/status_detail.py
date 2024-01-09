@@ -4,6 +4,8 @@ from textual.containers import Vertical, VerticalScroll
 from textual.widget import Widget
 from textual.widgets import Static
 
+from tooi.data.events import Event
+from tooi.context import get_context
 from tooi.entities import MediaAttachment, Status
 from tooi.utils.datetime import format_datetime
 from tooi.widgets.account import AccountHeader
@@ -14,6 +16,8 @@ from tooi.widgets.poll import Poll
 
 
 class StatusDetail(VerticalScroll):
+    _revealed: set[str] = set()
+
     DEFAULT_CSS = """
     StatusDetail {
         width: 2fr;
@@ -50,11 +54,27 @@ class StatusDetail(VerticalScroll):
         Binding("pagedown", "page_down", "Page Down", show=False),
     ]
 
-    def __init__(self, status: Status, revealed: bool = False):
+    def __init__(self, event: Event):
         super().__init__()
-        self.status = status
-        self.sensitive = status.original.sensitive
-        self.revealed = revealed
+        self.context = get_context()
+        self.event = event
+        self.status = event.status
+        self.sensitive = self.status.original.sensitive
+
+    @property
+    def revealed(self) -> bool:
+        return (self.context.config.always_show_sensitive
+                or (self.status.original.id in self._revealed))
+
+    @revealed.setter
+    def revealed(self, b: bool):
+        if b:
+            self._revealed.add(self.status.id)
+        else:
+            try:
+                self._revealed.remove(self.status.id)
+            except KeyError:
+                pass
 
     def compose(self):
         status = self.status.original
@@ -204,23 +224,6 @@ class StatusMeta(Static):
             f"{status.visibility.capitalize()}",
         ]
         return " · ".join(parts)
-
-
-class StatusDetailPlaceholder(Static, can_focus=True):
-    DEFAULT_CSS = """
-    StatusDetailPlaceholder {
-        width: 2fr;
-        padding: 0 1;
-        color: gray;
-        height: 100%;
-    }
-    StatusDetailPlaceholder:focus {
-        background: $panel;
-    }
-    """
-
-    def __init__(self):
-        super().__init__("No status selected")
 
 
 class StatusSensitiveNotice(Static):

@@ -1,4 +1,5 @@
 from textual.message import Message
+from tooi.data.events import Event
 from tooi.entities import Account, Status
 
 # Common message types
@@ -10,6 +11,12 @@ class AccountMessage(Message, bubble=True):
         self.account = account
 
 
+class EventMessage(Message, bubble=True):
+    def __init__(self, event: Event) -> None:
+        super().__init__()
+        self.event = event
+
+
 class StatusMessage(Message, bubble=True):
     def __init__(self, status: Status) -> None:
         super().__init__()
@@ -18,11 +25,11 @@ class StatusMessage(Message, bubble=True):
 # Custom messages
 
 
-class StatusSelected(StatusMessage):
+class EventSelected(EventMessage):
     pass
 
 
-class StatusHighlighted(StatusMessage):
+class EventHighlighted(EventMessage):
     pass
 
 
@@ -35,6 +42,10 @@ class GotoLocalTimeline(Message):
 
 
 class GotoFederatedTimeline(Message):
+    pass
+
+
+class ShowNotifications(Message):
     pass
 
 

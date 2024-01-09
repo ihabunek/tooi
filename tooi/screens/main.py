@@ -37,32 +37,32 @@ class MainScreen(Screen[None]):
     BINDINGS = [
         Binding("ctrl+d", "close_current_tab"),
         Binding(".", "refresh_timeline", "Refresh"),
-        Binding("1", "select_tab(1)"),
-        Binding("2", "select_tab(2)"),
-        Binding("3", "select_tab(3)"),
-        Binding("4", "select_tab(4)"),
-        Binding("5", "select_tab(5)"),
-        Binding("6", "select_tab(6)"),
-        Binding("7", "select_tab(7)"),
-        Binding("8", "select_tab(8)"),
-        Binding("9", "select_tab(9)"),
-        Binding("0", "select_tab(10)"),
         Binding("/", "open_search_tab", "Search"),
+        Binding("1", "select_tab(1)", show=False),
+        Binding("2", "select_tab(2)", show=False),
+        Binding("3", "select_tab(3)", show=False),
+        Binding("4", "select_tab(4)", show=False),
+        Binding("5", "select_tab(5)", show=False),
+        Binding("6", "select_tab(6)", show=False),
+        Binding("7", "select_tab(7)", show=False),
+        Binding("8", "select_tab(8)", show=False),
+        Binding("9", "select_tab(9)", show=False),
+        Binding("0", "select_tab(10)", show=False),
     ]
 
-    def __init__(self, instance_info: InstanceInfo):
-        self.instance_info = instance_info
+    def __init__(self, instance: InstanceInfo):
+        self.instance = instance
         super().__init__()
 
     def compose(self) -> ComposeResult:
         yield Header("toot")
         # Start with the home timeline
         with TabbedContent():
-            yield TimelineTab(self.instance_info, HomeTimeline())
+            yield TimelineTab(self.instance, HomeTimeline(self.instance))
         yield Footer()
 
     async def open_timeline_tab(self, timeline: Timeline, initial_focus: str | None = None):
-        tab = TimelineTab(self.instance_info, timeline, initial_focus=initial_focus)
+        tab = TimelineTab(self.instance, timeline, initial_focus=initial_focus)
         tc = self.query_one(TabbedContent)
         await tc.add_pane(tab)
         tc.active = tab.id

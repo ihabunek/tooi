@@ -6,11 +6,11 @@ from textual.screen import ModalScreen
 from urllib.parse import urlparse
 
 from tooi.api.timeline import Timeline, HomeTimeline, LocalTimeline, TagTimeline
-from tooi.api.timeline import FederatedTimeline, ContextTimeline
+from tooi.api.timeline import FederatedTimeline, ContextTimeline, NotificationTimeline
 from tooi.context import get_context
-from tooi.data.instance import InstanceInfo, get_instance_info
+from tooi.data.instance import get_instance_info
 from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoLocalTimeline
-from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread
+from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread, ShowNotifications
 from tooi.messages import ShowHashtagPicker, StatusReply, GotoFederatedTimeline
 from tooi.screens.account import AccountScreen
 from tooi.screens.compose import ComposeScreen
@@ -41,15 +41,12 @@ class TooiApp(App[None]):
     async def on_mount(self):
         self.push_screen("loading")
         self.context = get_context()
-
-        instance_info = await get_instance_info()
-
-        self.tabs = MainScreen(instance_info)
+        self.instance = await get_instance_info()
+        self.tabs = MainScreen(self.instance)
         self.switch_screen(self.tabs)
-        self.instance_info: InstanceInfo = instance_info
 
     def action_compose(self):
-        self.push_screen(ComposeScreen(self.instance_info))
+        self.push_screen(ComposeScreen(self.instance))
 
     def action_goto(self):
         def _goto_done(action):
@@ -59,7 +56,7 @@ class TooiApp(App[None]):
         self.push_screen(GotoScreen(), _goto_done)
 
     async def action_show_instance(self):
-        screen = InstanceScreen(self.instance_info)
+        screen = InstanceScreen(self.instance)
         self.push_screen(screen)
 
     def action_pop_or_quit(self):
@@ -86,7 +83,7 @@ class TooiApp(App[None]):
         self.push_screen(StatusMenuScreen(message.status))
 
     def on_status_reply(self, message: StatusReply):
-        self.push_screen(ComposeScreen(self.instance_info, message.status))
+        self.push_screen(ComposeScreen(self.instance, message.status))
 
     async def on_show_hashtag_picker(self, message: ShowHashtagPicker):
         def _show_hashtag(hashtag: str):
@@ -97,21 +94,27 @@ class TooiApp(App[None]):
 
     async def on_show_thread(self, message: ShowThread):
         # TODO: add footer message while loading statuses
-        timeline = ContextTimeline(message.status.original)
-        await self.tabs.open_timeline_tab(timeline, initial_focus=message.status.original.id)
+        timeline = ContextTimeline(self.instance, message.status.original)
+        # TODO: composing a status: event id by hand is probably not ideal.
+        await self.tabs.open_timeline_tab(
+                timeline,
+                initial_focus=f"status:{message.status.original.id}")
 
     async def on_goto_home_timeline(self, message: GotoHomeTimeline):
         # TODO: add footer message while loading statuses
-        await self._open_timeline(HomeTimeline())
+        await self._open_timeline(HomeTimeline(self.instance))
 
     async def on_goto_local_timeline(self, message: GotoLocalTimeline):
-        await self._open_timeline(LocalTimeline())
+        await self._open_timeline(LocalTimeline(self.instance))
 
     async def on_goto_federated_timeline(self, message: GotoFederatedTimeline):
-        await self._open_timeline(FederatedTimeline())
+        await self._open_timeline(FederatedTimeline(self.instance))
 
     async def on_goto_hashtag_timeline(self, message: GotoHashtagTimeline):
-        await self._open_timeline(TagTimeline(hashtag=message.hashtag))
+        await self._open_timeline(TagTimeline(self.instance, hashtag=message.hashtag))
+
+    async def on_show_notifications(self, message: ShowNotifications):
+        await self.tabs.open_timeline_tab(NotificationTimeline(self.instance))
 
     async def _open_timeline(self, timeline: Timeline):
         await self.tabs.open_timeline_tab(timeline)
@@ -122,7 +125,7 @@ class TooiApp(App[None]):
         # Hashtag
         if m := re.match(r"/tags/(\w+)", parsed.path):
             hashtag = m.group(1)
-            await self._open_timeline(TagTimeline(hashtag))
+            await self._open_timeline(TagTimeline(self.instance, hashtag))
         else:
             # TODO: improve link handling
             webbrowser.open(message.url)
