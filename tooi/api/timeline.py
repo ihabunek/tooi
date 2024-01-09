@@ -40,10 +40,12 @@ async def fetch_timeline(
         instance: InstanceInfo,
         path: str,
         params: Params | None = None,
-        limit: int | None = None):
+        limit: int | None = None,
+        since_id: str | None = None):
 
     _params = dict(params or {})
     _params["limit"] = limit or DEFAULT_LIMIT
+    _params["since_id"] = since_id
 
     next_path = path
     while next_path:
