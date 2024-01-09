@@ -109,7 +109,7 @@ class TimelineTab(TabPane):
                 case MentionEvent():
                     self.post_message(ShowAccount(event.status.original.account))
                 case StatusEvent():
-                    self.post_message(ShowThread(event.status.original.account))
+                    self.post_message(ShowAccount(event.status.original.account))
                 case _:
                     pass
 
