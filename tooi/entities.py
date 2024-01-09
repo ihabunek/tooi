@@ -467,8 +467,11 @@ class SearchResults:
 # Generic data class instance
 T = TypeVar("T")
 
+# Dict of data decoded from JSON
+Data = dict[str, Any]
 
-def from_dict(cls: Type[T], data: dict[Any, Any]) -> T:
+
+def from_dict(cls: Type[T], data: Data) -> T:
     """Convert a nested dict into an instance of `cls`."""
     def _fields() -> Generator[tuple[str, Any], None, None]:
         hints = get_type_hints(cls)
@@ -479,6 +482,10 @@ def from_dict(cls: Type[T], data: dict[Any, Any]) -> T:
             yield field.name, _convert(field_type, value)
 
     return cls(**dict(_fields()))
+
+
+def from_dict_list(cls: Type[T], data: list[Data]) -> list[T]:
+    return [from_dict(cls, x) for x in data]
 
 
 def from_response(cls: Type[T], response: Response) -> T:
