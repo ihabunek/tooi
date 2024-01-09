@@ -2,13 +2,14 @@ from httpx import TimeoutException
 from textual import on, work
 from textual.containers import Container, Vertical, VerticalScroll
 from textual.widget import Widget
-from textual.widgets import Input, ListItem, ListView, Rule, Static, TabPane
+from textual.widgets import Input, ListItem, Rule, Static, TabPane
 
 from tooi.api import ResponseError
 from tooi.api.search import search
 from tooi.entities import Account, SearchResults, Status, Tag, from_dict
 from tooi.messages import GotoHashtagTimeline, ShowAccount, ShowThread
 from tooi.utils.html import get_text
+from tooi.widgets.list_view import ListView
 
 
 class SearchTab(TabPane):
