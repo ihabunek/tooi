@@ -80,9 +80,6 @@ class TimelineTab(TabPane):
     def make_event_detail(self, event: Event):
         return make_event_detail(event)
 
-    def focus_status(self, status_id: str):
-        self.event_list.focus_status(status_id)
-
     async def refresh_timeline(self):
         self.generator = self.timeline.create_generator()
         events = await anext(self.generator)
