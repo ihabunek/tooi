@@ -43,8 +43,17 @@ class ComposeScreen(ModalScreen[None]):
         self.in_reply_to = in_reply_to
         self.content_warning = None
 
+        # posting:default:federation is used by Hometown's local-only
+        # (unfederated) posts feature.  We treat this as a 3-way switch; if
+        # it's not present, the instance doesn't support local-only posts at
+        # all, otherwise it indicates if the post should be federated by
+        # default.
+        self.federated = instance_info.user_preferences.get('posting:default:federation')
+
         if in_reply_to:
             self.visibility = in_reply_to.original.visibility
+            if in_reply_to.local_only is not None:
+                self.federated = not in_reply_to.local_only
         else:
             self.visibility = instance_info.user_preferences.get(
                     'posting:default:visibility', Visibility.Public)
@@ -61,18 +70,24 @@ class ComposeScreen(ModalScreen[None]):
         if initial_text:
             self.text_area.cursor_location = (0, len(initial_text))
 
+        self.menu = Menu()
+
         self.visibility_menu_item = MenuItem("visibility", f"Visibility: {self.visibility}")
+        self.menu.append(self.visibility_menu_item)
+
+        if self.federated is not None:
+            label = federated_label(self.federated)
+            self.federation_menu_item = MenuItem("federation", f"Federation: {label}")
+            self.menu.append(self.federation_menu_item)
+
         self.post_menu_item = MenuItem("post", "Post status")
+        self.menu.append(self.post_menu_item)
+
         self.cancel_menu_item = MenuItem("cancel", "Cancel")
+        self.menu.append(self.cancel_menu_item)
+
         self.toggle_cw_menu_item = MenuItem("add_cw", "Add content warning")
         self.status = Static(id="compose_status")
-
-        self.menu = Menu(
-            self.toggle_cw_menu_item,
-            self.visibility_menu_item,
-            self.post_menu_item,
-            self.cancel_menu_item,
-        )
 
         self.character_count = ComposeCharacterCount(self.instance_info, self.text_area.text)
 
@@ -103,12 +118,15 @@ class ComposeScreen(ModalScreen[None]):
         self.set_status("Posting...", "text-muted")
 
         try:
-            await statuses.post(
-                self.text_area.text,
-                visibility=self.visibility,
-                spoiler_text=self.content_warning.text if self.content_warning else None,
-                in_reply_to=self.in_reply_to.original.id if self.in_reply_to else None
-            )
+            args = {
+                'visibility': self.visibility,
+                'spoiler_text': self.content_warning.text if self.content_warning else None,
+                'in_reply_to': self.in_reply_to.original.id if self.in_reply_to else None
+            }
+            if self.federated is not None:
+                args['local_only'] = not self.federated
+
+            await statuses.post(self.text_area.text, **args)
             self.set_status("Status posted", "text-success")
             await asyncio.sleep(0.5)
             self.dismiss()
@@ -129,6 +147,8 @@ class ComposeScreen(ModalScreen[None]):
         match message.item.code:
             case "visibility":
                 self.app.push_screen(SelectVisibilityModal(), self.set_visibility)
+            case "federation":
+                self.app.push_screen(SelectFederationModal(), self.set_federation)
             case "post":
                 asyncio.create_task(self.post_status())
             case "add_cw":
@@ -160,6 +180,11 @@ class ComposeScreen(ModalScreen[None]):
     def set_visibility(self, visibility: Visibility):
         self.visibility = visibility
         self.visibility_menu_item.update(f"Visibility: {visibility.name}")
+
+    def set_federation(self, federated: bool):
+        self.federated = federated
+        label = federated_label(federated)
+        self.federation_menu_item.update(label)
 
     def set_status(self, message: str, classes: str = ""):
         self.status.set_classes(classes)
@@ -223,6 +248,18 @@ class ComposeTextArea(TextArea):
             super().__init__()
 
 
+def visibility_label(visibilty: Visibility):
+    match visibilty:
+        case Visibility.Public:
+            return "Public - Visible to everyone, shown in public timelines."
+        case Visibility.Unlisted:
+            return "Unlisted - Visible to public, but not included in public timelines."
+        case Visibility.Private:
+            return "Private - Visible to followers only, and to any mentioned users."
+        case Visibility.Direct:
+            return "Direct - Visible only to mentioned users."
+
+
 class SelectVisibilityModal(ModalScreen[Visibility]):
     def compose_modal(self):
         yield Static("Select visibility", classes="modal_title")
@@ -237,16 +274,23 @@ class SelectVisibilityModal(ModalScreen[Visibility]):
         self.dismiss(cast(Visibility, message.item.code))
 
 
-def visibility_label(visibilty: Visibility):
-    match visibilty:
-        case Visibility.Public:
-            return "Public - Visible to everyone, shown in public timelines."
-        case Visibility.Unlisted:
-            return "Unlisted - Visible to public, but not included in public timelines."
-        case Visibility.Private:
-            return "Private - Visible to followers only, and to any mentioned users."
-        case Visibility.Direct:
-            return "Direct - Visible only to mentioned users."
+def federated_label(federated: bool) -> str:
+    if federated:
+        return "Federated"
+    else:
+        return "Local only (unfederated)"
+
+
+class SelectFederationModal(ModalScreen[Visibility]):
+    def compose_modal(self):
+        yield Static("Select federation", classes="modal_title")
+        yield Menu(
+            MenuItem(True, federated_label(True)),
+            MenuItem(False, federated_label(False)),
+        )
+
+    def on_menu_item_selected(self, message: Menu.ItemSelected):
+        self.dismiss(message.item.code)
 
 
 class ComposeCharacterCount(Static):

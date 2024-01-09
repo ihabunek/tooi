@@ -23,6 +23,7 @@ async def post(
     sensitive: bool = False,
     spoiler_text: str | None = None,
     in_reply_to: Optional[str] = None,
+    local_only: bool | None = None,
 ) -> Response:
     # Idempotency key assures the same status is not posted multiple times
     # if the request is retried.
@@ -34,6 +35,7 @@ async def post(
         "sensitive": sensitive,
         "spoiler_text": spoiler_text,
         "in_reply_to_id": in_reply_to,
+        "local_only": local_only,
     })
 
     return await request("POST", "/api/v1/statuses", headers=headers, json=payload)
