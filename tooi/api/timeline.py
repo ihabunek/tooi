@@ -50,8 +50,13 @@ async def fetch_timeline(
     next_path = path
     while next_path:
         response = await request("GET", next_path, params=_params)
-        yield response.json()
-        next_path = _get_next_path(response.headers)
+        events = response.json()
+
+        if len(events) == 0:
+            next_path = None
+        else:
+            yield events
+            next_path = _get_next_path(response.headers)
 
 
 class Timeline(ABC):
@@ -77,10 +82,36 @@ class StatusTimeline(Timeline):
         super().__init__(name, instance)
         self.path = path
         self.params = params
+        self._most_recent_id = None
 
     async def fetch(self, limit: int | None = None) -> EventGenerator:
-        async for events in fetch_timeline(self.instance, self.path, self.params, limit):
-            yield [StatusEvent(self.instance, from_dict(Status, s)) for s in events]
+        async for eventlist in fetch_timeline(self.instance, self.path, self.params, limit):
+            events = [StatusEvent(self.instance, from_dict(Status, s)) for s in eventlist]
+
+            # Track the most recent id we've fetched, which will be the first, for update().
+            if self._most_recent_id is None and len(events) > 0:
+                self._most_recent_id = events[0].status.id
+
+            yield events
+
+    async def update(self, limit: int | None = None) -> EventGenerator:
+        eventslist = fetch_timeline(
+                self.instance,
+                self.path,
+                self.params,
+                limit,
+                self._most_recent_id)
+
+        updated_most_recent = False
+
+        async for eventlist in eventslist:
+            events = [StatusEvent(self.instance, from_dict(Status, s)) for s in eventlist]
+
+            if updated_most_recent == False and len(events) > 0:
+                updated_most_recent = True
+                self._most_recent_id = events[0].status.id
+
+            yield events
 
 
 class HomeTimeline(StatusTimeline):
@@ -159,8 +190,13 @@ class NotificationTimeline(Timeline):
     NotificationTimeline loads events from the user's notifications.
     https://docs.joinmastodon.org/methods/notifications/
     """
+
+    # TODO: not included: follow_request, poll, update, admin.sign_up, admin.report
+    TYPES = [ "mention", "follow", "favourite", "reblog"]
+
     def __init__(self, instance: InstanceInfo):
         super().__init__("Notifications", instance)
+        self._most_recent_id = None
 
     def make_notification_event(self, response: dict) -> Event | None:
         notification = from_dict(Notification, response)
@@ -185,13 +221,35 @@ class NotificationTimeline(Timeline):
 
         path = "/api/v1/notifications"
         async for events in fetch_timeline(self.instance, path, params, limit):
-            yield [e for e in map(self.make_notification_event, events) if e is not None]
+            events = [e for e in map(self.make_notification_event, events) if e is not None]
+
+            # Track the most recent id we've fetched, which will be the first, for update().
+            if self._most_recent_id is None and len(events) > 0:
+                self._most_recent_id = events[0].notification.id
+
+            yield events
 
     def fetch(self, limit: int | None = None):
-        # TODO: not included: follow_request, poll, update, admin.sign_up, admin.report
-        types = ["mention", "status", "reblog", "favourite", "follow"]
-        params = {"types[]": types}
-        return self.notification_generator(params, limit)
+        return self.notification_generator({ "types[]": self.TYPES}, limit)
+
+    async def update(self, limit: int | None = None) -> EventGenerator:
+        eventslist = fetch_timeline(
+                self.instance,
+                "/api/v1/notifications",
+                params={ "types[]": self.TYPES },
+                limit=limit,
+                since_id=self._most_recent_id)
+
+        updated_most_recent = False
+
+        async for eventlist in eventslist:
+            events = [e for e in map(self.make_notification_event, eventlist) if e is not None]
+
+            if updated_most_recent == False and len(events) > 0:
+                updated_most_recent = True
+                self._most_recent_id = events[0].notification.id
+
+            yield events
 
 
 class TagTimeline(StatusTimeline):
@@ -199,7 +257,14 @@ class TagTimeline(StatusTimeline):
     TagTimeline loads events from the given hashtag.
     This timeline only ever returns events of type StatusEvent.
     """
-    def __init__(self, instance: InstanceInfo, hashtag: str, local: bool = False):
+    def __init__(
+            self,
+            instance:
+            InstanceInfo,
+            hashtag: str,
+            local: bool = False,
+            remote: bool=False):
+
         self.local = local
 
         # Normalise the hashtag to not begin with a hash
@@ -210,11 +275,15 @@ class TagTimeline(StatusTimeline):
             raise (ValueError("TagTimeline: tag is empty"))
 
         self.hashtag = hashtag
-        super().__init__(f"#{self.hashtag}", instance)
 
-    def fetch(self, limit: int = 40):
-        path = f"/api/v1/timelines/tag/{quote(self.hashtag)}"
-        return self.status_generator(path, limit=limit)
+        super().__init__(
+                f"#{self.hashtag}",
+                instance,
+                f"/api/v1/timelines/tag/{quote(self.hashtag)}",
+                params={
+                    "local": local,
+                    "remote": remote,
+                })
 
 
 class ContextTimeline(Timeline):
