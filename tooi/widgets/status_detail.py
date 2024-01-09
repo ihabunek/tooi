@@ -214,6 +214,12 @@ class StatusMeta(Static):
         self.status = status
         super().__init__()
 
+    def visibility_string(self, status):
+        vis = f"{status.visibility.capitalize()}"
+        if status.local_only:
+            vis += " (local only)"
+        return vis
+
     def render(self):
         status = self.status.original
         parts = [
@@ -221,7 +227,7 @@ class StatusMeta(Static):
             f"{status.reblogs_count} boosts",
             f"{status.favourites_count} favourites",
             f"{status.replies_count} replies",
-            f"{status.visibility.capitalize()}",
+            self.visibility_string(status),
         ]
         return " · ".join(parts)
 

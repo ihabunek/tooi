@@ -252,6 +252,8 @@ class Status:
     bookmarked: Optional[bool]
     pinned: Optional[bool]
     filtered: Optional[list[FilterResult]]
+    # Hometown unfederated posts
+    local_only: Optional[bool]
 
     @property
     def original(self) -> "Status":
