@@ -73,16 +73,13 @@ class StatusTimeline(Timeline):
     StatusTimeline is the base class for timelines which only return statuses.
     """
 
-    def __init__(self, name: str, instance: InstanceInfo):
+    def __init__(self, name: str, instance: InstanceInfo, path: str, params: Params | None = None):
         super().__init__(name, instance)
+        self.path = path
+        self.params = params
 
-    async def status_generator(
-            self,
-            path: str,
-            params: Params = None,
-            limit: int | None = None) -> EventGenerator:
-
-        async for events in fetch_timeline(self.instance, path, params, limit):
+    async def fetch(self, limit: int | None = None) -> EventGenerator:
+        async for events in fetch_timeline(self.instance, self.path, self.params, limit):
             yield [StatusEvent(self.instance, from_dict(Status, s)) for s in events]
 
 
@@ -93,20 +90,14 @@ class HomeTimeline(StatusTimeline):
     """
 
     def __init__(self, instance: InstanceInfo):
-        super().__init__("Home", instance)
-
-    def fetch(self, limit: int | None = None):
-        return self.status_generator("/api/v1/timelines/home", limit=limit)
+        super().__init__("Home", instance, "/api/v1/timelines/home")
 
 
 class PublicTimeline(StatusTimeline):
     """PublicTimeline loads events from the public timeline."""
     def __init__(self, name: str, instance: InstanceInfo, local: bool):
-        super().__init__(name, instance)
+        super().__init__(name, instance, "/api/v1/timelines/public", {"local": local})
         self.local = local
-
-    def public_timeline_generator(self, limit: int | None = None):
-        return self.status_generator("/api/v1/timelines/public", {"local": self.local}, limit)
 
 
 class LocalTimeline(PublicTimeline):
@@ -117,9 +108,6 @@ class LocalTimeline(PublicTimeline):
     def __init__(self, instance: InstanceInfo):
         super().__init__("Local", instance, True)
 
-    def fetch(self, limit: int | None = None):
-        return self.public_timeline_generator(limit=limit)
-
 
 class FederatedTimeline(PublicTimeline):
     """
@@ -128,9 +116,6 @@ class FederatedTimeline(PublicTimeline):
     """
     def __init__(self, instance: InstanceInfo):
         super().__init__("Federated", instance, False)
-
-    def fetch(self, limit: int | None = None):
-        return self.public_timeline_generator(limit=limit)
 
 
 class AccountTimeline(StatusTimeline):
@@ -145,10 +130,19 @@ class AccountTimeline(StatusTimeline):
                  account_id: str,
                  replies=True,
                  reblogs=True):
-        super().__init__(title, instance)
+
         self.account_id = account_id
         self.replies = replies
         self.reblogs = reblogs
+
+        super().__init__(
+                title,
+                instance,
+                f"/api/v1/accounts/{self.account_id}/statuses",
+                {
+                    "exclude_replies": not self.replies,
+                    "exclude_reblogs": not self.reblogs
+                })
 
     @staticmethod
     async def from_name(
@@ -158,14 +152,6 @@ class AccountTimeline(StatusTimeline):
             reblogs: bool = True):
         account = await get_account_by_name(account_name)
         return AccountTimeline(instance, account_name, account.id, replies, reblogs)
-
-    def fetch(self, limit: int | None = None):
-        path = f"/api/v1/accounts/{self.account_id}/statuses"
-        params = {
-            "exclude_replies": not self.replies,
-            "exclude_reblogs": not self.reblogs
-        }
-        return self.status_generator(path, params, limit)
 
 
 class NotificationTimeline(Timeline):
