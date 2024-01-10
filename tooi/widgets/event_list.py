@@ -14,6 +14,10 @@ class EventList(ListView):
     A ListView that shows a list of events.
     """
 
+    # When prepending events, if we have more than this many events, start removing events from the
+    # end.
+    MAX_LENGTH = 1024
+
     DEFAULT_CSS = """
     EventList {
         width: 1fr;
@@ -61,6 +65,9 @@ class EventList(ListView):
 
         if self.current is not None:
             self.post_message(EventHighlighted(self.current))
+
+        for item in self.query(EventListItem)[self.MAX_LENGTH:]:
+            item.remove()
 
     def focus_event(self, event_id: str):
         for i, item in enumerate(self.query(EventListItem)):
