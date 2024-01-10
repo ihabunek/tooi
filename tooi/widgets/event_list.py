@@ -1,11 +1,10 @@
-from datetime import datetime, timezone, timedelta
 from textual.widgets import ListItem, Label
 
 from tooi.data.events import Event, StatusEvent, MentionEvent, NewFollowerEvent, ReblogEvent
 from tooi.data.events import FavouriteEvent
 from tooi.context import get_context
 from tooi.messages import EventHighlighted, EventSelected
-from tooi.utils.datetime import format_datetime
+from tooi.utils.datetime import format_datetime, format_relative
 from tooi.widgets.list_view import ListView
 
 
@@ -149,16 +148,7 @@ class EventListItem(ListItem, can_focus=True):
 
     def format_timestamp(self):
         if self.ctx.config.relative_timestamps:
-            diff = datetime.now(timezone.utc) - self.event.created_at
-            if (days := diff / timedelta(days=1)) >= 1:
-                return f"{int(days):>2}d"
-            elif (hours := diff / timedelta(hours=1)) >= 1:
-                return f"{int(hours):>2}h"
-            elif (minutes := diff / timedelta(minutes=1)) >= 1:
-                return f"{int(minutes):>2}m"
-            else:
-                seconds = diff / timedelta(seconds=1)
-                return f"{int(seconds):>2}s"
+            return format_relative(self.event.created_at)
         else:
             return format_datetime(self.event.created_at)
 
