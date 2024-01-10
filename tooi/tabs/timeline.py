@@ -9,8 +9,7 @@ from tooi.api.timeline import Timeline
 from tooi.context import get_context
 from tooi.data.instance import InstanceInfo
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread
-from tooi.messages import EventHighlighted, EventSelected, StatusReply
-from tooi.widgets.status_bar import StatusBar
+from tooi.messages import EventHighlighted, EventSelected, StatusReply, ShowStatusMessage
 from tooi.widgets.status_detail import StatusDetail
 from tooi.widgets.event_detail import make_event_detail, EventDetailPlaceholder
 from tooi.widgets.event_list import EventList
@@ -58,7 +57,6 @@ class TimelineTab(TabPane):
         # Start with an empty status list while we wait to load statuses.
         self.event_list = EventList([])
         self.event_detail = EventDetailPlaceholder()
-        self.status_bar = StatusBar()
 
     def on_show(self, message):
         self.event_list.focus()
@@ -75,7 +73,6 @@ class TimelineTab(TabPane):
             self.event_detail,
             id="main_window"
         )
-        yield self.status_bar
 
     def make_event_detail(self, event: Event):
         return make_event_detail(event)
@@ -88,16 +85,29 @@ class TimelineTab(TabPane):
 
         newevents = []
 
-        async for eventslist in self.timeline.update():
-            newevents += eventslist
+        self.post_message(ShowStatusMessage(f"[green]Updating timeline...[/]"))
+
+        try:
+            async for eventslist in self.timeline.update():
+                newevents += eventslist
+        except Exception as exc:
+            self.post_message(ShowStatusMessage(f"[red]Could not load timeline: {str(exc)}[/]"))
+            return
 
         # The updates are returned in inverse chronological order, so reverse them before adding.
         newevents.reverse()
         self.event_list.prepend_events(newevents)
+        self.post_message(ShowStatusMessage())
 
     async def fetch_timeline(self):
         self.generator = self.timeline.fetch()
-        events = await anext(self.generator)
+
+        try:
+            events = await anext(self.generator)
+        except Exception as exc:
+            self.post_message(ShowStatusMessage(f"[red]Could not load timeline: {str(exc)}[/]"))
+            return
+
         self.event_list.replace(events)
         self.query_one("#main_window").mount(self.event_detail)
 
@@ -162,14 +172,14 @@ class TimelineTab(TabPane):
     async def maybe_fetch_next_batch(self):
         if self.generator and self.should_fetch():
             self.fetching = True
-            self.status_bar.update("[green]Loading statuses...[/]")
+            self.post_message(ShowStatusMessage("[green]Loading statuses...[/]"))
             # TODO: handle exceptions
             try:
                 next_events = await anext(self.generator)
                 self.event_list.append_events(next_events)
             finally:
+                self.post_message(ShowStatusMessage())
                 self.fetching = False
-                self.status_bar.update()
 
     def should_fetch(self):
         if not self.fetching and self.event_list.index is not None:

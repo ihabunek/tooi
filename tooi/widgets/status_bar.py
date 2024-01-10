@@ -1,8 +1,8 @@
 from textual.timer import Timer
-from textual.widgets import Static
+from textual.widgets import Label
 
 
-class StatusBar(Static):
+class StatusBar(Label):
     timer: Timer
 
     # TODO: support multiple messages

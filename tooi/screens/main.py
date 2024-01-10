@@ -1,13 +1,16 @@
 from textual.app import ComposeResult
 from textual.binding import Binding
+from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import TabPane, TabbedContent, Footer
 
 from tooi.api.timeline import HomeTimeline, Timeline
 from tooi.data.instance import InstanceInfo
+from tooi.messages import ShowStatusMessage
 from tooi.tabs.search import SearchTab
 from tooi.tabs.timeline import TimelineTab
 from tooi.widgets.header import Header
+from tooi.widgets.status_bar import StatusBar
 
 
 class MainScreen(Screen[None]):
@@ -32,6 +35,11 @@ class MainScreen(Screen[None]):
     TabPane {
         padding: 0;
     }
+
+    #footer {
+        height: 2;
+        dock: bottom;
+    }
     """
 
     BINDINGS = [
@@ -51,21 +59,35 @@ class MainScreen(Screen[None]):
     ]
 
     def __init__(self, instance: InstanceInfo):
-        self.instance = instance
         super().__init__()
+        self.instance = instance
 
     def compose(self) -> ComposeResult:
-        yield Header("toot")
-        # Start with the home timeline
-        with TabbedContent():
-            yield TimelineTab(self.instance, HomeTimeline(self.instance))
-        yield Footer()
+        with Vertical():
+            yield Header("toot")
+            # Start with the home timeline
+            with TabbedContent():
+                yield TimelineTab(self.instance, HomeTimeline(self.instance))
+            with Vertical(id="footer"):
+                # Footer() needs to be in its own container, because it forcibly docks itself to the
+                # bottom, which would cause it to overlap the status bar.
+                with Vertical():
+                    yield Footer()
+                yield StatusBar()
 
     async def open_timeline_tab(self, timeline: Timeline, initial_focus: str | None = None):
         tab = TimelineTab(self.instance, timeline, initial_focus=initial_focus)
         tc = self.query_one(TabbedContent)
         await tc.add_pane(tab)
         tc.active = tab.id
+
+    def on_show_status_message(self, message: ShowStatusMessage):
+        status_bar = self.query_one(StatusBar)
+
+        if message.text is None:
+            status_bar.clear()
+        else:
+            status_bar.update(message.text)
 
     def action_select_tab(self, tabnr: int):
         tc = self.query_one(TabbedContent)

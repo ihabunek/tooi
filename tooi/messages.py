@@ -81,3 +81,8 @@ class ShowStatusMenu(StatusMessage):
 
 class StatusReply(StatusMessage):
     pass
+
+class ShowStatusMessage(Message):
+    def __init__(self, text: str | None = None):
+        super().__init__()
+        self.text = text
