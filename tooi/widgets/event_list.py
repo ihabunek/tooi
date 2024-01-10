@@ -13,9 +13,6 @@ class EventList(ListView):
     A ListView that shows a list of events.
     """
 
-    current: Event | None
-    events: list[Event]
-
     DEFAULT_CSS = """
     EventList {
         width: 1fr;
@@ -29,57 +26,51 @@ class EventList(ListView):
 
     def __init__(self, events: list[Event]):
         super().__init__()
-        self.events = []
-        self.current = None
         self.append_events(events)
+
+    @property
+    def current(self) -> Event | None:
+        if self.highlighted_child is None:
+            return None
+
+        return self.highlighted_child.event
 
     def replace(self, next_events: list[Event]):
         self.clear()
-        self.current = None
         self.append_events(next_events)
 
     def append_events(self, next_events: list[Event]):
-        self.events += next_events
-
         for event in next_events:
             self.mount(EventListItem(event))
 
-        if self.current is None and len(self.events) > 0:
+        if self.highlighted_child is None:
             self.index = 0
-            self.current = self.events[0]
 
         if self.current is not None:
             self.post_message(EventHighlighted(self.current))
 
     def prepend_events(self, next_events: list[Event]):
-        self.events = next_events + self.events
-
         for event in next_events:
             self.mount(EventListItem(event), before=0)
 
-        if self.current is None and len(self.events) > 0:
+        if self.current is None:
             self.index = 0
-            self.current = self.events[0]
 
         if self.current is not None:
             self.post_message(EventHighlighted(self.current))
 
     def focus_event(self, event_id: str):
-        for i, event in enumerate(self.events):
-            if event.id == event_id:
+        for i, item in enumerate(self.query(EventListItem)):
+            if item.event.id == event_id:
                 self.index = i
-                self.current = event
 
     @property
     def count(self):
-        return len(self.events)
+        return len(self)
 
     def on_list_view_highlighted(self, message: ListView.Highlighted):
-        if message.item and hasattr(message.item, "event"):
-            event = message.item.event
-            if event != self.current:
-                self.current = event
-                self.post_message(EventHighlighted(event))
+        if message.item:
+            self.post_message(EventHighlighted(message.item.event))
 
     def on_list_view_selected(self, message: ListView.Highlighted):
         if self.current:
