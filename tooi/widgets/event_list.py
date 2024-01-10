@@ -127,14 +127,14 @@ class EventListItem(ListItem, can_focus=True):
         if self.ctx.config.relative_timestamps:
             diff = datetime.now(timezone.utc) - self.event.created_at
             if (days := diff / timedelta(days=1)) >= 1:
-                timestamp = f"{int(days)}d"
+                timestamp = f"{int(days):>2}d"
             elif (hours := diff / timedelta(hours=1)) >= 1:
-                timestamp = f"{int(hours)}h"
+                timestamp = f"{int(hours):>2}h"
             elif (minutes := diff / timedelta(minutes=1)) >= 1:
-                timestamp = f"{int(minutes)}m"
+                timestamp = f"{int(minutes):>2}m"
             else:
                 seconds = diff / timedelta(seconds=1)
-                timestamp = f"{int(seconds)}s"
+                timestamp = f"{int(seconds):>2}s"
         else:
             timestamp = format_datetime(self.event.created_at)
 
