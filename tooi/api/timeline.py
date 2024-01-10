@@ -107,7 +107,7 @@ class StatusTimeline(Timeline):
         async for eventlist in eventslist:
             events = [StatusEvent(self.instance, from_dict(Status, s)) for s in eventlist]
 
-            if updated_most_recent == False and len(events) > 0:
+            if (not updated_most_recent) and len(events) > 0:
                 updated_most_recent = True
                 self._most_recent_id = events[0].status.id
 
@@ -192,7 +192,7 @@ class NotificationTimeline(Timeline):
     """
 
     # TODO: not included: follow_request, poll, update, admin.sign_up, admin.report
-    TYPES = [ "mention", "follow", "favourite", "reblog"]
+    TYPES = ["mention", "follow", "favourite", "reblog"]
 
     def __init__(self, instance: InstanceInfo):
         super().__init__("Notifications", instance)
@@ -230,13 +230,13 @@ class NotificationTimeline(Timeline):
             yield events
 
     def fetch(self, limit: int | None = None):
-        return self.notification_generator({ "types[]": self.TYPES}, limit)
+        return self.notification_generator({"types[]": self.TYPES}, limit)
 
     async def update(self, limit: int | None = None) -> EventGenerator:
         eventslist = fetch_timeline(
                 self.instance,
                 "/api/v1/notifications",
-                params={ "types[]": self.TYPES },
+                params={"types[]": self.TYPES},
                 limit=limit,
                 since_id=self._most_recent_id)
 
@@ -245,7 +245,7 @@ class NotificationTimeline(Timeline):
         async for eventlist in eventslist:
             events = [e for e in map(self.make_notification_event, eventlist) if e is not None]
 
-            if updated_most_recent == False and len(events) > 0:
+            if (not updated_most_recent) and len(events) > 0:
                 updated_most_recent = True
                 self._most_recent_id = events[0].notification.id
 
@@ -263,7 +263,7 @@ class TagTimeline(StatusTimeline):
             InstanceInfo,
             hashtag: str,
             local: bool = False,
-            remote: bool=False):
+            remote: bool = False):
 
         self.local = local
 
