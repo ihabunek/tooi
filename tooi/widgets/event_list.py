@@ -55,6 +55,8 @@ class EventList(ListView):
 
         if self.current is None:
             self.index = 0
+        else:
+            self.index += len(next_events)
 
         if self.current is not None:
             self.post_message(EventHighlighted(self.current))
