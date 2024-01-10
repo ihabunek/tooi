@@ -57,6 +57,14 @@ class ShowHashtagPicker(Message):
     pass
 
 
+class ToggleStatusFavourite(StatusMessage):
+    pass
+
+
+class ToggleStatusBoost(StatusMessage):
+    pass
+
+
 class GotoHashtagTimeline(Message):
     def __init__(self, hashtag: str) -> None:
         super().__init__()
@@ -81,6 +89,7 @@ class ShowStatusMenu(StatusMessage):
 
 class StatusReply(StatusMessage):
     pass
+
 
 class ShowStatusMessage(Message):
     def __init__(self, text: str | None = None):

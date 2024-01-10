@@ -5,11 +5,13 @@ from textual.containers import Horizontal
 from textual.widgets import TabPane
 
 from tooi.data.events import Event, StatusEvent, MentionEvent
+from tooi.api.statuses import set_favourite, unset_favourite, boost, unboost
 from tooi.api.timeline import Timeline
 from tooi.context import get_context
 from tooi.data.instance import InstanceInfo
-from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread
+from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread, ToggleStatusFavourite
 from tooi.messages import EventHighlighted, EventSelected, StatusReply, ShowStatusMessage
+from tooi.messages import ToggleStatusBoost
 from tooi.widgets.status_detail import StatusDetail
 from tooi.widgets.event_detail import make_event_detail, EventDetailPlaceholder
 from tooi.widgets.event_list import EventList
@@ -25,6 +27,8 @@ class TimelineTab(TabPane):
         Binding("u", "show_source", "Source"),
         Binding("t", "show_thread", "Thread"),
         Binding("r", "status_reply", "Reply"),
+        Binding("f", "status_favourite", "(Un)Favourite"),
+        Binding("b", "status_boost", "(Un)Boost"),
         Binding("left,h", "scroll_left", "Scroll Left", show=False),
         Binding("right,l", "scroll_right", "Scroll Right", show=False),
         Binding("s", "show_sensitive", "Show Sensitive", show=False),
@@ -85,7 +89,7 @@ class TimelineTab(TabPane):
 
         newevents = []
 
-        self.post_message(ShowStatusMessage(f"[green]Updating timeline...[/]"))
+        self.post_message(ShowStatusMessage("[green]Updating timeline...[/]"))
 
         try:
             async for eventslist in self.timeline.update():
@@ -126,6 +130,40 @@ class TimelineTab(TabPane):
 
     def on_status_selected(self, message: EventSelected):
         self.post_message(ShowStatusMenu(message.status))
+
+    async def on_toggle_status_favourite(self, message: ToggleStatusFavourite):
+        original = message.status.original
+        if original.favourited:
+            await unset_favourite(original.id)
+        else:
+            await set_favourite(original.id)
+
+    def action_status_favourite(self):
+        if event := self.event_list.current:
+            match event:
+                case MentionEvent():
+                    self.post_message(ToggleStatusFavourite(event.status))
+                case StatusEvent():
+                    self.post_message(ToggleStatusFavourite(event.status))
+                case _:
+                    pass
+
+    async def on_toggle_status_boost(self, message: ToggleStatusBoost):
+        original = message.status.original
+        if original.reblogged:
+            await unboost(original.id)
+        else:
+            await boost(original.id)
+
+    def action_status_boost(self):
+        if event := self.event_list.current:
+            match event:
+                case MentionEvent():
+                    self.post_message(ToggleStatusBoost(event.status))
+                case StatusEvent():
+                    self.post_message(ToggleStatusBoost(event.status))
+                case _:
+                    pass
 
     def action_show_sensitive(self):
         if isinstance(self.event_detail, StatusDetail) and self.event_detail.sensitive:

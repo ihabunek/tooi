@@ -44,3 +44,23 @@ async def post(
 def drop_empty_values(data: Dict[Any, Any]) -> Dict[Any, Any]:
     """Remove keys whose values are null"""
     return {k: v for k, v in data.items() if v is not None}
+
+
+async def set_favourite(status_id: str):
+    path = f"/api/v1/statuses/{status_id}/favourite"
+    await request("POST", path)
+
+
+async def unset_favourite(status_id: str):
+    path = f"/api/v1/statuses/{status_id}/unfavourite"
+    await request("POST", path)
+
+
+async def boost(status_id: str):
+    path = f"/api/v1/statuses/{status_id}/reblog"
+    await request("POST", path)
+
+
+async def unboost(status_id: str):
+    path = f"/api/v1/statuses/{status_id}/unreblog"
+    await request("POST", path)
