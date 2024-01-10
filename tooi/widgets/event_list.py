@@ -74,6 +74,10 @@ class EventList(ListView):
             if item.event.id == event_id:
                 self.index = i
 
+    def refresh_events(self):
+        for item in self.query(EventListItem):
+            item.refresh_event()
+
     @property
     def count(self):
         return len(self)
@@ -124,20 +128,7 @@ class EventListItem(ListItem, can_focus=True):
         self.ctx = get_context()
 
     def compose(self):
-        if self.ctx.config.relative_timestamps:
-            diff = datetime.now(timezone.utc) - self.event.created_at
-            if (days := diff / timedelta(days=1)) >= 1:
-                timestamp = f"{int(days):>2}d"
-            elif (hours := diff / timedelta(hours=1)) >= 1:
-                timestamp = f"{int(hours):>2}h"
-            elif (minutes := diff / timedelta(minutes=1)) >= 1:
-                timestamp = f"{int(minutes):>2}m"
-            else:
-                seconds = diff / timedelta(seconds=1)
-                timestamp = f"{int(seconds):>2}s"
-        else:
-            timestamp = format_datetime(self.event.created_at)
-
+        timestamp = self.format_timestamp()
         yield Label(timestamp, classes="event_list_timestamp")
 
         # TODO: These should probably be implemented in a way that doesn't
@@ -155,6 +146,27 @@ class EventListItem(ListItem, can_focus=True):
                 yield from self.compose_status()
             case _:
                 yield from self.compose_unknown()
+
+    def format_timestamp(self):
+        if self.ctx.config.relative_timestamps:
+            diff = datetime.now(timezone.utc) - self.event.created_at
+            if (days := diff / timedelta(days=1)) >= 1:
+                return f"{int(days):>2}d"
+            elif (hours := diff / timedelta(hours=1)) >= 1:
+                return f"{int(hours):>2}h"
+            elif (minutes := diff / timedelta(minutes=1)) >= 1:
+                return f"{int(minutes):>2}m"
+            else:
+                seconds = diff / timedelta(seconds=1)
+                return f"{int(seconds):>2}s"
+        else:
+            return format_datetime(self.event.created_at)
+
+    def refresh_event(self):
+        # Don't use query_one since the timestamp might not exist if we're updated before we've had
+        # a chance to render.
+        for label in self.query(".event_list_timestamp"):
+            label.update(self.format_timestamp())
 
     def _format_account_name(self, account):
         ctx = get_context()

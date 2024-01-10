@@ -99,6 +99,9 @@ class TimelineTab(TabPane):
         self.event_list.prepend_events(newevents)
         self.post_message(ShowStatusMessage())
 
+        # Make sure older events are up to date
+        self.query_one(EventList).refresh_events()
+
     async def fetch_timeline(self):
         self.generator = self.timeline.fetch()
 
