@@ -11,4 +11,4 @@ clean:
 	rm -rf build dist
 
 lint:
-	flake8
+	flake8 tooi
