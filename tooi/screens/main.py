@@ -20,7 +20,7 @@ class MainScreen(Screen[None]):
 
     DEFAULT_CSS = """
     Tabs {
-        height: 2;
+        height: 1;
 
         #tabs-list {
            min-height: 1;
@@ -39,6 +39,10 @@ class MainScreen(Screen[None]):
     #footer {
         height: 2;
         dock: bottom;
+    }
+
+    Underline {
+        display: none
     }
     """
 
