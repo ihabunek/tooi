@@ -11,6 +11,7 @@ _local = local()
 @dataclass
 class Configuration:
     always_show_sensitive: Optional[bool] = None
+    relative_timestamps: bool = False
 
 
 @dataclass

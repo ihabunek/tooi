@@ -1,3 +1,4 @@
+from datetime import datetime, timezone, timedelta
 from textual.widgets import ListItem, Label
 
 from tooi.data.events import Event, StatusEvent, MentionEvent, NewFollowerEvent, ReblogEvent
@@ -95,6 +96,7 @@ class EventListItem(ListItem, can_focus=True):
 
     .event_list_timestamp {
         width: auto;
+        min-width: 4;
     }
 
     .event_list_acct {
@@ -112,9 +114,23 @@ class EventListItem(ListItem, can_focus=True):
     def __init__(self, event: Event):
         super().__init__(classes="event_list_item")
         self.event = event
+        self.ctx = get_context()
 
     def compose(self):
-        timestamp = format_datetime(self.event.created_at)
+        if self.ctx.config.relative_timestamps:
+            diff = datetime.now(timezone.utc) - self.event.created_at
+            if (days := diff / timedelta(days=1)) >= 1:
+                timestamp = f"{int(days)}d"
+            elif (hours := diff / timedelta(hours=1)) >= 1:
+                timestamp = f"{int(hours)}h"
+            elif (minutes := diff / timedelta(minutes=1)) >= 1:
+                timestamp = f"{int(minutes)}m"
+            else:
+                seconds = diff / timedelta(seconds=1)
+                timestamp = f"{int(seconds)}s"
+        else:
+            timestamp = format_datetime(self.event.created_at)
+
         yield Label(timestamp, classes="event_list_timestamp")
 
         # TODO: These should probably be implemented in a way that doesn't

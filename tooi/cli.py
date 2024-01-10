@@ -34,9 +34,17 @@ CONTEXT = dict(
     type=click.BOOL,
     help="Override server preference to expand toots with content warnings automatically"
 )
-def tooi(always_show_sensitive: Optional[bool]):
+@click.option(
+    "-R", "--relative-timestamps",
+    is_flag=True,
+    help="Use relative timestamps in the timeline"
+)
+def tooi(
+        always_show_sensitive: Optional[bool],
+        relative_timestamps: bool):
     ctx = create_context()
     ctx.config.always_show_sensitive = always_show_sensitive
+    ctx.config.relative_timestamps = relative_timestamps
     set_context(ctx)
 
     app = TooiApp()
