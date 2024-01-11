@@ -1,8 +1,8 @@
 from textual.widgets import ListItem, Label
 
-from tooi.data.events import Event, StatusEvent, MentionEvent, NewFollowerEvent, ReblogEvent
-from tooi.data.events import FavouriteEvent
+from tooi.data.events import Event
 from tooi.context import get_context
+from tooi.entities import Account
 from tooi.messages import EventHighlighted, EventSelected
 from tooi.utils.datetime import format_datetime, format_relative
 from tooi.widgets.list_view import ListView
@@ -127,24 +127,9 @@ class EventListItem(ListItem, can_focus=True):
         self.ctx = get_context()
 
     def compose(self):
-        timestamp = self.format_timestamp()
-        yield Label(timestamp, classes="event_list_timestamp")
-
-        # TODO: These should probably be implemented in a way that doesn't
-        # require hard-coding the list of event types.
-        match self.event:
-            case NewFollowerEvent():
-                yield from self.compose_new_follower()
-            case ReblogEvent():
-                yield from self.compose_reblog()
-            case FavouriteEvent():
-                yield from self.compose_favourite()
-            case MentionEvent():
-                yield from self.compose_mention()
-            case StatusEvent():
-                yield from self.compose_status()
-            case _:
-                yield from self.compose_unknown()
+        yield Label(self.format_timestamp(), classes="event_list_timestamp")
+        yield Label(self.event.flags, classes="event_list_flags")
+        yield Label(self._format_account_name(self.event.account), classes="event_list_acct")
 
     def format_timestamp(self):
         if self.ctx.config.relative_timestamps:
@@ -158,38 +143,7 @@ class EventListItem(ListItem, can_focus=True):
         for label in self.query(".event_list_timestamp"):
             label.update(self.format_timestamp())
 
-    def _format_account_name(self, account):
+    def _format_account_name(self, account: Account) -> str:
         ctx = get_context()
         acct = account.acct
         return acct if "@" in acct else f"{acct}@{ctx.auth.domain}"
-
-    def compose_status(self):
-        flags = "B" if self.event.status.reblog else " "
-        acct = self.event.status.original.account
-        yield Label(flags, classes="event_list_flags")
-        yield Label(self._format_account_name(acct), classes="event_list_acct")
-
-    def compose_mention(self):
-        acct = self.event.account
-        yield Label("@", classes="event_list_flags")
-        yield Label(self._format_account_name(acct), classes="event_list_acct")
-
-    def compose_reblog(self):
-        acct = self.event.account
-        yield Label("B", classes="event_list_flags")
-        yield Label(self._format_account_name(acct), classes="event_list_acct")
-
-    def compose_favourite(self):
-        acct = self.event.account
-        yield Label("*", classes="event_list_flags")
-        yield Label(self._format_account_name(acct), classes="event_list_acct")
-
-    def compose_new_follower(self):
-        acct = self.event.account
-        yield Label(">", classes="event_list_flags")
-        yield Label(self._format_account_name(acct), classes="event_list_acct")
-
-    def compose_unknown(self):
-        acct = self.event.account
-        yield Label("?", classes="event_list_flags")
-        yield Label(self._format_account_name(acct), classes="event_list_acct")
