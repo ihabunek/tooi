@@ -13,10 +13,9 @@ from httpx._types import QueryParamTypes
 
 from tooi.api import request, statuses
 from tooi.api.accounts import get_account_by_name
-from tooi.data.events import Event, StatusEvent, MentionEvent, NewFollowerEvent, ReblogEvent
-from tooi.data.events import FavouriteEvent
+from tooi.data.events import Event, NotificationEvent, StatusEvent
 from tooi.data.instance import InstanceInfo
-from tooi.entities import Status, Notification, from_dict
+from tooi.entities import Status, Notification, from_dict, from_dict_list
 
 Params = Optional[QueryParamTypes]
 EventGenerator = AsyncGenerator[List[Event], None]
@@ -198,21 +197,6 @@ class NotificationTimeline(Timeline):
         super().__init__("Notifications", instance)
         self._most_recent_id = None
 
-    def make_notification_event(self, response: dict) -> Event | None:
-        notification = from_dict(Notification, response)
-
-        match notification.type:
-            case "mention":
-                return MentionEvent(self.instance, notification)
-            case "follow":
-                return NewFollowerEvent(self.instance, notification)
-            case "favourite":
-                return FavouriteEvent(self.instance, notification)
-            case "reblog":
-                return ReblogEvent(self.instance, notification)
-            case _:
-                return None
-
     async def notification_generator(
             self,
             path: str,
@@ -220,8 +204,9 @@ class NotificationTimeline(Timeline):
             limit: int | None = None) -> EventGenerator:
 
         path = "/api/v1/notifications"
-        async for events in fetch_timeline(self.instance, path, params, limit):
-            events = [e for e in map(self.make_notification_event, events) if e is not None]
+        async for items in fetch_timeline(self.instance, path, params, limit):
+            notifications = from_dict_list(Notification, items)
+            events = [NotificationEvent(self.instance, n) for n in notifications]
 
             # Track the most recent id we've fetched, which will be the first, for update().
             if self._most_recent_id is None and len(events) > 0:
@@ -233,7 +218,7 @@ class NotificationTimeline(Timeline):
         return self.notification_generator({"types[]": self.TYPES}, limit)
 
     async def update(self, limit: int | None = None) -> EventGenerator:
-        eventslist = fetch_timeline(
+        timeline = fetch_timeline(
                 self.instance,
                 "/api/v1/notifications",
                 params={"types[]": self.TYPES},
@@ -242,8 +227,9 @@ class NotificationTimeline(Timeline):
 
         updated_most_recent = False
 
-        async for eventlist in eventslist:
-            events = [e for e in map(self.make_notification_event, eventlist) if e is not None]
+        async for items in timeline:
+            notifications = from_dict_list(Notification, items)
+            events = [NotificationEvent(self.instance, n) for n in notifications]
 
             if (not updated_most_recent) and len(events) > 0:
                 updated_most_recent = True
