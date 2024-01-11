@@ -68,9 +68,9 @@ class UnknownEventDetail(Static, can_focus=True):
     }
     """
 
-    def __init__(self, event):
+    def __init__(self, event: NotificationEvent):
         self.event = event
-        super().__init__("<unknown event>")
+        super().__init__(f"<unknown notification type: {event.notification.type}>")
 
 
 class EventDetailPlaceholder(Static, can_focus=True):

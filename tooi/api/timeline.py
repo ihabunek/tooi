@@ -191,9 +191,6 @@ class NotificationTimeline(Timeline):
     https://docs.joinmastodon.org/methods/notifications/
     """
 
-    # TODO: not included: follow_request, poll, update, admin.sign_up, admin.report
-    TYPES = ["mention", "follow", "favourite", "reblog"]
-
     def __init__(self, instance: InstanceInfo):
         super().__init__("Notifications", instance)
         self._most_recent_id = None
@@ -215,7 +212,6 @@ class NotificationTimeline(Timeline):
 
     async def notification_generator(
             self,
-            path: str,
             params: Params = None,
             limit: int | None = None) -> EventGenerator:
 
@@ -230,13 +226,12 @@ class NotificationTimeline(Timeline):
             yield events
 
     def fetch(self, limit: int | None = None):
-        return self.notification_generator({"types[]": self.TYPES}, limit)
+        return self.notification_generator(limit=limit)
 
     async def update(self, limit: int | None = None) -> EventGenerator:
         eventslist = fetch_timeline(
                 self.instance,
                 "/api/v1/notifications",
-                params={"types[]": self.TYPES},
                 limit=limit,
                 since_id=self._most_recent_id)
 
