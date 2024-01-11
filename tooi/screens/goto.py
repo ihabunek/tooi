@@ -1,12 +1,13 @@
+from textual import on
 from textual.app import ComposeResult, log
 from textual.binding import Binding
 from textual.message import Message
-from textual.widgets import Input, ListItem, Static
+from textual.widgets import Input, Static
 
 from tooi.messages import GotoHomeTimeline, GotoLocalTimeline, ShowNotifications
 from tooi.messages import GotoFederatedTimeline, ShowHashtagPicker, GotoPersonalTimeline
 from tooi.screens.modal import ModalScreen
-from tooi.widgets.list_view import ListView
+from tooi.widgets.menu import Menu, MenuItem
 
 
 class GotoScreen(ModalScreen[Message | None]):
@@ -17,27 +18,21 @@ class GotoScreen(ModalScreen[Message | None]):
     """
 
     def compose_modal(self) -> ComposeResult:
-        self.list_view = ListView(
-            ListItem(Static("< Home timeline >"), id="goto_home"),
-            ListItem(Static("< Personal timeline >"), id="goto_personal"),
-            ListItem(Static("< Local timeline >"), id="goto_local"),
-            ListItem(Static("< Federated timeline >"), id="goto_federated"),
-            ListItem(Static("< Notifications >"), id="goto_notifications"),
-            ListItem(Static("< Hashtag timeline >"), id="goto_hashtag"),
-        )
-        self.status = Static("")
-
         yield Static("Go to", classes="modal_title")
-        yield self.list_view
-        yield self.status
+        yield Menu(
+            MenuItem(code="goto_personal", label="Personal timeline", key="p"),
+            MenuItem(code="goto_home", label="Home timeline", key="h"),
+            MenuItem(code="goto_local", label="Local timeline", key="l"),
+            MenuItem(code="goto_federated", label="Federated timeline", key="f"),
+            MenuItem(code="goto_notifications", label="Notifications", key="n"),
+            MenuItem(code="goto_hashtag", label="Hashtag timeline", key="t"),
+        )
 
-    def on_list_view_selected(self, message: ListView.Selected):
+    @on(Menu.ItemSelected)
+    def on_item_selected(self, message: Menu.ItemSelected):
         message.stop()
 
-        if not message.item:
-            self.dismiss(None)
-
-        match message.item.id:
+        match message.item.code:
             case "goto_home":
                 self.dismiss(GotoHomeTimeline())
             case "goto_personal":
