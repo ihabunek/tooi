@@ -4,7 +4,7 @@ from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.widgets import TabPane
 
-from tooi.data.events import Event, StatusEvent, MentionEvent
+from tooi.data.events import Event
 from tooi.api.statuses import set_favourite, unset_favourite, boost, unboost
 from tooi.api.timeline import Timeline
 from tooi.context import get_context
@@ -140,13 +140,8 @@ class TimelineTab(TabPane):
 
     def action_status_favourite(self):
         if event := self.event_list.current:
-            match event:
-                case MentionEvent():
-                    self.post_message(ToggleStatusFavourite(event.status))
-                case StatusEvent():
-                    self.post_message(ToggleStatusFavourite(event.status))
-                case _:
-                    pass
+            if event.status:
+                self.post_message(ToggleStatusFavourite(event.status))
 
     async def on_toggle_status_boost(self, message: ToggleStatusBoost):
         original = message.status.original
@@ -157,13 +152,8 @@ class TimelineTab(TabPane):
 
     def action_status_boost(self):
         if event := self.event_list.current:
-            match event:
-                case MentionEvent():
-                    self.post_message(ToggleStatusBoost(event.status))
-                case StatusEvent():
-                    self.post_message(ToggleStatusBoost(event.status))
-                case _:
-                    pass
+            if event.status:
+                self.post_message(ToggleStatusBoost(event.status))
 
     def action_show_sensitive(self):
         if isinstance(self.event_detail, StatusDetail) and self.event_detail.sensitive:
@@ -171,38 +161,23 @@ class TimelineTab(TabPane):
 
     def action_show_account(self):
         if event := self.event_list.current:
-            match event:
-                case MentionEvent():
-                    self.post_message(ShowAccount(event.status.original.account))
-                case StatusEvent():
-                    self.post_message(ShowAccount(event.status.original.account))
-                case _:
-                    pass
+            if event.status:
+                self.post_message(ShowAccount(event.status.original.account))
 
     def action_show_source(self):
         if event := self.event_list.current:
-            if isinstance(event, StatusEvent):
+            if event.status:
                 self.post_message(ShowSource(event.status))
 
     def action_show_thread(self):
         if event := self.event_list.current:
-            match event:
-                case MentionEvent():
-                    self.post_message(ShowThread(event.status))
-                case StatusEvent():
-                    self.post_message(ShowThread(event.status))
-                case _:
-                    pass
+            if event.status:
+                self.post_message(ShowThread(event.status))
 
     def action_status_reply(self):
         if event := self.event_list.current:
-            match event:
-                case MentionEvent():
-                    self.post_message(StatusReply(event.status))
-                case StatusEvent():
-                    self.post_message(StatusReply(event.status))
-                case _:
-                    pass
+            if event.status:
+                self.post_message(StatusReply(event.status))
 
     def action_scroll_left(self):
         self.event_list.focus()
