@@ -3,13 +3,12 @@ from textual.widget import Widget
 from textual.widgets import Static
 
 from tooi.context import get_context
-from tooi.data.events import Event, StatusEvent, MentionEvent, FavouriteEvent, NewFollowerEvent
-from tooi.data.events import ReblogEvent
+from tooi.data.events import Event, NotificationEvent, StatusEvent
 from tooi.widgets.status_detail import StatusDetail
 
 
 class MentionDetail(StatusDetail):
-    def __init__(self, event: Event, revealed: bool = False):
+    def __init__(self, event: NotificationEvent, revealed: bool = False):
         super().__init__(event)
 
     # TODO: Perhaps display a "You were mentioned by..." header.
@@ -18,7 +17,7 @@ class MentionDetail(StatusDetail):
 
 
 class ReblogDetail(StatusDetail):
-    def __init__(self, event: Event, revealed: bool = False):
+    def __init__(self, event: NotificationEvent, revealed: bool = False):
         super().__init__(event)
 
     def compose(self):
@@ -26,7 +25,7 @@ class ReblogDetail(StatusDetail):
 
 
 class FavouriteDetail(StatusDetail):
-    def __init__(self, event: Event, revealed: bool = False):
+    def __init__(self, event: NotificationEvent, revealed: bool = False):
         super().__init__(event)
 
     def compose(self):
@@ -44,7 +43,7 @@ class NewFollowerDetail(VerticalScroll):
     }
     """
 
-    def __init__(self, event: NewFollowerEvent, revealed: bool = False):
+    def __init__(self, event: NotificationEvent, revealed: bool = False):
         self.event = event
         super().__init__()
 
@@ -92,15 +91,19 @@ class EventDetailPlaceholder(Static, can_focus=True):
 
 def make_event_detail(event: Event) -> Widget:
     match event:
-        case NewFollowerEvent():
-            return NewFollowerDetail(event)
-        case MentionEvent():
-            return MentionDetail(event)
-        case FavouriteEvent():
-            return FavouriteDetail(event)
-        case ReblogEvent():
-            return ReblogDetail(event)
         case StatusEvent():
             return StatusDetail(event)
+        case NotificationEvent():
+            match event.notification.type:
+                case "follow":
+                    return NewFollowerDetail(event)
+                case "mention":
+                    return MentionDetail(event)
+                case "favourite":
+                    return FavouriteDetail(event)
+                case "reblog":
+                    return ReblogDetail(event)
+                case _:
+                    return UnknownEventDetail(event)
         case _:
-            return UnknownEventDetail(event)
+            raise NotImplementedError()
