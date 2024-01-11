@@ -21,6 +21,10 @@ class Event(ABC):
     def status(self) -> Status | None:
         ...
 
+    @abstractproperty
+    def account(self) -> Account:
+        ...
+
 
 class StatusEvent(Event):
     """
@@ -37,6 +41,10 @@ class StatusEvent(Event):
     @property
     def created_at(self) -> datetime:
         return self.status.created_at
+
+    @property
+    def account(self) -> Account:
+        return self.status.original.account
 
 
 class NotificationEvent(Event):
