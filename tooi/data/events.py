@@ -17,14 +17,22 @@ class Event(ABC):
     def created_at(self) -> datetime:
         ...
 
+    @abstractproperty
+    def status(self) -> Status | None:
+        ...
+
 
 class StatusEvent(Event):
     """
     Represents a new status being posted on a timeline.
     """
     def __init__(self, instance: InstanceInfo, status: Status):
-        self.status = status
+        self._status = status
         super().__init__(f"status:{status.id}", instance)
+
+    @property
+    def status(self) -> Status:
+        return self._status
 
     @property
     def created_at(self) -> datetime:
@@ -46,6 +54,10 @@ class NotificationEvent(Event):
     @property
     def account(self) -> Account:
         return self.notification.account
+
+    @property
+    def status(self) -> Status | None:
+        return self.notification.status
 
 
 class MentionEvent(NotificationEvent):
