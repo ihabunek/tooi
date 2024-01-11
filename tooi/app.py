@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 from tooi.api.timeline import Timeline, HomeTimeline, LocalTimeline, TagTimeline, AccountTimeline
 from tooi.api.timeline import FederatedTimeline, ContextTimeline, NotificationTimeline
+from tooi.asyncio import create_async_context, set_async_context
 from tooi.context import get_context
 from tooi.data.instance import get_instance_info
 from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoLocalTimeline
@@ -38,6 +39,10 @@ class TooiApp(App[None]):
         ("g", "goto", "Goto"),
         ("i", "show_instance", "Instance"),
     ]
+
+    def __init__(self):
+        super().__init__()
+        set_async_context(create_async_context(self))
 
     async def on_mount(self):
         self.push_screen("loading")
