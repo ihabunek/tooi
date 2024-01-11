@@ -1,7 +1,9 @@
+import re
+
 from typing import cast
+from rich.text import Text
 
 from textual import events
-from textual.app import log
 from textual.message import Message
 from textual.widgets import ListItem, Static
 from tooi.widgets.list_view import ListView
@@ -57,8 +59,19 @@ class MenuItem(ListItem):
     def __init__(self, code: str, label: str, key: str | None = None):
         self.code = code
         self.key = key
-        self._static = Static(f"< {label} >")
+        self._static = Static(self.make_label(label, key))
         super().__init__(self._static)
 
     def update(self, value: str):
         self._static.update(f"< {value} >")
+
+    def make_label(self, label: str, key: str | None) -> Text:
+        label = f"< {label} >"
+        text = Text(label)
+
+        # Attempt to automatically mark the shortcuts to menu items
+        if key is not None and len(key) == 1:
+            if match := re.search(key, label, re.IGNORECASE):
+                text.stylize("bold underline", match.start(), match.end())
+
+        return text
