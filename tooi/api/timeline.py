@@ -14,6 +14,7 @@ from httpx._types import QueryParamTypes
 
 from tooi.api import request, statuses
 from tooi.api.accounts import get_account_by_name
+from tooi.api.streaming import StreamSubscription
 from tooi.asyncio import run_async_task, AsyncAtomic
 from tooi.data.events import Event, NotificationEvent, StatusEvent
 from tooi.data.instance import InstanceInfo
@@ -88,7 +89,7 @@ class Timeline(ABC):
         if not self.can_update:
             raise (NotImplementedError("this Timeline cannot update"))
 
-    def close(self):
+    async def close(self):
         if update_task := self._update_task:
             update_task.cancel()
 
@@ -102,6 +103,13 @@ class Timeline(ABC):
     def periodic_refresh(self, frequency: int):
         self._assert_can_update()
         self._periodic_refresh_task = run_async_task(self._periodic_refresh(frequency))
+
+    @property
+    def can_stream(self):
+        return False
+
+    def streaming(self, enable: bool):
+        raise (NotImplementedError("this Timeline cannot stream"))
 
     async def _periodic_refresh(self, frequency: int):
         while True:
@@ -177,11 +185,32 @@ class StatusTimeline(Timeline):
     StatusTimeline is the base class for timelines which only return statuses.
     """
 
-    def __init__(self, name: str, instance: InstanceInfo, path: str, params: Params | None = None):
+    def __init__(
+            self,
+            name: str,
+            instance: InstanceInfo,
+            path: str,
+            params: Params | None = None,
+            stream_name: str | None = None):
+
         super().__init__(name, instance, can_update=True)
         self.path = path
         self.params = params
+        self._stream_name = stream_name
+        self._subscription = None
         self._most_recent_id = None
+        self._streaming_task = None
+
+    async def close(self):
+        if self._streaming_task is not None:
+            self._streaming_task.cancel()
+            self._streaming_task = None
+
+        if self._subscription is not None:
+            await self._subscription.close()
+            self._subscription = None
+
+        await super().close()
 
     async def fetch(self, limit: int | None = None) -> EventGenerator:
         async for eventlist in fetch_timeline(self.instance, self.path, self.params, limit):
@@ -214,6 +243,27 @@ class StatusTimeline(Timeline):
                 # Note that we need to preserve the event order, so dispatch them one at a time.
                 await self._dispatch(event)
 
+    @property
+    def can_stream(self):
+        return self._stream_name is not None
+
+    async def streaming(self, enable):
+        if enable:
+            self._subscription = await self.instance.streamer.subscribe(self._stream_name)
+            self._streaming_task = run_async_task(self._stream())
+        else:
+            pass
+
+    async def _stream(self):
+        while True:
+            sevt = await self._subscription.get()
+            match sevt.event:
+                case "update":
+                    event = StatusEvent(self.instance, from_dict(Status, sevt.payload))
+                    await self._dispatch(event)
+                case _:
+                    pass
+
 
 class HomeTimeline(StatusTimeline):
     """
@@ -227,8 +277,20 @@ class HomeTimeline(StatusTimeline):
 
 class PublicTimeline(StatusTimeline):
     """PublicTimeline loads events from the public timeline."""
-    def __init__(self, name: str, instance: InstanceInfo, local: bool):
-        super().__init__(name, instance, "/api/v1/timelines/public", {"local": local})
+    def __init__(
+            self,
+            name: str,
+            instance: InstanceInfo,
+            local: bool,
+            stream_name: str | None = None):
+
+        super().__init__(
+                name,
+                instance,
+                "/api/v1/timelines/public",
+                {"local": local},
+                stream_name=stream_name)
+
         self.local = local
 
 
@@ -247,7 +309,7 @@ class FederatedTimeline(PublicTimeline):
     This timeline only ever returns events of type StatusEvent.
     """
     def __init__(self, instance: InstanceInfo):
-        super().__init__("Federated", instance, False)
+        super().__init__("Federated", instance, False, stream_name=StreamSubscription.PUBLIC_REMOTE)
 
 
 class AccountTimeline(StatusTimeline):
