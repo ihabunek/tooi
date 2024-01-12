@@ -63,7 +63,7 @@ class TimelineTab(TabPane):
         self.event_list = EventList([])
         self.event_detail = EventDetailPlaceholder()
 
-    def on_show(self, message):
+    def batch_show_update(self):
         self.event_list.focus()
 
     async def on_mount(self, message):
