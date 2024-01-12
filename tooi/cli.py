@@ -61,6 +61,11 @@ def tooi(
     ctx.config.relative_timestamps = relative_timestamps
     ctx.config.timeline_refresh = timeline_refresh
     ctx.config.streaming = streaming
+    # Streaming is not reliable, so if it's enabled, force timeline_refresh to be enabled as well;
+    # this catches any events that streaming missed.
+    if ctx.config.streaming and not ctx.config.timeline_refresh:
+        ctx.config.timeline_refresh = 120
+
     set_context(ctx)
 
     app = TooiApp()
