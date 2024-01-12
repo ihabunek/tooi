@@ -9,8 +9,7 @@ It uses the [Textual framework](https://textual.textualize.io/).
 
 This project is in its early days and not feature complete.
 
-* Source code: https://git.sr.ht/~ihabunek/tooi
-* Mailing list: https://lists.sr.ht/~ihabunek/toot-discuss
+* Source code: https://github.com/ihabunek/tooi
 * IRC chat: #toot channel on libera.chat
 
 ## Setting up a dev environment
@@ -18,8 +17,8 @@ This project is in its early days and not feature complete.
 Check out tooi and install in a virtual environment:
 
 ```
-git clone https://git.sr.ht/~ihabunek/tooi
-cd toot
+git clone https://github.com/ihabunek/tooi.git
+cd tooi
 python3 -m venv _env
 source _env/bin/activate
 pip install --editable ".[dev]"
