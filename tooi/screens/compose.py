@@ -62,7 +62,10 @@ class ComposeScreen(ModalScreen[None]):
 
     def compose_modal(self) -> ComposeResult:
         if self.in_reply_to:
-            initial_text = f"@{self.in_reply_to.original.account.acct} "
+            mention_accounts = (
+                    [self.in_reply_to.original.account.acct]
+                    + [m.acct for m in self.in_reply_to.original.mentions])
+            initial_text = " ".join([f"@{m}" for m in mention_accounts]) + " "
         else:
             initial_text = ""
 
