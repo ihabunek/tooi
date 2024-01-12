@@ -25,11 +25,6 @@ class Event(ABC):
     def account(self) -> Account:
         ...
 
-    @abstractproperty
-    def flags(self) -> str:
-        """Flags to display in event list."""
-        ...
-
 
 class StatusEvent(Event):
     """
@@ -51,22 +46,11 @@ class StatusEvent(Event):
     def account(self) -> Account:
         return self.status.original.account
 
-    @property
-    def flags(self) -> str:
-        return "B" if self.status.reblog else " "
-
 
 class NotificationEvent(Event):
     """
     Represents an event from the notification timeline.
     """
-    NOTIFICATION_FLAGS = {
-        "mention": "@",
-        "reblog": "B",
-        "favourite": "*",
-        "follow": ">",
-    }
-
     def __init__(self, instance: InstanceInfo, notification: Notification):
         self.notification = notification
         super().__init__(f"notification:{notification.id}", instance)
@@ -82,7 +66,3 @@ class NotificationEvent(Event):
     @property
     def status(self) -> Status | None:
         return self.notification.status
-
-    @property
-    def flags(self) -> str:
-        return self.NOTIFICATION_FLAGS.get(self.notification.type, " ")

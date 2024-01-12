@@ -1,6 +1,6 @@
 from textual.widgets import ListItem, Label
 
-from tooi.data.events import Event
+from tooi.data.events import Event, NotificationEvent, StatusEvent
 from tooi.context import get_context
 from tooi.entities import Account
 from tooi.messages import EventHighlighted, EventSelected
@@ -121,6 +121,13 @@ class EventListItem(ListItem, can_focus=True):
     }
     """
 
+    NOTIFICATION_FLAGS = {
+        "mention": "@",
+        "reblog": "B",
+        "favourite": "*",
+        "follow": ">",
+    }
+
     def __init__(self, event: Event):
         super().__init__(classes="event_list_item")
         self.event = event
@@ -128,7 +135,7 @@ class EventListItem(ListItem, can_focus=True):
 
     def compose(self):
         yield Label(self.format_timestamp(), classes="event_list_timestamp")
-        yield Label(self.event.flags, classes="event_list_flags")
+        yield Label(self._format_flags(), classes="event_list_flags")
         yield Label(self._format_account_name(self.event.account), classes="event_list_acct")
 
     def format_timestamp(self):
@@ -147,3 +154,12 @@ class EventListItem(ListItem, can_focus=True):
         ctx = get_context()
         acct = account.acct
         return acct if "@" in acct else f"{acct}@{ctx.auth.domain}"
+
+    def _format_flags(self) -> str:
+        match self.event:
+            case StatusEvent():
+                return "B" if self.event.status.reblog else " "
+            case NotificationEvent():
+                return self.NOTIFICATION_FLAGS.get(self.event.notification.type, " ")
+            case _:
+                return " "
