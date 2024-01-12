@@ -76,10 +76,15 @@ class Timeline(ABC):
     # perhaps removed entirely (set to zero).
     QUEUE_SIZE = 128
 
-    def __init__(self, name, instance: InstanceInfo, can_update: bool = False):
+    def __init__(self,
+                 name,
+                 instance: InstanceInfo,
+                 can_update: bool = False,
+                 can_stream: bool = False):
         self.instance = instance
         self.name = name
         self.can_update = can_update
+        self.can_stream = can_stream
         self._update_running = AsyncAtomic[bool](False)
         self._update_task = None
         self._periodic_refresh_task = None
@@ -103,10 +108,6 @@ class Timeline(ABC):
     def periodic_refresh(self, frequency: int):
         self._assert_can_update()
         self._periodic_refresh_task = run_async_task(self._periodic_refresh(frequency))
-
-    @property
-    def can_stream(self):
-        return False
 
     def streaming(self, enable: bool):
         raise (NotImplementedError("this Timeline cannot stream"))
@@ -195,7 +196,7 @@ class StatusTimeline(Timeline):
             params: Params | None = None,
             stream_name: str | None = None):
 
-        super().__init__(name, instance, can_update=True)
+        super().__init__(name, instance, can_update=True, can_stream=(stream_name is not None))
         self.path = path
         self.params = params
         self._stream_name = stream_name
@@ -253,10 +254,6 @@ class StatusTimeline(Timeline):
 
             # Clear the seen events cache for the next fetch.
             self._seen_events.clear()
-
-    @property
-    def can_stream(self):
-        return self._stream_name is not None
 
     async def streaming(self, enable):
         if enable:
