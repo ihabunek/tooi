@@ -202,6 +202,9 @@ class StatusTimeline(Timeline):
         self._subscription = None
         self._most_recent_id = None
         self._streaming_task = None
+        self._seen_events: set[str] = set()
+        # _lock protects self._seen_events
+        self._lock = asyncio.Lock()
 
     async def close(self):
         if self._streaming_task is not None:
@@ -225,25 +228,31 @@ class StatusTimeline(Timeline):
             yield events
 
     async def _update(self):
-        eventslist = fetch_timeline(
+        # Fetch all the events before taking the lock
+        events: list[Event] = []
+        generator = fetch_timeline(
                 self.instance,
                 self.path,
                 params=self.params,
                 since_id=self._most_recent_id)
+        async for eventlist in generator:
+            events += [StatusEvent(self.instance, from_dict(Status, s)) for s in eventlist]
 
-        updated_most_recent = False
+        # Use the first (most recent) event id for _most_recent_id.
+        if len(events) > 0:
+            self._most_recent_id = events[0].status.id
 
-        async for eventlist in eventslist:
-            events = [StatusEvent(self.instance, from_dict(Status, s)) for s in eventlist]
+        # We need the events in chronological order.
+        events.reverse()
 
-            if (not updated_most_recent) and len(events) > 0:
-                updated_most_recent = True
-                self._most_recent_id = events[0].status.id
-
-            events.reverse()
+        async with self._lock:
             for event in events:
-                # Note that we need to preserve the event order, so dispatch them one at a time.
-                await self._dispatch(event)
+                # Skip any events we already handled via streaming.
+                if event.id not in self._seen_events:
+                    await self._dispatch(event)
+
+            # Clear the seen events cache for the next fetch.
+            self._seen_events.clear()
 
     @property
     def can_stream(self):
@@ -259,12 +268,17 @@ class StatusTimeline(Timeline):
     async def _stream(self):
         while True:
             sevt = await self._subscription.get()
-            match sevt.event:
-                case "update":
-                    event = StatusEvent(self.instance, from_dict(Status, sevt.payload))
-                    await self._dispatch(event)
-                case _:
-                    pass
+
+            async with self._lock:
+                match sevt.event:
+                    case "update":
+                        event = StatusEvent(self.instance, from_dict(Status, sevt.payload))
+                        # Track the events we've seen from streaming; these will be discarded in the
+                        # next fetch(), to avoid generating duplicate events.
+                        self._seen_events.add(event.id)
+                        await self._dispatch(event)
+                    case _:
+                        pass
 
 
 class HomeTimeline(StatusTimeline):
