@@ -46,15 +46,23 @@ CONTEXT = dict(
     default=0,
     help="How often to automatically refresh timelines (in seconds)"
 )
+@click.option(
+    "-s", "--streaming",
+    is_flag=True,
+    help="Use real-time streaming to fetch timeline updates",
+)
 def tooi(
         always_show_sensitive: Optional[bool],
         relative_timestamps: bool,
-        timeline_refresh: int):
+        timeline_refresh: int,
+        streaming: bool):
+
     ctx = create_context()
     ctx.config = get_settings()
     ctx.config.options.always_show_sensitive = always_show_sensitive
     ctx.config.options.relative_timestamps = relative_timestamps
     ctx.config.options.timeline_refresh = timeline_refresh
+    ctx.config.options.streaming = streaming
     set_context(ctx)
 
     app = TooiApp()

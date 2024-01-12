@@ -87,8 +87,12 @@ class TimelineTab(TabPane):
         if self.timeline.can_update and self.context.config.options.timeline_refresh > 0:
             self.timeline.periodic_refresh(self.context.config.options.timeline_refresh)
 
-    def on_unmount(self, message):
-        self.timeline.close()
+        # Start streaming.
+        if self.context.config.options.streaming and self.timeline.can_stream:
+            await self.timeline.streaming(True)
+
+    async def on_unmount(self, message):
+        await self.timeline.close()
         self.timeline = None
 
     def compose(self):
