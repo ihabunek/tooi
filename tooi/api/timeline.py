@@ -2,6 +2,7 @@
 Timelines API
 https://docs.joinmastodon.org/methods/timelines/
 """
+import asyncio
 import re
 
 from abc import ABC, abstractmethod
@@ -81,15 +82,26 @@ class Timeline(ABC):
         self.can_update = can_update
         self._queue = Queue()
 
+    def _assert_can_update(self):
+        if not self.can_update:
+            raise (NotImplementedError("this Timeline cannot update"))
+
     def close(self):
         # Close any resources associated with the timeline.
         pass
 
     def update(self):
-        if not self.can_update:
-            raise (NotImplementedError("this Timeline cannot update"))
-
+        self._assert_can_update()
         run_async_task(self._update())
+
+    def periodic_refresh(self, frequency: int):
+        self._assert_can_update()
+        run_async_task(self._periodic_refresh(frequency))
+
+    async def _periodic_refresh(self, frequency: int):
+        while True:
+            await asyncio.sleep(frequency)
+            await self._update()
 
     async def get_events(self) -> list[Event]:
         """

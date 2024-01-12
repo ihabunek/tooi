@@ -39,12 +39,20 @@ CONTEXT = dict(
     is_flag=True,
     help="Use relative timestamps in the timeline"
 )
+@click.option(
+    "-r", "--timeline-refresh",
+    type=click.INT,
+    default=0,
+    help="How often to automatically refresh timelines (in seconds)"
+)
 def tooi(
         always_show_sensitive: Optional[bool],
-        relative_timestamps: bool):
+        relative_timestamps: bool,
+        timeline_refresh: int):
     ctx = create_context()
     ctx.config.always_show_sensitive = always_show_sensitive
     ctx.config.relative_timestamps = relative_timestamps
+    ctx.config.timeline_refresh = timeline_refresh
     set_context(ctx)
 
     app = TooiApp()
