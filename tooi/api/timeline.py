@@ -6,7 +6,6 @@ import asyncio
 import re
 
 from abc import ABC, abstractmethod
-from asyncio import Queue, QueueEmpty
 from typing import AsyncGenerator, List, Optional
 from urllib.parse import quote, urlparse
 
@@ -81,7 +80,7 @@ class Timeline(ABC):
         self.name = name
         self.can_update = can_update
         self._update_running = AsyncAtomic[bool](False)
-        self._queue = Queue()
+        self._queue = asyncio.Queue()
 
     def _assert_can_update(self):
         if not self.can_update:
@@ -116,14 +115,14 @@ class Timeline(ABC):
             try:
                 event = self._queue.get_nowait()
                 self._queue.task_done()
-            except QueueEmpty:
+            except asyncio.QueueEmpty:
                 return events
 
             events.append(event)
 
         return events
 
-    async def get_events_wait(self, timeout: int | None = None) -> list[Event]:
+    async def get_events_wait(self) -> list[Event]:
         """
         Return a list of pending events which have been queued to the timeline since the last time
         get_events() or get_events_wait() were called.  If no events are available, wait until at
