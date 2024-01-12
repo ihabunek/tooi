@@ -12,6 +12,7 @@ _local = local()
 class Configuration:
     always_show_sensitive: Optional[bool] = None
     relative_timestamps: bool = False
+    timeline_refresh: int = 0
 
 
 @dataclass
