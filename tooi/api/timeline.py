@@ -81,6 +81,10 @@ class Timeline(ABC):
         self.can_update = can_update
         self._queue = Queue()
 
+    def close(self):
+        # Close any resources associated with the timeline.
+        pass
+
     def update(self):
         if not self.can_update:
             raise (NotImplementedError("this Timeline cannot update"))

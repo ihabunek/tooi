@@ -1,5 +1,6 @@
 import asyncio
 
+from textual import work
 from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.widgets import TabPane
@@ -7,7 +8,6 @@ from textual.widgets import TabPane
 from tooi.data.events import Event
 from tooi.api.statuses import set_favourite, unset_favourite, boost, unboost
 from tooi.api.timeline import Timeline
-from tooi.asyncio import run_async_task
 from tooi.context import get_context
 from tooi.data.instance import InstanceInfo
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread, ToggleStatusFavourite
@@ -78,7 +78,11 @@ class TimelineTab(TabPane):
 
         # Start our background worker to load new statuses.  We start this even if the timeline
         # can't update, because it may have some other way to acquire new events.
-        self._fetch_task = run_async_task(self.fetch_events())
+        self.fetch_events()
+
+    def on_unmount(self, message):
+        self.timeline.close()
+        self.timeline = None
 
     def compose(self):
         yield Horizontal(
@@ -91,6 +95,7 @@ class TimelineTab(TabPane):
         self.event_list.prepend_events([message.event])
         self.query_one(EventList).refresh_events()
 
+    @work
     async def fetch_events(self):
         # Fetch new events from the timeline and post messages for them.  This task runs in a
         # separate async task, so we don't want to touch the UI directly.
