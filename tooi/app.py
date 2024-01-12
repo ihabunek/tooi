@@ -5,6 +5,7 @@ from textual.app import App
 from textual.screen import ModalScreen
 from urllib.parse import urlparse
 
+from tooi.api.streaming import InstanceStreamer
 from tooi.api.timeline import Timeline, HomeTimeline, LocalTimeline, TagTimeline, AccountTimeline
 from tooi.api.timeline import FederatedTimeline, ContextTimeline, NotificationTimeline
 from tooi.asyncio import create_async_context, set_async_context
@@ -48,6 +49,7 @@ class TooiApp(App[None]):
         self.push_screen("loading")
         self.context = get_context()
         self.instance = await get_instance_info()
+        self.instance.streamer = InstanceStreamer(self.instance)
         self.tabs = MainScreen(self.instance)
         self.switch_screen(self.tabs)
 
