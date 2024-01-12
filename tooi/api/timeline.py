@@ -208,13 +208,14 @@ class StatusTimeline(Timeline):
         self._lock = asyncio.Lock()
 
     async def close(self):
-        if self._streaming_task is not None:
-            self._streaming_task.cancel()
-            self._streaming_task = None
+        async with self._lock:
+            if self._streaming_task is not None:
+                self._streaming_task.cancel()
+                self._streaming_task = None
 
-        if self._subscription is not None:
-            await self._subscription.close()
-            self._subscription = None
+            if self._subscription is not None:
+                await self._subscription.close()
+                self._subscription = None
 
         await super().close()
 
@@ -257,8 +258,9 @@ class StatusTimeline(Timeline):
 
     async def streaming(self, enable):
         if enable:
-            self._subscription = await self.instance.streamer.subscribe(self._stream_name)
-            self._streaming_task = run_async_task(self._stream())
+            async with self._lock:
+                self._subscription = await self.instance.streamer.subscribe(self._stream_name)
+                self._streaming_task = run_async_task(self._stream())
         else:
             pass
 
@@ -381,13 +383,14 @@ class NotificationTimeline(Timeline):
         self._lock = asyncio.Lock()
 
     async def close(self):
-        if self._streaming_task is not None:
-            self._streaming_task.cancel()
-            self._streaming_task = None
+        async with self._lock:
+            if self._streaming_task is not None:
+                self._streaming_task.cancel()
+                self._streaming_task = None
 
-        if self._subscription is not None:
-            await self._subscription.close()
-            self._subscription = None
+            if self._subscription is not None:
+                await self._subscription.close()
+                self._subscription = None
 
         await super().close()
 
@@ -442,9 +445,10 @@ class NotificationTimeline(Timeline):
 
     async def streaming(self, enable):
         if enable:
-            self._subscription = await self.instance.streamer.subscribe(
-                    StreamSubscription.USER)
-            self._streaming_task = run_async_task(self._stream())
+            async with self._lock:
+                self._subscription = await self.instance.streamer.subscribe(
+                        StreamSubscription.USER)
+                self._streaming_task = run_async_task(self._stream())
         else:
             pass
 
