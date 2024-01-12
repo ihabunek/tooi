@@ -82,8 +82,11 @@ class MainScreen(Screen[None]):
     async def open_timeline_tab(self, timeline: Timeline, initial_focus: str | None = None):
         tab = TimelineTab(self.instance, timeline, initial_focus=initial_focus)
         tc = self.query_one(TabbedContent)
-        await tc.add_pane(tab)
-        tc.active = tab.id
+
+        with self.app.batch_update():
+            await tc.add_pane(tab)
+            tc.active = tab.id
+            tab.batch_show_update()
 
     def on_show_status_message(self, message: ShowStatusMessage):
         status_bar = self.query_one(StatusBar)
@@ -97,7 +100,10 @@ class MainScreen(Screen[None]):
         tc = self.query_one(TabbedContent)
         tabs = tc.query(TabPane)
         if tabnr <= len(tabs):
-            tc.active = tabs[tabnr - 1].id
+            with self.app.batch_update():
+                tab = tabs[tabnr - 1]
+                tc.active = tab.id
+                tab.batch_show_update()
 
     def action_close_current_tab(self):
         tc = self.query_one(TabbedContent)
