@@ -1,9 +1,14 @@
+import asyncio
 import sys
 
+from typing import Generic, TypeVar
 from textual.dom import DOMNode
 
 # Implemention of an async runner.  This is created at startup and can be used to run async workers
 # from outside the App context, e.g. in non-UI code.
+
+
+T = TypeVar('T')
 
 
 class AsyncContext(object):
@@ -12,6 +17,30 @@ class AsyncContext(object):
 
     def run(self, work, group: str = "default", exclusive: bool = False):
         self.owner.run_worker(work)
+
+
+class AsyncAtomic(Generic[T]):
+    def __init__(self, value: T):
+        self._value = value
+        self._lock = asyncio.Lock()
+
+    async def compare_and_swap(self, oldvalue: T, newvalue: T) -> T:
+        async with self._lock:
+            if self._value == oldvalue:
+                self._value = newvalue
+                return oldvalue
+            else:
+                return self._value
+
+    async def get(self) -> T:
+        async with self._lock:
+            return self._value
+
+    async def set(self, newvalue: T) -> T:
+        async with self._lock:
+            oldvalue = self._value
+            self._value = newvalue
+            return oldvalue
 
 
 _this = sys.modules[__name__]

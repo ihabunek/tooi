@@ -15,7 +15,7 @@ from httpx._types import QueryParamTypes
 
 from tooi.api import request, statuses
 from tooi.api.accounts import get_account_by_name
-from tooi.asyncio import run_async_task
+from tooi.asyncio import run_async_task, AsyncAtomic
 from tooi.data.events import Event, NotificationEvent, StatusEvent
 from tooi.data.instance import InstanceInfo
 from tooi.entities import Status, Notification, from_dict, from_dict_list
@@ -80,6 +80,7 @@ class Timeline(ABC):
         self.instance = instance
         self.name = name
         self.can_update = can_update
+        self._update_running = AsyncAtomic[bool](False)
         self._queue = Queue()
 
     def _assert_can_update(self):
@@ -92,7 +93,7 @@ class Timeline(ABC):
 
     def update(self):
         self._assert_can_update()
-        run_async_task(self._update())
+        run_async_task(self._interlocked_update())
 
     def periodic_refresh(self, frequency: int):
         self._assert_can_update()
@@ -101,7 +102,7 @@ class Timeline(ABC):
     async def _periodic_refresh(self, frequency: int):
         while True:
             await asyncio.sleep(frequency)
-            await self._update()
+            await self._interlocked_update()
 
     async def get_events(self) -> list[Event]:
         """
@@ -141,6 +142,17 @@ class Timeline(ABC):
     async def _dispatch(self, event: Event):
         # Push a new event into the queue.  This will block if the queue is full.
         await self._queue.put(event)
+
+    async def _interlocked_update(self):
+        if await self._update_running.compare_and_swap(False, True) is True:
+            # Update is already running.
+            return
+
+        try:
+            await self._update()
+        finally:
+            # Safe because we hold the lock.
+            await self._update_running.set(False)
 
     async def _update(self):
         # This function is called to instruct the timeline implementation to fetch more events and
