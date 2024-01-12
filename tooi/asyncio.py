@@ -2,6 +2,7 @@ import asyncio
 import sys
 
 from typing import Generic, TypeVar
+from textual import Worker
 from textual.dom import DOMNode
 
 # Implemention of an async runner.  This is created at startup and can be used to run async workers
@@ -16,7 +17,19 @@ class AsyncContext(object):
         self.owner = owner
 
     def run(self, work, group: str = "default", exclusive: bool = False):
-        self.owner.run_worker(work)
+        worker = self.owner.run_worker(work)
+        return AsyncWorker(worker)
+
+
+class AsyncWorker(object):
+    def __init__(self, worker: Worker):
+        self.worker = worker
+
+    def cancel(self):
+        self.worker.cancel()
+
+    def wait(self):
+        return self.worker.wait()
 
 
 class AsyncAtomic(Generic[T]):
