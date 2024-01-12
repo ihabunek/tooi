@@ -2,8 +2,8 @@ import asyncio
 import sys
 
 from typing import Generic, TypeVar
-from textual import Worker
 from textual.dom import DOMNode
+from textual.worker import Worker
 
 # Implemention of an async runner.  This is created at startup and can be used to run async workers
 # from outside the App context, e.g. in non-UI code.
@@ -76,4 +76,4 @@ def get_async_context() -> AsyncContext:
 
 def run_async_task(*args, **kwargs):
     ctx = get_async_context()
-    ctx.run(*args, **kwargs)
+    return ctx.run(*args, **kwargs)

@@ -116,7 +116,7 @@ class TimelineTab(TabPane):
             await self.fetch_timeline()
         else:
             # This returns immediately; any updates will be handled by fetch_events.
-            self.timeline.update()
+            await self.timeline.update()
 
     async def fetch_timeline(self):
         self.generator = self.timeline.fetch()

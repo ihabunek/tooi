@@ -80,6 +80,8 @@ class Timeline(ABC):
         self.name = name
         self.can_update = can_update
         self._update_running = AsyncAtomic[bool](False)
+        self._update_task = None
+        self._periodic_refresh_task = None
         self._queue = asyncio.Queue()
 
     def _assert_can_update(self):
@@ -87,16 +89,19 @@ class Timeline(ABC):
             raise (NotImplementedError("this Timeline cannot update"))
 
     def close(self):
-        # Close any resources associated with the timeline.
-        pass
+        if (update_task := self._update_task) is not None:
+            update_task.cancel()
 
-    def update(self):
+        if (periodic_refresh_task := self._periodic_refresh_task) is not None:
+            periodic_refresh_task.cancel()
+
+    async def update(self):
         self._assert_can_update()
-        run_async_task(self._interlocked_update())
+        await self._interlocked_update()
 
     def periodic_refresh(self, frequency: int):
         self._assert_can_update()
-        run_async_task(self._periodic_refresh(frequency))
+        self._periodic_refresh_task = run_async_task(self._periodic_refresh(frequency))
 
     async def _periodic_refresh(self, frequency: int):
         while True:
@@ -143,15 +148,18 @@ class Timeline(ABC):
         await self._queue.put(event)
 
     async def _interlocked_update(self):
+        async def _run_update():
+            try:
+                await self._update()
+            finally:
+                self._update_task = None
+                await self._update_running.set(False)
+
         if await self._update_running.compare_and_swap(False, True) is True:
             # Update is already running.
             return
 
-        try:
-            await self._update()
-        finally:
-            # Safe because we hold the lock.
-            await self._update_running.set(False)
+        self._update_task = run_async_task(_run_update())
 
     async def _update(self):
         # This function is called to instruct the timeline implementation to fetch more events and
