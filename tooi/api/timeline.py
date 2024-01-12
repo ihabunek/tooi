@@ -287,7 +287,11 @@ class HomeTimeline(StatusTimeline):
     """
 
     def __init__(self, instance: InstanceInfo):
-        super().__init__("Home", instance, "/api/v1/timelines/home")
+        super().__init__(
+                "Home",
+                instance,
+                "/api/v1/timelines/home",
+                stream_name=StreamSubscription.USER)
 
 
 class PublicTimeline(StatusTimeline):
@@ -315,7 +319,7 @@ class LocalTimeline(PublicTimeline):
     This timeline only ever returns events of type StatusEvent.
     """
     def __init__(self, instance: InstanceInfo):
-        super().__init__("Local", instance, True)
+        super().__init__("Local", instance, True, stream_name=StreamSubscription.PUBLIC_LOCAL)
 
 
 class FederatedTimeline(PublicTimeline):
