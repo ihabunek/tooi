@@ -3,6 +3,7 @@ Timelines API
 https://docs.joinmastodon.org/methods/timelines/
 """
 import asyncio
+import logging
 import re
 
 from abc import ABC, abstractmethod
@@ -26,6 +27,7 @@ EventGenerator = AsyncGenerator[List[Event], None]
 
 # Max 80, as of Mastodon 4.1.0
 DEFAULT_LIMIT = 40
+logger = logging.getLogger(__name__)
 
 
 def _get_next_path(headers: Headers) -> str | None:
@@ -275,7 +277,7 @@ class StatusTimeline(Timeline):
                         self._seen_events.add(event.id)
                         await self._dispatch(event)
                     case _:
-                        pass
+                        logger.info(f"StatusTimeline: no use for event type {sevt.event}")
 
 
 class HomeTimeline(StatusTimeline):
@@ -372,8 +374,24 @@ class NotificationTimeline(Timeline):
     """
 
     def __init__(self, instance: InstanceInfo):
-        super().__init__("Notifications", instance, can_update=True)
+        super().__init__("Notifications", instance, can_update=True, can_stream=True)
         self._most_recent_id = None
+        self._streaming_task = None
+        self._subscription = None
+        self._seen_events: set[str] = set()
+        # _lock protects self._seen_events
+        self._lock = asyncio.Lock()
+
+    async def close(self):
+        if self._streaming_task is not None:
+            self._streaming_task.cancel()
+            self._streaming_task = None
+
+        if self._subscription is not None:
+            await self._subscription.close()
+            self._subscription = None
+
+        await super().close()
 
     async def notification_generator(
             self,
@@ -401,19 +419,58 @@ class NotificationTimeline(Timeline):
                 limit=limit,
                 since_id=self._most_recent_id)
 
-        updated_most_recent = False
+        # Fetch all the events before taking the lock
+        events = []
 
         async for items in timeline:
             notifications = from_dict_list(Notification, items)
-            events = [NotificationEvent(self.instance, n) for n in notifications]
+            events += [NotificationEvent(self.instance, n) for n in notifications]
 
-            if (not updated_most_recent) and len(events) > 0:
-                updated_most_recent = True
-                self._most_recent_id = events[0].notification.id
+        # Use the first (most recent) event id for _most_recent_id.
+        if len(events) > 0:
+            self._most_recent_id = events[0].status.id
 
-            events.reverse()
+        # We need the events in chronological order.
+        events.reverse()
+
+        async with self._lock:
             for event in events:
-                await self._dispatch(event)
+                # Skip any events we already handled via streaming.
+                if event.id not in self._seen_events:
+                    await self._dispatch(event)
+
+            # Clear the seen events cache for the next fetch.
+            self._seen_events.clear()
+
+    async def streaming(self, enable):
+        if enable:
+            self._subscription = await self.instance.streamer.subscribe(
+                    StreamSubscription.USER)
+            self._streaming_task = run_async_task(self._stream())
+        else:
+            pass
+
+    async def _stream(self):
+        while True:
+            sevt = await self._subscription.get()
+
+            async with self._lock:
+                match sevt.event:
+                    case "update" | "delete" | "status.update":
+                        # Ignore events handled by other timelines.
+                        pass
+
+                    case "notification":
+                        event = NotificationEvent(
+                                    self.instance,
+                                    from_dict(Notification, sevt.payload))
+                        # Track the events we've seen from streaming; these will be discarded in the
+                        # next fetch(), to avoid generating duplicate events.
+                        self._seen_events.add(event.id)
+                        await self._dispatch(event)
+
+                    case _:
+                        logger.info(f"NotificationTimeline: no use for event type {sevt.event}")
 
 
 class TagTimeline(StatusTimeline):
