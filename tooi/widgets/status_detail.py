@@ -7,7 +7,7 @@ from textual.widgets import Static
 from tooi.data.events import Event
 from tooi.context import get_context
 from tooi.entities import MediaAttachment, Status
-from tooi.utils.datetime import format_datetime
+from tooi.utils.datetime import format_datetime, format_relative
 from tooi.widgets.account import AccountHeader
 from tooi.widgets.image import HalfblockImage
 from tooi.widgets.link import Link
@@ -212,6 +212,7 @@ class StatusMeta(Static):
 
     def __init__(self, status: Status):
         self.status = status
+        self.ctx = get_context()
         super().__init__()
 
     def visibility_string(self, status):
@@ -220,10 +221,24 @@ class StatusMeta(Static):
             vis += " (local only)"
         return vis
 
+    def format_timestamp(self):
+        edited_ts = ""
+
+        if self.ctx.config.relative_timestamps:
+            created_ts = format_relative(self.status.created_at)
+            if self.status.edited_at:
+                edited_ts = f" (edited {format_relative(self.status.edited_at)} ago)"
+        else:
+            created_ts = format_datetime(self.status.created_at)
+            if self.status.edited_at:
+                edited_ts = f" (edited at {format_datetime(self.status.edited_at)})"
+
+        return created_ts + edited_ts
+
     def render(self):
         status = self.status.original
         parts = [
-            f"[bold]{format_datetime(status.created_at)}[/]",
+            f"[bold]{self.format_timestamp()}[/]",
             f"{status.reblogs_count} boosts",
             f"{status.favourites_count} favourites",
             f"{status.replies_count} replies",
