@@ -27,19 +27,19 @@ class InstanceScreen(Screen[None]):
             yield from self.compose_description(self.extended_description)
 
     def compose_instance_v2(self, instance: InstanceV2):
-        yield Static(instance.title)
-        yield Static(instance.domain)
+        yield Static(instance.title, markup=False)
+        yield Static(instance.domain, markup=False)
 
         yield Static("")
-        yield Static(instance.description)
+        yield Static(instance.description, markup=False)
 
         yield Static("")
-        yield Static(f"Contact: {instance.contact.email}")
+        yield Static(f"Contact: {instance.contact.email}", markup=False)
 
         yield Static("")
         yield Static("Rules:")
         for rule in instance.rules:
-            yield Static(f"* {rule.text}")
+            yield Static(f"* {rule.text}", markup=False)
 
     def compose_instance(self, instance: Instance):
         # TODO: implement this

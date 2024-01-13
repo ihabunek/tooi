@@ -19,14 +19,14 @@ class StatusMenuScreen(ModalScreen[None]):
         super().__init__()
 
     def compose_modal(self):
-        yield Static(f"Status #{self.status.id}", classes="modal_title")
+        yield Static(f"Status #{self.status.id}", markup=False, classes="modal_title")
         yield ListView(*self.top_items())
 
         tags = self.status.original.tags
         if tags:
             yield Static("")
             yield Static("[b]Hashtags:[/b]")
-            yield ListView(*[ListItem(Static(f"< #{t.name} >")) for t in tags])
+            yield ListView(*[ListItem(Static(f"< #{t.name} >", markup=False)) for t in tags])
 
     def top_items(self) -> Generator[ListItem, None, None]:
         account = self.status.account
@@ -49,4 +49,4 @@ class StatusMenuScreen(ModalScreen[None]):
 
 
 def menu_item(title: str, id: str):
-    return ListItem(Static(f"< {title} >"), id=id)
+    return ListItem(Static(f"< {title} >", markup=False), id=id)

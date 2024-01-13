@@ -1,3 +1,4 @@
+from rich import markup
 from textual.screen import Screen
 from textual.widgets import Static
 
@@ -23,6 +24,6 @@ class LoadingScreen(Screen[None]):
     """
 
     def compose(self):
-        yield Static(f"[b]tooi {__version__}[/b]")
+        yield Static(f"[b]tooi {markup.escape(__version__)}[/b]")
         yield Static(" Loading toots…")
         yield Static("Imagine this is spinning")

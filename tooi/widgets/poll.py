@@ -57,7 +57,7 @@ class Poll(Widget):
 
     def option_header(self, option: PollOption, voted: bool):
         voted_mark = " ✔" if voted else ""
-        return Static(f"{option.title}{voted_mark}")
+        return Static(f"{option.title}{voted_mark}", markup=False)
 
     def option_progress(self, option: PollOption):
         progress_bar = ProgressBar(100, show_eta=False)
@@ -76,4 +76,4 @@ class Poll(Widget):
         elif self.poll.expires_at:
             parts.append(f"Closes {format_datetime(self.poll.expires_at)}")
 
-        return Static(" · ".join(parts), classes="poll_meta")
+        return Static(" · ".join(parts), markup=False, classes="poll_meta")
