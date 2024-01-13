@@ -140,7 +140,7 @@ class EventListItem(ListItem, can_focus=True):
 
     def format_timestamp(self):
         if self.ctx.config.relative_timestamps:
-            return format_relative(self.event.created_at)
+            return f"{format_relative(self.event.created_at):>3}"
         else:
             return format_datetime(self.event.created_at)
 

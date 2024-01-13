@@ -8,16 +8,16 @@ def format_datetime(dttm: datetime) -> str:
 def format_relative(dttm: datetime) -> str:
     diff = datetime.now(timezone.utc) - dttm
     if (days := diff / timedelta(days=1)) >= 1:
-        return f"{int(days):>2}d"
+        return f"{int(days)}d"
 
     if (hours := diff / timedelta(hours=1)) >= 1:
-        return f"{int(hours):>2}h"
+        return f"{int(hours)}h"
 
     if (minutes := diff / timedelta(minutes=1)) >= 1:
-        return f"{int(minutes):>2}m"
+        return f"{int(minutes)}m"
 
     seconds = diff / timedelta(seconds=1)
-    return f"{int(seconds):>2}s"
+    return f"{int(seconds)}s"
 
 
 def parse_datetime(value: str):
