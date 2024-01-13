@@ -1,5 +1,4 @@
 import asyncio
-from textual import work
 
 from textual import work
 from textual.binding import Binding
