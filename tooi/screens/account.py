@@ -71,5 +71,5 @@ class AccountField(Widget):
         super().__init__()
 
     def compose(self):
-        yield Static(self.field.name, classes="account_field_name")
+        yield Static(self.field.name, markup=False, classes="account_field_name")
         yield Markdown(self.field.value_md, classes="account_field_value")

@@ -28,6 +28,6 @@ class AccountHeader(Widget):
         acct = self.account.acct
         acct = acct if "@" in acct else f"{acct}@{ctx.auth.domain}"
 
-        yield Static(f"@{acct}", classes="account_acct")
+        yield Static(f"@{acct}", markup=False, classes="account_acct")
         if self.account.display_name:
-            yield Static(self.account.display_name, classes="account_name")
+            yield Static(self.account.display_name, markup=False, classes="account_name")
