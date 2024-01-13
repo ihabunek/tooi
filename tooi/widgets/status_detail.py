@@ -1,3 +1,4 @@
+from rich import markup
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical, VerticalScroll
@@ -99,13 +100,13 @@ class StatusDetail(VerticalScroll):
 
     def compose_sensitive(self, status: Status) -> ComposeResult:
         if status.spoiler_text:
-            yield Static(status.spoiler_text, classes="spoiler_text")
+            yield Static(status.spoiler_text, markup=False, classes="spoiler_text")
 
         yield StatusSensitiveNotice()
 
     def compose_revealed(self, status: Status) -> ComposeResult:
         if status.spoiler_text:
-            yield Static(status.spoiler_text, classes="spoiler_text")
+            yield Static(status.spoiler_text, markup=False, classes="spoiler_text")
 
         if status.sensitive:
             yield StatusSensitiveOpenedNotice()
@@ -132,7 +133,7 @@ class BoostedBy(Static):
 
     def __init__(self, status: Status):
         self.status = status
-        super().__init__()
+        super().__init__("", markup=False)
 
     def render(self):
         return f"boosted by {self.status.account.acct}"
@@ -165,11 +166,11 @@ class StatusCard(Widget):
         yield Link(card.url, card.title, classes="title")
 
         if card.author_name:
-            yield Static(f"by {card.author_name}")
+            yield Static(f"by {card.author_name}", markup=False)
 
         if card.description:
             yield Static("")
-            yield Static(card.description)
+            yield Static(card.description, markup=False)
 
         yield Static("")
         yield Link(card.url)
@@ -194,9 +195,9 @@ class StatusMediaAttachment(Widget):
         super().__init__()
 
     def compose(self):
-        yield Static(f"Media attachment ({self.attachment.type})", classes="title")
+        yield Static(f"Media attachment ({self.attachment.type})", markup=False, classes="title")
         if self.attachment.description:
-            yield Static(self.attachment.description)
+            yield Static(self.attachment.description, markup=False)
         yield Link(self.attachment.url)
         if self.attachment.type == "image":
             yield HalfblockImage(self.attachment)
@@ -223,11 +224,11 @@ class StatusMeta(Static):
     def render(self):
         status = self.status.original
         parts = [
-            f"[bold]{format_datetime(status.created_at)}[/]",
-            f"{status.reblogs_count} boosts",
-            f"{status.favourites_count} favourites",
-            f"{status.replies_count} replies",
-            self.visibility_string(status),
+            f"[bold]{markup.escape(format_datetime(status.created_at))}[/]",
+            f"{int(status.reblogs_count)} boosts",
+            f"{int(status.favourites_count)} favourites",
+            f"{int(status.replies_count)} replies",
+            markup.escape(self.visibility_string(status)),
         ]
         return " · ".join(parts)
 

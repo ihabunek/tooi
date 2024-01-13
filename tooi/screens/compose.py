@@ -72,12 +72,18 @@ class ComposeScreen(ModalScreen[None]):
 
         self.menu = Menu()
 
-        self.visibility_menu_item = MenuItem("visibility", f"Visibility: {self.visibility}")
+        self.visibility_menu_item = MenuItem(
+                "visibility",
+                f"Visibility: {self.visibility}",
+                markup=False)
         self.menu.append(self.visibility_menu_item)
 
         if self.federated is not None:
             label = federated_label(self.federated)
-            self.federation_menu_item = MenuItem("federation", f"Federation: {label}")
+            self.federation_menu_item = MenuItem(
+                    "federation",
+                    f"Federation: {label}",
+                    markup=False)
             self.menu.append(self.federation_menu_item)
 
         self.post_menu_item = MenuItem("post", "Post status")
@@ -87,7 +93,7 @@ class ComposeScreen(ModalScreen[None]):
         self.menu.append(self.cancel_menu_item)
 
         self.toggle_cw_menu_item = MenuItem("add_cw", "Add content warning")
-        self.status = Static(id="compose_status")
+        self.status = Static(id="compose_status", markup=False)
 
         self.character_count = ComposeCharacterCount(self.instance_info, self.text_area.text)
 
@@ -166,7 +172,7 @@ class ComposeScreen(ModalScreen[None]):
 
         self.content_warning = ComposeTextArea(id="cw_text_area")
         self.vertical.mount(
-            Static("Content warning:", id="cw_label"),
+            Static("Content warning:", markup=False, id="cw_label"),
             self.content_warning,
             after=self.query_one("ComposeCharacterCount")
         )
@@ -264,10 +270,10 @@ class SelectVisibilityModal(ModalScreen[Visibility]):
     def compose_modal(self):
         yield Static("Select visibility", classes="modal_title")
         yield Menu(
-            MenuItem(Visibility.Public, visibility_label(Visibility.Public)),
-            MenuItem(Visibility.Unlisted, visibility_label(Visibility.Unlisted)),
-            MenuItem(Visibility.Private, visibility_label(Visibility.Private)),
-            MenuItem(Visibility.Direct, visibility_label(Visibility.Direct)),
+            MenuItem(Visibility.Public, visibility_label(Visibility.Public), markup=False),
+            MenuItem(Visibility.Unlisted, visibility_label(Visibility.Unlisted), markup=False),
+            MenuItem(Visibility.Private, visibility_label(Visibility.Private), markup=False),
+            MenuItem(Visibility.Direct, visibility_label(Visibility.Direct), markup=False),
         )
 
     def on_menu_item_selected(self, message: Menu.ItemSelected):
@@ -285,8 +291,8 @@ class SelectFederationModal(ModalScreen[Visibility]):
     def compose_modal(self):
         yield Static("Select federation", classes="modal_title")
         yield Menu(
-            MenuItem(True, federated_label(True)),
-            MenuItem(False, federated_label(False)),
+            MenuItem(True, federated_label(True), markup=False),
+            MenuItem(False, federated_label(False), markup=False),
         )
 
     def on_menu_item_selected(self, message: Menu.ItemSelected):
