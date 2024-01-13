@@ -103,7 +103,7 @@ class TimelineTab(TabPane):
         self.event_list.prepend_events([message.event])
         self.query_one(EventList).refresh_events()
 
-    @work
+    @work(group="fetch_events")
     async def fetch_events(self):
         # Fetch new events from the timeline and post messages for them.  This task runs in a
         # separate async task, so we don't want to touch the UI directly.
