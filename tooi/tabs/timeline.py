@@ -81,7 +81,7 @@ class TimelineTab(TabPane):
         self.fetch_events()
 
         # Start the timeline periodic refresh, if configured.
-        if self.context.config.timeline_refresh > 0:
+        if self.timeline.can_update and self.context.config.timeline_refresh > 0:
             self.timeline.periodic_refresh(self.context.config.timeline_refresh)
 
         # Start streaming.
