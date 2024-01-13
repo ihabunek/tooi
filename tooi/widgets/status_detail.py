@@ -236,14 +236,17 @@ class StatusMeta(Static):
         return created_ts + edited_ts
 
     def render(self):
+        parts: list[str] = []
         status = self.status.original
-        parts = [
-            f"[bold]{self.format_timestamp()}[/]",
-            f"{status.reblogs_count} boosts",
-            f"{status.favourites_count} favourites",
-            f"{status.replies_count} replies",
-            self.visibility_string(status),
-        ]
+
+        parts += [f"[bold]{self.format_timestamp()}[/]"]
+        parts += [f"{status.reblogs_count} boosts"]
+        parts += [f"{status.favourites_count} favourites"]
+        parts += [f"{status.replies_count} replies"]
+        parts += [self.visibility_string(status)]
+        if status.application:
+            parts += [status.application.name]
+
         return " · ".join(parts)
 
 
