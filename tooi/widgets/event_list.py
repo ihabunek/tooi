@@ -116,7 +116,7 @@ class EventListItem(ListItem, can_focus=True):
     }
 
     .event_list_flags {
-        width: 2;
+        width: 5;
         padding-left: 1;
     }
     """
@@ -156,10 +156,29 @@ class EventListItem(ListItem, can_focus=True):
         return acct if "@" in acct else f"{acct}@{ctx.auth.domain}"
 
     def _format_flags(self) -> str:
+        FLAG_STATUS_BOOSTED = 0
+        FLAG_SELF_FAVOURITE = 1
+        FLAG_SELF_BOOST = 2
+        FLAG_NOTIFICATION_TYPE = 3
+
+        flags = [' '] * 4
+
         match self.event:
             case StatusEvent():
-                return "B" if self.event.status.reblog else " "
+                if self.event.status.reblog:
+                    flags[FLAG_STATUS_BOOSTED] = "B"
+
+                if self.event.status.original.reblogged:
+                    flags[FLAG_SELF_BOOST] = "B"
+
+                if self.event.status.original.favourited:
+                    flags[FLAG_SELF_FAVOURITE] = "*"
+
             case NotificationEvent():
-                return self.NOTIFICATION_FLAGS.get(self.event.notification.type, " ")
+                flags[FLAG_NOTIFICATION_TYPE] = self.NOTIFICATION_FLAGS.get(
+                        self.event.notification.type, " ")
+
             case _:
-                return " "
+                pass
+
+        return "".join(flags)
