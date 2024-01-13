@@ -134,9 +134,12 @@ class EventListItem(ListItem, can_focus=True):
         self.ctx = get_context()
 
     def compose(self):
-        yield Label(self.format_timestamp(), classes="event_list_timestamp")
-        yield Label(self._format_flags(), classes="event_list_flags")
-        yield Label(self._format_account_name(self.event.account), classes="event_list_acct")
+        yield Label(self.format_timestamp(), markup=False, classes="event_list_timestamp")
+        yield Label(self._format_flags(), markup=False, classes="event_list_flags")
+        yield Label(
+                self._format_account_name(self.event.account),
+                markup=False,
+                classes="event_list_acct")
 
     def format_timestamp(self):
         if self.ctx.config.relative_timestamps:

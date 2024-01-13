@@ -1,3 +1,4 @@
+from rich import markup
 from textual.message import Message
 from textual.widgets import Static
 
@@ -18,7 +19,7 @@ class Link(Static):
         super().__init__(classes=classes, disabled=disabled)
 
     def render(self):
-        return f"[@click='on_click']{self.title or self.url}[/]"
+        return f"[@click='on_click']{markup.escape(self.title or self.url)}[/]"
 
     def _action_on_click(self):
         self.post_message(self.Clicked(self.url, self.title))

@@ -1,4 +1,5 @@
 import asyncio
+from textual import work
 
 from textual import work
 from textual.binding import Binding
@@ -135,12 +136,24 @@ class TimelineTab(TabPane):
         self.query_one("#main_window").mount(self.event_detail)
 
     def on_event_highlighted(self, message: EventHighlighted):
+        self.show_status_detail(message.event)
+
+    @work(exclusive=True)
+    async def show_status_detail(self, event: Event):
         # TODO: This is slow, try updating the existing StatusDetail instead of
         # creating a new one. This requires some fiddling since compose() is
         # called only once, so updating needs to be implemented manually.
         # See: https://github.com/Textualize/textual/discussions/1683
+
+        # Having a short sleep here allows for smooth scrolling. Since `@work`
+        # has `exclusive=True` this task will be canceled if it is called again
+        # before the current one finishes. When scrolling down the event list
+        # quickly, this happens before the sleep ends so the status is not
+        # drawn at all until we stop scrolling.
+        await asyncio.sleep(0.05)
+
         self.event_detail.remove()
-        self.event_detail = self.make_event_detail(message.event)
+        self.event_detail = self.make_event_detail(event)
         self.query_one("#main_window").mount(self.event_detail)
         asyncio.create_task(self.maybe_fetch_next_batch())
 

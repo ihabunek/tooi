@@ -1,4 +1,5 @@
 from httpx import TimeoutException
+from rich import markup
 from textual import on, work
 from textual.containers import Container, Vertical, VerticalScroll
 from textual.widget import Widget
@@ -37,13 +38,13 @@ class SearchTab(TabPane):
             self.update_results(SearchResultsList(results))
         except ResponseError as ex:
             self.update_results(Vertical(
-                Static(f"[red]Error: {ex.error}[/]"),
-                Static(f"[red]{ex.description}[/]"),
+                Static(f"[red]Error: {markup.escape(ex.error)}[/]"),
+                Static(f"[red]{markup.escape(ex.description)}[/]"),
             ))
         except TimeoutException:
             self.update_results(Static("[red]Request timed out[/]"))
         except Exception as ex:
-            self.update_results(Static(f"[red]Unexpected error: {ex}[/]"))
+            self.update_results(Static(f"[red]Unexpected error: {markup.escape(ex)}[/]"))
 
     def update_results(self, widget: Widget):
         results = self.query_one("#search_results")
@@ -109,7 +110,7 @@ class ResultList(ListView):
 class AccountItem(ListItem):
     def __init__(self, account: Account):
         self.account = account
-        super().__init__(Static(f"< @{account.acct} >"))
+        super().__init__(Static(f"< @{account.acct} >", markup=False))
 
 
 class StatusItem(ListItem):
@@ -117,10 +118,10 @@ class StatusItem(ListItem):
         self.status = status
         excerpt = get_text(status.content).replace("\n", " ")[:50] + "…"
         label = f"#{status.id} @{status.account.acct}\n  {excerpt}"
-        super().__init__(Static(f"< @{label} >"))
+        super().__init__(Static(f"< @{label} >", markup=False))
 
 
 class TagItem(ListItem):
     def __init__(self, tag: Tag):
         self.tag = tag
-        super().__init__(Static(f"< #{tag.name} >"))
+        super().__init__(Static(f"< #{tag.name} >", markup=False))

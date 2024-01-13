@@ -51,7 +51,7 @@ class NewFollowerDetail(VerticalScroll):
         ctx = get_context()
         acct = self.event.account.acct
         acct = acct if "@" in acct else f"{acct}@{ctx.auth.domain}"
-        yield Static(f"{acct} followed you.")
+        yield Static(f"{acct} followed you.", markup=False)
 
 
 class UnknownEventDetail(Static, can_focus=True):
@@ -69,7 +69,7 @@ class UnknownEventDetail(Static, can_focus=True):
 
     def __init__(self, event: NotificationEvent):
         self.event = event
-        super().__init__(f"<unknown notification type: {event.notification.type}>")
+        super().__init__(f"<unknown notification type: {event.notification.type}>", markup=False)
 
 
 class EventDetailPlaceholder(Static, can_focus=True):
