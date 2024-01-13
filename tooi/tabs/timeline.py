@@ -137,7 +137,7 @@ class TimelineTab(TabPane):
     def on_event_highlighted(self, message: EventHighlighted):
         self.show_status_detail(message.event)
 
-    @work(exclusive=True)
+    @work(exclusive=True, group="show_status_detail")
     async def show_status_detail(self, event: Event):
         # TODO: This is slow, try updating the existing StatusDetail instead of
         # creating a new one. This requires some fiddling since compose() is
