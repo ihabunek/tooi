@@ -244,6 +244,10 @@ class StatusMeta(Static):
             f"{status.replies_count} replies",
             self.visibility_string(status),
         ]
+
+        if status.application:
+            parts.append(status.application.name)
+
         return " · ".join(parts)
 
 
