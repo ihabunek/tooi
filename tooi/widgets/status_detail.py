@@ -221,14 +221,17 @@ class StatusMeta(Static):
         return vis
 
     def render(self):
+        parts: list[str] = []
         status = self.status.original
-        parts = [
-            f"[bold]{format_datetime(status.created_at)}[/]",
-            f"{status.reblogs_count} boosts",
-            f"{status.favourites_count} favourites",
-            f"{status.replies_count} replies",
-            self.visibility_string(status),
-        ]
+
+        parts += [f"[bold]{format_datetime(status.created_at)}[/]"]
+        parts += [f"{status.reblogs_count} boosts"]
+        parts += [f"{status.favourites_count} favourites"]
+        parts += [f"{status.replies_count} replies"]
+        parts += [self.visibility_string(status)]
+        if status.application:
+            parts += [status.application.name]
+
         return " · ".join(parts)
 
 
