@@ -24,4 +24,4 @@ class HalfblockImage(Static):
         if event.state == WorkerState.SUCCESS:
             self.update(event.worker.result)
         if event.state == WorkerState.ERROR:
-            self.update(f"[red]Failed loading image:\n{markup.escape(event.worker.error)}[/]")
+            self.update(f"[red]Failed loading image:\n{markup.escape(str(event.worker.error))}[/]")
