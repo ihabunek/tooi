@@ -2,18 +2,15 @@
 Dataclasses which represent entities returned by the Mastodon API.
 """
 
-import dataclasses
-
-from dataclasses import Field, dataclass, is_dataclass
+from dataclasses import dataclass
 from datetime import date, datetime
 from functools import cached_property
 from html2text import html2text
-from typing import Any, Generator, Optional, Type, TypeVar, Union, get_args, get_origin
-from typing import get_type_hints
+from typing import Optional, Type, TypeVar
 
 from httpx import Response
 
-from tooi.utils.datetime import parse_datetime
+from tooi.utils.from_dict import from_dict
 
 
 @dataclass
@@ -479,69 +476,6 @@ class SearchResults:
 # Generic data class instance
 T = TypeVar("T")
 
-# Dict of data decoded from JSON
-Data = dict[str, Any]
-
-
-def from_dict(cls: Type[T], data: Data) -> T:
-    """Convert a nested dict into an instance of `cls`."""
-    def _fields() -> Generator[tuple[str, Any], None, None]:
-        hints = get_type_hints(cls)
-        for field in dataclasses.fields(cls):
-            field_type = _prune_optional(hints[field.name])
-            default_value = _get_default_value(field)
-            value = data.get(field.name, default_value)
-            yield field.name, _convert(field_type, value)
-
-    return cls(**dict(_fields()))
-
-
-def from_dict_list(cls: Type[T], data: list[Data]) -> list[T]:
-    return [from_dict(cls, x) for x in data]
-
 
 def from_response(cls: Type[T], response: Response) -> T:
     return from_dict(cls, response.json())
-
-
-def _get_default_value(field: Field[Any]):
-    if field.default is not dataclasses.MISSING:
-        return field.default
-
-    if field.default_factory is not dataclasses.MISSING:
-        return field.default_factory()
-
-    return None
-
-
-def _convert(field_type: Type[Any], value: Any) -> Any:
-    if value is None:
-        return None
-
-    if field_type in [str, int, bool, dict]:
-        return value
-
-    if field_type == datetime:
-        return parse_datetime(value)
-
-    if field_type == date:
-        return date.fromisoformat(value)
-
-    if get_origin(field_type) == list:
-        (inner_type,) = get_args(field_type)
-        return [_convert(inner_type, x) for x in value]
-
-    if is_dataclass(field_type):
-        return from_dict(field_type, value)
-
-    raise ValueError(f"Not implemented for type '{field_type}'")
-
-
-def _prune_optional(field_type: Type[Any]):
-    """For `Optional[<type>]` returns the encapsulated `<type>`."""
-    if get_origin(field_type) == Union:
-        args = get_args(field_type)
-        if len(args) == 2 and args[1] == type(None):  # noqa
-            return args[0]
-
-    return field_type

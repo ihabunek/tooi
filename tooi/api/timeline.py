@@ -15,7 +15,8 @@ from tooi.api import request, statuses
 from tooi.api.accounts import get_account_by_name
 from tooi.data.events import Event, NotificationEvent, StatusEvent
 from tooi.data.instance import InstanceInfo
-from tooi.entities import Status, Notification, from_dict, from_dict_list
+from tooi.entities import Status, Notification
+from tooi.utils.from_dict import from_dict, from_dict_list
 
 Params = Optional[QueryParamTypes]
 EventGenerator = AsyncGenerator[List[Event], None]
