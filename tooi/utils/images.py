@@ -55,7 +55,7 @@ def load_image(url: str, width: int, height: int) -> Iterator[Image.Image]:
     # TODO: cache fetched images to disk in XDG_CACHE_DIR?
     # This would allow cache to persist between runs
     with tempfile.SpooledTemporaryFile(max_size=5 * 1024 * 1024) as tmp:
-        with httpx.stream("GET", url) as response:
+        with httpx.stream("GET", url, follow_redirects=True) as response:
             response.raise_for_status()
             for data in response.iter_bytes():
                 tmp.write(data)
