@@ -6,6 +6,7 @@ from textual.containers import Horizontal
 from textual.widgets import TabPane
 
 from tooi.data.events import Event
+from tooi.api import APIError
 from tooi.api.statuses import set_favourite, unset_favourite, boost, unboost, get_status_source
 from tooi.api.timeline import Timeline
 from tooi.context import get_context
@@ -110,11 +111,10 @@ class TimelineTab(TabPane):
         self.query_one(EventList).refresh_events()
 
     async def fetch_timeline(self):
-        self.generator = self.timeline.fetch()
-
         try:
+            self.generator = self.timeline.fetch()
             events = await anext(self.generator)
-        except Exception as exc:
+        except APIError as exc:
             self.post_message(ShowStatusMessage(f"[red]Could not load timeline: {str(exc)}[/]"))
             return
 
@@ -148,6 +148,7 @@ class TimelineTab(TabPane):
 
     async def on_toggle_status_favourite(self, message: ToggleStatusFavourite):
         original = message.status.original
+
         if original.favourited:
             await unset_favourite(original.id)
         else:
