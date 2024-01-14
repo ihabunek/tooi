@@ -4,7 +4,8 @@ https://docs.joinmastodon.org/methods/accounts/
 """
 from httpx import Response
 from tooi.api import request
-from tooi.entities import Account, from_dict
+from tooi.entities import Account
+from tooi.utils.from_dict import from_dict
 
 
 async def get_account_by_id(account_id: str) -> Account:
