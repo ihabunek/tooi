@@ -50,10 +50,15 @@ class TooiApp(App[None]):
         self.push_screen(ComposeScreen(self.instance))
 
     def on_status_edit(self, message: StatusEdit):
-        self.push_screen(ComposeScreen(
-            self.instance,
-            edit=message.status,
-            edit_source=message.status_source))
+        acct = message.status.account.acct
+        if "@" not in acct:
+            acct += f"@{self.context.auth.domain}"
+
+        if acct == self.context.auth.acct:
+            self.push_screen(ComposeScreen(
+                self.instance,
+                edit=message.status,
+                edit_source=message.status_source))
 
     def action_goto(self):
         def _goto_done(action):
