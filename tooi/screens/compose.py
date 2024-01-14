@@ -47,6 +47,7 @@ class ComposeScreen(ModalScreen[None]):
         self.edit = edit
         self.edit_source = edit_source
         self.content_warning = None
+        self.federated = None
 
         # posting:default:federation is used by Hometown's local-only
         # (unfederated) posts feature.  We treat this as a 3-way switch; if
