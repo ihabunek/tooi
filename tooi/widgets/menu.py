@@ -56,7 +56,7 @@ class Menu(ListView):
 
 
 class MenuItem(ListItem):
-    def __init__(self, code: str, label: str, key: str | None = None, markup: bool = True):
+    def __init__(self, code: str, label: str, key: str | None = None, markup: bool = False):
         self.code = code
         self.key = key
         self._static = Static(self.make_label(label, key), markup=markup)

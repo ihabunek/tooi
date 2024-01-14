@@ -75,18 +75,12 @@ class ComposeScreen(ModalScreen[None]):
 
         self.menu = Menu()
 
-        self.visibility_menu_item = MenuItem(
-                "visibility",
-                f"Visibility: {self.visibility}",
-                markup=False)
+        self.visibility_menu_item = MenuItem("visibility", f"Visibility: {self.visibility}")
         self.menu.append(self.visibility_menu_item)
 
         if self.federated is not None:
             label = federated_label(self.federated)
-            self.federation_menu_item = MenuItem(
-                    "federation",
-                    f"Federation: {label}",
-                    markup=False)
+            self.federation_menu_item = MenuItem("federation", f"Federation: {label}")
             self.menu.append(self.federation_menu_item)
 
         self.post_menu_item = MenuItem("post", "Post status")
@@ -273,10 +267,10 @@ class SelectVisibilityModal(ModalScreen[Visibility]):
     def compose_modal(self):
         yield Static("Select visibility", classes="modal_title")
         yield Menu(
-            MenuItem(Visibility.Public, visibility_label(Visibility.Public), markup=False),
-            MenuItem(Visibility.Unlisted, visibility_label(Visibility.Unlisted), markup=False),
-            MenuItem(Visibility.Private, visibility_label(Visibility.Private), markup=False),
-            MenuItem(Visibility.Direct, visibility_label(Visibility.Direct), markup=False),
+            MenuItem(Visibility.Public, visibility_label(Visibility.Public)),
+            MenuItem(Visibility.Unlisted, visibility_label(Visibility.Unlisted)),
+            MenuItem(Visibility.Private, visibility_label(Visibility.Private)),
+            MenuItem(Visibility.Direct, visibility_label(Visibility.Direct)),
         )
 
     def on_menu_item_selected(self, message: Menu.ItemSelected):
@@ -294,8 +288,8 @@ class SelectFederationModal(ModalScreen[Visibility]):
     def compose_modal(self):
         yield Static("Select federation", classes="modal_title")
         yield Menu(
-            MenuItem(True, federated_label(True), markup=False),
-            MenuItem(False, federated_label(False), markup=False),
+            MenuItem(True, federated_label(True)),
+            MenuItem(False, federated_label(False)),
         )
 
     def on_menu_item_selected(self, message: Menu.ItemSelected):
