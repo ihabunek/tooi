@@ -12,7 +12,7 @@ from tooi.data.instance import InstanceInfo
 from tooi.screens.modal import ModalScreen
 from tooi.widgets.header import Header
 from tooi.widgets.menu import Menu, MenuItem
-from tooi.entities import Status
+from tooi.entities import Status, StatusSource
 
 
 class Visibility(StrEnum):
@@ -38,9 +38,14 @@ class ComposeScreen(ModalScreen[None]):
 
     def __init__(self,
                  instance_info: InstanceInfo,
-                 in_reply_to: Optional[Status] = None):
+                 in_reply_to: Optional[Status] = None,
+                 edit: Optional[Status] = None,
+                 edit_source: Optional[StatusSource] = None):
+
         self.instance_info = instance_info
         self.in_reply_to = in_reply_to
+        self.edit = edit
+        self.edit_source = edit_source
         self.content_warning = None
 
         # posting:default:federation is used by Hometown's local-only
@@ -48,20 +53,25 @@ class ComposeScreen(ModalScreen[None]):
         # it's not present, the instance doesn't support local-only posts at
         # all, otherwise it indicates if the post should be federated by
         # default.
-        self.federated = instance_info.user_preferences.get('posting:default:federation')
 
-        if in_reply_to:
+        if edit:
+            self.visibility = edit.visibility
+            self.federated = not edit.local_only
+        elif in_reply_to:
             self.visibility = in_reply_to.original.visibility
             if in_reply_to.local_only is not None:
                 self.federated = not in_reply_to.local_only
         else:
+            self.federated = instance_info.user_preferences.get('posting:default:federation')
             self.visibility = instance_info.user_preferences.get(
                     'posting:default:visibility', Visibility.Public)
 
         super().__init__()
 
     def compose_modal(self) -> ComposeResult:
-        if self.in_reply_to:
+        if self.edit:
+            initial_text = self.edit_source.text
+        elif self.in_reply_to:
             mention_accounts = (
                     [self.in_reply_to.original.account.acct]
                     + [m.acct for m in self.in_reply_to.original.mentions])
@@ -83,7 +93,9 @@ class ComposeScreen(ModalScreen[None]):
             self.federation_menu_item = MenuItem("federation", f"Federation: {label}")
             self.menu.append(self.federation_menu_item)
 
-        self.post_menu_item = MenuItem("post", "Post status")
+        self.post_menu_item = MenuItem(
+                "post",
+                "Edit status" if self.edit else "Post status")
         self.menu.append(self.post_menu_item)
 
         self.cancel_menu_item = MenuItem("cancel", "Cancel")
@@ -94,7 +106,10 @@ class ComposeScreen(ModalScreen[None]):
 
         self.character_count = ComposeCharacterCount(self.instance_info, self.text_area.text)
 
-        yield Header("Compose toot")
+        if self.edit:
+            yield Header("Edit toot")
+        else:
+            yield Header("Compose toot")
         yield self.text_area
         yield self.character_count
         yield self.menu
@@ -124,12 +139,19 @@ class ComposeScreen(ModalScreen[None]):
             args = {
                 'visibility': self.visibility,
                 'spoiler_text': self.content_warning.text if self.content_warning else None,
-                'in_reply_to': self.in_reply_to.original.id if self.in_reply_to else None
             }
-            if self.federated is not None:
-                args['local_only'] = not self.federated
 
-            await statuses.post(self.text_area.text, **args)
+            if self.edit:
+                await statuses.edit(self.edit.id, self.text_area.text, **args)
+            else:
+                if self.in_reply_to is not None:
+                    args['in_reply_to'] = self.in_reply_to.original.id
+
+                if self.federated is not None:
+                    args['local_only'] = not self.federated
+
+                await statuses.post(self.text_area.text, **args)
+
             self.set_status("Status posted", "text-success")
             await asyncio.sleep(0.5)
             self.dismiss()

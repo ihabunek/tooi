@@ -12,7 +12,7 @@ from tooi.data.instance import get_instance_info
 from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoLocalTimeline
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread, ShowNotifications
 from tooi.messages import ShowHashtagPicker, StatusReply, GotoFederatedTimeline
-from tooi.messages import GotoPersonalTimeline
+from tooi.messages import GotoPersonalTimeline, StatusEdit
 from tooi.screens.account import AccountScreen
 from tooi.screens.compose import ComposeScreen
 from tooi.screens.goto import GotoScreen, GotoHashtagScreen
@@ -48,6 +48,12 @@ class TooiApp(App[None]):
 
     def action_compose(self):
         self.push_screen(ComposeScreen(self.instance))
+
+    def on_status_edit(self, message: StatusEdit):
+        self.push_screen(ComposeScreen(
+            self.instance,
+            edit=message.status,
+            edit_source=message.status_source))
 
     def action_goto(self):
         def _goto_done(action):

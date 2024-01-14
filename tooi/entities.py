@@ -265,6 +265,16 @@ class Status:
 
 
 @dataclass
+class StatusSource:
+    """
+    https://docs.joinmastodon.org/entities/StatusSource/
+    """
+    id: str
+    text: str
+    spoiler_text: str
+
+
+@dataclass
 class Report:
     """
     https://docs.joinmastodon.org/entities/Report/
