@@ -3,6 +3,8 @@ import json
 import logging
 import re
 
+from httpx import RequestError
+
 from tooi.asyncio import run_async_task
 from tooi.context import get_context
 from tooi.data.instance import InstanceInfo
@@ -32,6 +34,7 @@ class HTTPStreamClient(object):
     """
 
     TIMEOUT = 120
+    ERROR_BACKOFF = 30
 
     def __init__(
             self,
@@ -52,12 +55,25 @@ class HTTPStreamClient(object):
     async def run(self):
         logger.info(f"HTTPStreamClient: running url={self.url}")
 
-        async with self.ctx.auth.client.stream("GET", self.url, timeout=self.TIMEOUT) as stream:
-            async for line in stream.aiter_lines():
-                print(f"got line: {line}")
-                await self._handle_line(line)
+        # Run forever, silently reconnecting if we get an error.
+        while True:
+            try:
+                await self._stream()
+            except RequestError as exc:
+                logger.info((
+                    f"HTTPStreamClient: disconnected from stream={self.stream_name}: "
+                    f"{str(exc)}"))
+                await asyncio.sleep(self.ERROR_BACKOFF)
 
-        print("done")
+    async def _stream(self):
+        logger.info("HTTPStreamClient: connecting to stream={stream}")
+
+        async with self.ctx.auth.client.stream("GET", self.url, timeout=self.TIMEOUT) as stream:
+            await self._parse_stream(stream)
+
+    async def _parse_stream(self, stream):
+        async for line in stream.aiter_lines():
+            await self._handle_line(line)
 
     async def _handle_line(self, line: str):
         # Lines beginning with ':' are comments (keepalives).
