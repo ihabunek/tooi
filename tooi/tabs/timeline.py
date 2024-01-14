@@ -6,13 +6,13 @@ from textual.containers import Horizontal
 from textual.widgets import TabPane
 
 from tooi.data.events import Event
-from tooi.api.statuses import set_favourite, unset_favourite, boost, unboost
+from tooi.api.statuses import set_favourite, unset_favourite, boost, unboost, get_status_source
 from tooi.api.timeline import Timeline
 from tooi.context import get_context
 from tooi.data.instance import InstanceInfo
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread, ToggleStatusFavourite
 from tooi.messages import EventHighlighted, EventSelected, StatusReply, ShowStatusMessage
-from tooi.messages import ToggleStatusBoost
+from tooi.messages import ToggleStatusBoost, EventMessage, StatusEdit
 from tooi.widgets.status_detail import StatusDetail
 from tooi.widgets.event_detail import make_event_detail, EventDetailPlaceholder
 from tooi.widgets.event_list import EventList
@@ -27,6 +27,7 @@ class TimelineTab(TabPane):
         Binding("a", "show_account", "Account"),
         Binding("u", "show_source", "Source"),
         Binding("t", "show_thread", "Thread"),
+        Binding("e", "status_edit", "Edit"),
         Binding("r", "status_reply", "Reply"),
         Binding("f", "status_favourite", "(Un)Favourite"),
         Binding("b", "status_boost", "(Un)Boost"),
@@ -186,6 +187,12 @@ class TimelineTab(TabPane):
         if event := self.event_list.current:
             if event.status:
                 self.post_message(ShowThread(event.status))
+
+    async def action_status_edit(self):
+        if event := self.event_list.current:
+            if event.status:
+                source = await get_status_source(event.status.original.id)
+                self.post_message(StatusEdit(event.status.original, source))
 
     def action_status_reply(self):
         if event := self.event_list.current:

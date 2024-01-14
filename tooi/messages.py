@@ -1,6 +1,6 @@
 from textual.message import Message
 from tooi.data.events import Event
-from tooi.entities import Account, Status
+from tooi.entities import Account, Status, StatusSource
 
 # Common message types
 
@@ -89,6 +89,12 @@ class ShowStatusMenu(StatusMessage):
 
 class StatusReply(StatusMessage):
     pass
+
+
+class StatusEdit(StatusMessage):
+    def __init__(self, status: Status, status_source: StatusSource):
+        super().__init__(status)
+        self.status_source = status_source
 
 
 class ShowStatusMessage(Message):
