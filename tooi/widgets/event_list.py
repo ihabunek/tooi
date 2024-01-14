@@ -148,7 +148,10 @@ class EventListItem(ListItem, can_focus=True):
                 markup=False,
                 classes="event_list_acct")
         if self.event.status:
-            yield Label(self.event.status.original.content_md, classes="event_list_status_preview")
+            yield Label(
+                    self.event.status.original.spoiler_text or
+                        self.event.status.original.content_md,
+                    classes="event_list_status_preview")
 
     def format_timestamp(self):
         if self.ctx.config.relative_timestamps:
