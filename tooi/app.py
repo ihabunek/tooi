@@ -20,6 +20,7 @@ from tooi.screens.help import HelpScreen
 from tooi.screens.instance import InstanceScreen
 from tooi.screens.loading import LoadingScreen
 from tooi.screens.main import MainScreen
+from tooi.screens.messagebox import MessageBox
 from tooi.screens.source import SourceScreen
 from tooi.screens.status_context import StatusMenuScreen
 from tooi.widgets.link import Link
@@ -45,6 +46,9 @@ class TooiApp(App[None]):
         self.instance = await get_instance_info()
         self.tabs = MainScreen(self.instance)
         self.switch_screen(self.tabs)
+
+    def show_error(self, title, message):
+        self.push_screen(MessageBox(title, message))
 
     def action_compose(self):
         self.push_screen(ComposeScreen(self.instance))
