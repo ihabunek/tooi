@@ -12,10 +12,11 @@ from tooi.api.statuses import set_favourite, unset_favourite, boost, unboost, ge
 from tooi.api.timeline import Timeline
 from tooi.context import get_context
 from tooi.data.instance import InstanceInfo
-from tooi.entities import StatusSource, from_dict
+from tooi.entities import StatusSource
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread, ToggleStatusFavourite
 from tooi.messages import EventHighlighted, EventSelected, StatusReply, ShowStatusMessage
 from tooi.messages import ToggleStatusBoost, EventMessage, StatusEdit
+from tooi.utils.from_dict import from_dict
 from tooi.widgets.status_detail import StatusDetail
 from tooi.widgets.event_detail import make_event_detail, EventDetailPlaceholder
 from tooi.widgets.event_list import EventList
