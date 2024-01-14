@@ -149,10 +149,13 @@ class TimelineTab(TabPane):
     async def on_toggle_status_favourite(self, message: ToggleStatusFavourite):
         original = message.status.original
 
-        if original.favourited:
-            await unset_favourite(original.id)
-        else:
-            await set_favourite(original.id)
+        try:
+            if original.favourited:
+                await unset_favourite(original.id)
+            else:
+                await set_favourite(original.id)
+        except APIError as exc:
+            self.app.show_error("Error", f"Could not (un)favourite status: {str(exc)}")
 
     def action_status_favourite(self):
         if event := self.event_list.current:
@@ -161,10 +164,13 @@ class TimelineTab(TabPane):
 
     async def on_toggle_status_boost(self, message: ToggleStatusBoost):
         original = message.status.original
-        if original.reblogged:
-            await unboost(original.id)
-        else:
-            await boost(original.id)
+        try:
+            if original.reblogged:
+                await unboost(original.id)
+            else:
+                await boost(original.id)
+        except APIError as exc:
+            self.app.show_error("Error", f"Could not (un)boost status: {str(exc)}")
 
     def action_status_boost(self):
         if event := self.event_list.current:
