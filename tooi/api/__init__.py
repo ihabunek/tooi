@@ -21,7 +21,7 @@ class APIError(Exception):
         super().__init__(self.message)
 
 
-class ResponseError(Exception):
+class ResponseError(APIError):
     """Raised when the API returns a response with status code >= 400."""
     def __init__(self, status_code: int, error: str | None, description: str | None):
         self.status_code = status_code
@@ -42,7 +42,7 @@ async def request(method: str, url: str, **kwargs: Unpack[RequestParams]) -> Res
     try:
         response = await ctx.auth.client.request(method, url, **kwargs)
     except RequestError as exc:
-        raise (APIError(exc))
+        raise (APIError(cause=exc))
 
     duration_ms = int(1000 * (time.time() - start))
 
@@ -51,7 +51,7 @@ async def request(method: str, url: str, **kwargs: Unpack[RequestParams]) -> Res
         return response
 
     error, description = await get_error(response)
-    raise APIError(ResponseError(response.status_code, error, description))
+    raise ResponseError(response.status_code, error, description)
 
 
 async def get_error(response: Response) -> Tuple[Optional[str], Optional[str]]:
