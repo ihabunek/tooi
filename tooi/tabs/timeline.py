@@ -10,6 +10,7 @@ from tooi.api.statuses import set_favourite, unset_favourite, boost, unboost, ge
 from tooi.api.timeline import Timeline
 from tooi.context import get_context
 from tooi.data.instance import InstanceInfo
+from tooi.entities import StatusSource, from_dict
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread, ToggleStatusFavourite
 from tooi.messages import EventHighlighted, EventSelected, StatusReply, ShowStatusMessage
 from tooi.messages import ToggleStatusBoost, EventMessage, StatusEdit
@@ -191,7 +192,8 @@ class TimelineTab(TabPane):
     async def action_status_edit(self):
         if event := self.event_list.current:
             if event.status:
-                source = await get_status_source(event.status.original.id)
+                response = await get_status_source(event.status.original.id)
+                source = from_dict(StatusSource, response.json())
                 self.post_message(StatusEdit(event.status.original, source))
 
     def action_status_reply(self):

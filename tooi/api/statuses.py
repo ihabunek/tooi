@@ -71,13 +71,11 @@ def drop_empty_values(data: Dict[Any, Any]) -> Dict[Any, Any]:
 
 async def get_status_source(status_id: str):
     """
-    Fetch the original plaintext source for a status.  Only works on locally-posted statuses.
+    Fetch the original plaintext source for a status. Only works on locally-posted statuses.
     https://docs.joinmastodon.org/methods/statuses/#source
     """
     path = f"/api/v1/statuses/{status_id}/source"
-    response = await request("GET", path)
-    json = response.json()
-    return from_dict(StatusSource, json)
+    return await request("GET", path)
 
 
 async def set_favourite(status_id: str):
