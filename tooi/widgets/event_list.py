@@ -119,6 +119,13 @@ class EventListItem(ListItem, can_focus=True):
         width: 5;
         padding-left: 1;
     }
+
+    .event_list_status_preview {
+        color: grey;
+        height: 1;
+        overflow: hidden;
+        padding-left: 1;
+    }
     """
 
     NOTIFICATION_FLAGS = {
@@ -140,6 +147,8 @@ class EventListItem(ListItem, can_focus=True):
                 self._format_account_name(self.event.account),
                 markup=False,
                 classes="event_list_acct")
+        if self.event.status:
+            yield Label(self.event.status.original.content_md, classes="event_list_status_preview")
 
     def format_timestamp(self):
         if self.ctx.config.relative_timestamps:
