@@ -56,9 +56,9 @@ class StatusDetail(VerticalScroll):
     ]
 
     def __init__(self, event: Event):
+        assert event.status is not None
         super().__init__()
         self.context = get_context()
-        self.event = event
         self.status = event.status
         self.sensitive = self.status.original.sensitive
 
