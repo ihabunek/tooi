@@ -30,6 +30,7 @@ class TimelineTab(TabPane):
         Binding("a", "show_account", "Account"),
         Binding("u", "show_source", "Source"),
         Binding("t", "show_thread", "Thread"),
+        Binding("m", "show_media", "View media"),
         Binding("e", "status_edit", "Edit"),
         Binding("r", "status_reply", "Reply"),
         Binding("f", "status_favourite", "(Un)Favourite"),
@@ -214,6 +215,13 @@ class TimelineTab(TabPane):
 
     def action_scroll_right(self):
         self.event_detail.focus()
+
+    def action_show_media(self):
+        if event := self.event_list.current:
+            if event.status:
+                self.app.view_images(
+                        [e.url for e in event.status.original.media_attachments
+                         if e.type == "image"])
 
     async def maybe_fetch_next_batch(self):
         if self.generator and self.should_fetch():
