@@ -1,8 +1,10 @@
 import asyncio
 import contextlib
 
+from os import path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import AsyncGenerator
+from urllib.parse import urlparse
 from tooi.context import get_context
 
 
@@ -32,7 +34,7 @@ async def download_temporary(urls: list[str]) -> AsyncGenerator[tuple[str, list[
 
 
 async def _download_file(url: str, tempdir: str, stack: contextlib.ExitStack):
-    file = NamedTemporaryFile(mode="wb", delete=False, dir=tempdir)
+    file = NamedTemporaryFile(mode="wb", delete=False, dir=tempdir, suffix=_get_suffix(url))
     stack.enter_context(file)
 
     client = get_context().auth.client
@@ -44,3 +46,10 @@ async def _download_file(url: str, tempdir: str, stack: contextlib.ExitStack):
 
     file.close()
     return file.name
+
+
+def _get_suffix(url: str) -> str | None:
+    """Attempt to get the file extension"""
+    _, ext = path.splitext(urlparse(url).path)
+    if ext:
+        return ext
