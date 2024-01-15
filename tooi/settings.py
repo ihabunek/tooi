@@ -24,8 +24,14 @@ class Options:
 
 
 @dataclass
+class Media:
+    image_viewer: Optional[str] = None
+
+
+@dataclass
 class Configuration:
     options: Options = field(default_factory=Options)
+    media: Media = field(default_factory=Media)
 
 
 def get_config_dir():
