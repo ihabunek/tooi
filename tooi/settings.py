@@ -2,15 +2,29 @@ import click
 import sys
 import os
 
+from dataclasses import dataclass, field
 from functools import lru_cache
 from os.path import exists, join, expanduser
 from tomlkit import parse
 from typing import Any, Optional, Type, TypeVar
 
+from tooi.utils.from_dict import from_dict
+
 
 DISABLE_SETTINGS = False
 TOOI_CONFIG_DIR_NAME = "tooi"
 TOOI_SETTINGS_FILE_NAME = "settings.toml"
+
+
+@dataclass
+class Options:
+    always_show_sensitive: Optional[bool] = None
+    relative_timestamps: bool = False
+
+
+@dataclass
+class Configuration:
+    options: Options = field(default_factory=Options)
 
 
 def get_config_dir():
@@ -56,7 +70,7 @@ def _load_settings() -> dict[str, Any]:
 @lru_cache(maxsize=None)
 def get_settings():
     settings = _load_settings()
-    return settings.get('options', {})
+    return from_dict(Configuration, settings)
 
 
 T = TypeVar("T")

@@ -1,5 +1,6 @@
 import click
 import logging
+import dataclasses
 
 from textual.logging import TextualHandler
 from typing import Optional
@@ -10,8 +11,7 @@ from tooi.settings import get_settings
 
 
 def get_default_map():
-    settings = get_settings()
-    return settings
+    return dataclasses.asdict(get_settings().options)
 
 
 # Tweak the Click context
@@ -32,6 +32,7 @@ CONTEXT = dict(
 @click.option(
     "-S", "--always-show-sensitive",
     type=click.BOOL,
+    default=None,
     help="Override server preference to expand toots with content warnings automatically"
 )
 @click.option(
@@ -43,8 +44,9 @@ def tooi(
         always_show_sensitive: Optional[bool],
         relative_timestamps: bool):
     ctx = create_context()
-    ctx.config.always_show_sensitive = always_show_sensitive
-    ctx.config.relative_timestamps = relative_timestamps
+    ctx.config = get_settings()
+    ctx.config.options.always_show_sensitive = always_show_sensitive
+    ctx.config.options.relative_timestamps = relative_timestamps
     set_context(ctx)
 
     app = TooiApp()

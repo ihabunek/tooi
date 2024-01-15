@@ -56,8 +56,8 @@ class TimelineTab(TabPane):
         self.fetching = False
         self.initial_focus = initial_focus
 
-        if self.context.config.always_show_sensitive is not None:
-            self.always_show_sensitive = self.context.config.always_show_sensitive
+        if self.context.config.options.always_show_sensitive is not None:
+            self.always_show_sensitive = self.context.config.options.always_show_sensitive
         else:
             self.always_show_sensitive = (
                     instance_info.user_preferences.get('reading:expand:spoilers',
