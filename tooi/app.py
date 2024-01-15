@@ -1,6 +1,11 @@
+import asyncio
 import re
 import webbrowser
 
+from contextlib import ExitStack
+from itertools import starmap
+from tempfile import NamedTemporaryFile, TemporaryDirectory
+from textual import work
 from textual.app import App
 from textual.screen import ModalScreen
 from urllib.parse import urlparse
@@ -154,3 +159,47 @@ class TooiApp(App[None]):
         else:
             # TODO: improve link handling
             webbrowser.open(message.url)
+
+    @work(group="view_images", exclusive=False)
+    async def view_images(self, urls: list[str]):
+        """
+        Open a local image viewer to display the given images, which should be a list of URLs.
+        This returns immediately and starts the work in a background thread.
+        """
+
+        async def _download_file(url: str, file):
+            """Download the given URL and write its data to the given file object."""
+            async with self.context.auth.client.stream("GET", url, follow_redirects=True) as stream:
+                stream.raise_for_status()
+
+                async for bytes in stream.aiter_bytes():
+                    file.write(bytes)
+
+            file.close()
+
+        # Create a context manager to ensure we free resources on stack unwind.
+        with ExitStack() as stack:
+
+            # Create a temporary directory for the file(s) we download.  We do it this way because
+            # NamedTemporaryFile doesn't support the delete_on_close parameter prior to Python 3.12,
+            # which makes it awkward for this usecase.
+            tempdir = TemporaryDirectory()
+            stack.enter_context(tempdir)
+
+            # Create a temporary file for each of the given URLs.
+            tempfiles: list[NamedTemporaryFile] = []
+
+            for url in urls:
+                tmpfile = NamedTemporaryFile(mode='wb', delete=False, dir=tempdir.name)
+                stack.enter_context(tmpfile)
+                tempfiles.append(tmpfile)
+
+            # Download the files.
+            await asyncio.gather(*starmap(_download_file, zip(urls, tempfiles)))
+
+            # Spawn the image viewer.
+            process = await asyncio.create_subprocess_exec(
+                    self.context.config.media.image_viewer,
+                    *map(lambda f: f.name, tempfiles))
+            # ... and wait for it to exit.
+            await process.communicate()
