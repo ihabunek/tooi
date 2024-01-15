@@ -235,9 +235,13 @@ class TimelineTab(TabPane):
 
         if event := self.event_list.current:
             if event.status:
-                self.app.view_images(
-                        [e.url for e in event.status.original.media_attachments
-                         if e.type == "image"])
+                images = [e.url for e in event.status.original.media_attachments
+                          if e.type == "image"]
+
+                if len(images) == 0:
+                    return
+
+                self.app.view_images(images)
 
     async def maybe_fetch_next_batch(self):
         if self.generator and self.should_fetch():
