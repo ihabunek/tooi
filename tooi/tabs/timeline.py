@@ -217,6 +217,10 @@ class TimelineTab(TabPane):
         self.event_detail.focus()
 
     def action_show_media(self):
+        if self.context.config.media.image_viewer is None:
+            self.app.show_error("Error", "No image viewer has been configured")
+            return
+
         if event := self.event_list.current:
             if event.status:
                 self.app.view_images(
