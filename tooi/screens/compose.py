@@ -6,9 +6,10 @@ from textual.app import ComposeResult
 from textual.message import Message
 from textual.reactive import Reactive, reactive
 from textual.widgets import Static, TextArea
-from tooi.api import statuses
-from tooi.data.instance import InstanceInfo
 
+from tooi.api import statuses
+from tooi.context import get_context
+from tooi.data.instance import InstanceInfo
 from tooi.screens.modal import ModalScreen
 from tooi.widgets.header import Header
 from tooi.widgets.menu import Menu, MenuItem
@@ -47,6 +48,7 @@ class ComposeScreen(ModalScreen[None]):
         self.edit = edit
         self.edit_source = edit_source
         self.content_warning = None
+        self.ctx = get_context()
 
         # posting:default:federation is used by Hometown's local-only
         # (unfederated) posts feature.  We treat this as a 3-way switch; if
@@ -72,9 +74,12 @@ class ComposeScreen(ModalScreen[None]):
         if self.edit:
             initial_text = self.edit_source.text
         elif self.in_reply_to:
-            mention_accounts = (
-                    [self.in_reply_to.original.account.acct]
-                    + [m.acct for m in self.in_reply_to.original.mentions])
+            mention_accounts = [
+                    user for user in (
+                        [self.in_reply_to.original.account.acct]
+                        + [m.acct for m in self.in_reply_to.original.mentions])
+                    if user != self.ctx.auth.acct and user != self.ctx.auth.acct.split('@')[0]
+                ]
             initial_text = " ".join([f"@{m}" for m in mention_accounts]) + " "
         else:
             initial_text = ""
