@@ -72,19 +72,7 @@ class ComposeScreen(ModalScreen[None]):
         super().__init__()
 
     def compose_modal(self) -> ComposeResult:
-        if self.edit:
-            initial_text = self.edit_source.text
-        elif self.in_reply_to:
-            mention_accounts = [
-                    user for user in (
-                        [self.in_reply_to.original.account.acct]
-                        + [m.acct for m in self.in_reply_to.original.mentions])
-                    if user != self.ctx.auth.acct and user != self.ctx.auth.acct.split('@')[0]
-                ]
-            initial_text = " ".join([f"@{m}" for m in mention_accounts]) + " "
-        else:
-            initial_text = ""
-
+        initial_text = self._get_initial_text()
         self.text_area = ComposeTextArea(id="compose_text_area", initial_text=initial_text)
         if initial_text:
             self.text_area.cursor_location = (0, len(initial_text))
@@ -223,6 +211,21 @@ class ComposeScreen(ModalScreen[None]):
     def set_status(self, message: str, classes: str = ""):
         self.status.set_classes(classes)
         self.status.update(message)
+
+    def _get_initial_text(self):
+        if self.edit:
+            return self.edit_source.text
+
+        if self.in_reply_to:
+            mention_accounts = [
+                    user for user in (
+                        [self.in_reply_to.original.account.acct]
+                        + [m.acct for m in self.in_reply_to.original.mentions])
+                    if user != self.ctx.auth.acct and user != self.ctx.auth.acct.split('@')[0]
+                ]
+            return " ".join([f"@{m}" for m in mention_accounts]) + " "
+
+        return ""
 
 
 class ComposeTextArea(TextArea):
