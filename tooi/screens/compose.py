@@ -91,6 +91,9 @@ class ComposeScreen(ModalScreen[None]):
 
         self.menu = Menu()
 
+        self.toggle_cw_menu_item = MenuItem("add_cw", "Add content warning")
+        self.menu.append(self.toggle_cw_menu_item)
+
         self.visibility_menu_item = MenuItem("visibility", f"Visibility: {self.visibility}")
         self.menu.append(self.visibility_menu_item)
 
@@ -107,7 +110,6 @@ class ComposeScreen(ModalScreen[None]):
         self.cancel_menu_item = MenuItem("cancel", "Cancel")
         self.menu.append(self.cancel_menu_item)
 
-        self.toggle_cw_menu_item = MenuItem("add_cw", "Add content warning")
         self.status = Static(id="compose_status", markup=False)
 
         self.character_count = ComposeCharacterCount(self.instance_info, self.text_area.text)
