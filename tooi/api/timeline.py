@@ -82,7 +82,7 @@ class Timeline(ABC):
         self._update_running = AsyncAtomic[bool](False)
         self._update_task = None
         self._periodic_refresh_task = None
-        self._queue = asyncio.Queue()
+        self._queue = asyncio.Queue(maxsize=self.QUEUE_SIZE)
 
     def _assert_can_update(self):
         if not self.can_update:
