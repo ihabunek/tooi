@@ -125,8 +125,6 @@ class Timeline(ABC):
 
             events.append(event)
 
-        return events
-
     async def get_events_wait(self) -> list[Event]:
         """
         Return a list of pending events which have been queued to the timeline since the last time
