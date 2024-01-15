@@ -203,6 +203,7 @@ class ComposeScreen(ModalScreen[None]):
             self.content_warning,
             after=self.query_one("ComposeCharacterCount")
         )
+        self.content_warning.focus()
 
     def remove_content_warning(self):
         self.toggle_cw_menu_item.code = "add_cw"
