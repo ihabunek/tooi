@@ -89,10 +89,10 @@ class Timeline(ABC):
             raise (NotImplementedError("this Timeline cannot update"))
 
     def close(self):
-        if (update_task := self._update_task) is not None:
+        if update_task := self._update_task:
             update_task.cancel()
 
-        if (periodic_refresh_task := self._periodic_refresh_task) is not None:
+        if periodic_refresh_task := self._periodic_refresh_task:
             periodic_refresh_task.cancel()
 
     async def update(self):
