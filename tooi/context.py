@@ -2,17 +2,11 @@ from dataclasses import dataclass
 from threading import local
 from typing import Optional
 
-from .auth import AuthContext, load_auth_context
+from tooi.auth import AuthContext, load_auth_context
+from tooi.settings import Configuration
 
 
 _local = local()
-
-
-@dataclass
-class Configuration:
-    always_show_sensitive: Optional[bool] = None
-    relative_timestamps: bool = False
-    timeline_refresh: int = 0
 
 
 @dataclass

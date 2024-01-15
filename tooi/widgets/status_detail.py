@@ -64,7 +64,7 @@ class StatusDetail(VerticalScroll):
 
     @property
     def revealed(self) -> bool:
-        return (self.context.config.always_show_sensitive
+        return (self.context.config.options.always_show_sensitive
                 or (self.status.original.id in self._revealed))
 
     @revealed.setter
@@ -225,7 +225,7 @@ class StatusMeta(Static):
     def format_timestamp(self):
         edited_ts = ""
 
-        if self.ctx.config.relative_timestamps:
+        if self.ctx.config.options.relative_timestamps:
             created_ts = format_relative(self.status.created_at)
             if self.status.edited_at:
                 edited_ts = f" (edited {format_relative(self.status.edited_at)} ago)"
