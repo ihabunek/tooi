@@ -67,16 +67,6 @@ class StatusDetail(VerticalScroll):
         return (self.context.config.options.always_show_sensitive
                 or (self.status.original.id in self._revealed))
 
-    @revealed.setter
-    def revealed(self, b: bool):
-        if b:
-            self._revealed.add(self.status.id)
-        else:
-            try:
-                self._revealed.remove(self.status.id)
-            except KeyError:
-                pass
-
     def compose(self):
         status = self.status.original
 
@@ -96,7 +86,7 @@ class StatusDetail(VerticalScroll):
         if self.sensitive and not self.revealed:
             self.query_one(".status_sensitive").styles.display = "none"
             self.query_one(".status_revealed").styles.display = "block"
-            self.revealed = True
+            self._revealed.add(self.status.id)
 
     def compose_sensitive(self, status: Status) -> ComposeResult:
         if status.spoiler_text:
