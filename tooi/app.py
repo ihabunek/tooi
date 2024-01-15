@@ -4,6 +4,7 @@ import webbrowser
 
 from textual import work
 from textual.app import App
+from textual.message import Message
 from textual.screen import ModalScreen
 from urllib.parse import urlparse
 
@@ -12,7 +13,7 @@ from tooi.api.timeline import FederatedTimeline, ContextTimeline, NotificationTi
 from tooi.asyncio import create_async_context, set_async_context
 from tooi.context import get_context
 from tooi.data.instance import get_instance_info
-from tooi.messages import GotoHashtagTimeline, GotoHomeTimeline, GotoLocalTimeline
+from tooi.messages import GotoAccountTimeline, GotoHashtagTimeline, GotoHomeTimeline, GotoLocalTimeline
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread, ShowNotifications
 from tooi.messages import ShowHashtagPicker, StatusReply, GotoFederatedTimeline
 from tooi.messages import GotoPersonalTimeline, StatusEdit
@@ -73,9 +74,9 @@ class TooiApp(App[None]):
                 edit_source=message.status_source))
 
     def action_goto(self):
-        def _goto_done(action):
-            if action is not None:
-                self.post_message(action)
+        def _goto_done(message: Message | None):
+            if message is not None:
+                self.post_message(message)
 
         self.push_screen(GotoScreen(), _goto_done)
 
@@ -98,7 +99,12 @@ class TooiApp(App[None]):
 
     def on_show_account(self, message: ShowAccount):
         self.close_modals()
-        self.push_screen(AccountScreen(message.account))
+
+        def _done(message: Message | None):
+            if message:
+                self.post_message(message)
+
+        self.push_screen(AccountScreen(message.account), _done)
 
     def on_show_source(self, message: ShowSource):
         self.push_screen(SourceScreen(message.status))
@@ -130,6 +136,10 @@ class TooiApp(App[None]):
 
     async def on_goto_personal_timeline(self, message: GotoPersonalTimeline):
         timeline = await AccountTimeline.from_name(self.instance, self.context.auth.acct)
+        await self._open_timeline(timeline)
+
+    async def on_goto_account_timeline(self, message: GotoAccountTimeline):
+        timeline = AccountTimeline(self.instance, message.account.acct, message.account.id)
         await self._open_timeline(timeline)
 
     async def on_goto_local_timeline(self, message: GotoLocalTimeline):
