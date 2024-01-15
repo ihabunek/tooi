@@ -36,13 +36,12 @@ class MainScreen(Screen[None]):
         padding: 0;
     }
 
-    #footer {
-        height: 2;
-        dock: bottom;
-    }
-
     Underline {
         display: none
+    }
+
+    StatusBar {
+        dock: bottom;
     }
     """
 
@@ -72,12 +71,7 @@ class MainScreen(Screen[None]):
             # Start with the home timeline
             with TabbedContent():
                 yield TimelineTab(self.instance, HomeTimeline(self.instance))
-            with Vertical(id="footer"):
-                # Footer() needs to be in its own container, because it forcibly docks itself to the
-                # bottom, which would cause it to overlap the status bar.
-                with Vertical():
-                    yield Footer()
-                yield StatusBar()
+            yield StatusBar()
 
     async def open_timeline_tab(self, timeline: Timeline, initial_focus: str | None = None):
         tab = TimelineTab(self.instance, timeline, initial_focus=initial_focus)
