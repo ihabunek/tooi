@@ -2,6 +2,7 @@
 Timelines API
 https://docs.joinmastodon.org/methods/timelines/
 """
+import asyncio
 import re
 
 from abc import ABC, abstractmethod
@@ -13,6 +14,7 @@ from httpx._types import QueryParamTypes
 
 from tooi.api import request, statuses
 from tooi.api.accounts import get_account_by_name
+from tooi.asyncio import run_async_task, AsyncAtomic
 from tooi.data.events import Event, NotificationEvent, StatusEvent
 from tooi.data.instance import InstanceInfo
 from tooi.entities import Status, Notification, from_dict, from_dict_list
@@ -60,15 +62,115 @@ async def fetch_timeline(
 
 class Timeline(ABC):
     """
-    Base class for a timeline.  This provides some useful generators that subclasses can use.
+    Base class for a timeline.  A timeline generates Events, which can be retrieved via its fetch()
+    or fetch_wait() methods.  The type of events the timeline generates depends on which subclass is
+    instantiated.
     """
 
-    def __init__(self, name, instance: InstanceInfo):
+    # How many events to queue at once before attempts to queue more events start to block.
+    # 128 should be a reasonable amount to allow a large timeline refresh to queue fully
+    # without blocking.  Increasing this doesn't significantly affect memory usage, because these
+    # events will be turned into timeline events anyway, but it may cause the timeline to be updated
+    # slower if many events being added block get_events().  This may need to be tuned later or
+    # perhaps removed entirely (set to zero).
+    QUEUE_SIZE = 128
+
+    def __init__(self, name, instance: InstanceInfo, can_update: bool = False):
         self.instance = instance
         self.name = name
+        self.can_update = can_update
+        self._update_running = AsyncAtomic[bool](False)
+        self._update_task = None
+        self._periodic_refresh_task = None
+        self._queue = asyncio.Queue()
+
+    def _assert_can_update(self):
+        if not self.can_update:
+            raise (NotImplementedError("this Timeline cannot update"))
+
+    def close(self):
+        if (update_task := self._update_task) is not None:
+            update_task.cancel()
+
+        if (periodic_refresh_task := self._periodic_refresh_task) is not None:
+            periodic_refresh_task.cancel()
+
+    async def update(self):
+        self._assert_can_update()
+        await self._interlocked_update()
+
+    def periodic_refresh(self, frequency: int):
+        self._assert_can_update()
+        self._periodic_refresh_task = run_async_task(self._periodic_refresh(frequency))
+
+    async def _periodic_refresh(self, frequency: int):
+        while True:
+            await asyncio.sleep(frequency)
+            await self._interlocked_update()
+
+    async def get_events(self) -> list[Event]:
+        """
+        Return a list of pending events which have been queued to the timeline since the last time
+        get_events() or get_events_wait() were called.  This function always returns immediately.
+        If no events are available, an empty list will be returned.
+        """
+        events = []
+
+        while True:
+            try:
+                event = self._queue.get_nowait()
+                self._queue.task_done()
+            except asyncio.QueueEmpty:
+                return events
+
+            events.append(event)
+
+        return events
+
+    async def get_events_wait(self) -> list[Event]:
+        """
+        Return a list of pending events which have been queued to the timeline since the last time
+        get_events() or get_events_wait() were called.  If no events are available, wait until at
+        least one event is available.
+        """
+
+        # Wait for the first event.
+        event = await self._queue.get()
+        self._queue.task_done()
+
+        # We got at least one event, fetch any more that happen to be pending.
+        events = [event] + await self.get_events()
+
+        return events
+
+    async def _dispatch(self, event: Event):
+        # Push a new event into the queue.  This will block if the queue is full.
+        await self._queue.put(event)
+
+    async def _interlocked_update(self):
+        async def _run_update():
+            try:
+                await self._update()
+            finally:
+                self._update_task = None
+                await self._update_running.set(False)
+
+        if await self._update_running.compare_and_swap(False, True) is True:
+            # Update is already running.
+            return
+
+        self._update_task = run_async_task(_run_update())
+
+    async def _update(self):
+        # This function is called to instruct the timeline implementation to fetch more events and
+        # dispatch them.  This function will be called in a separate runner, so it's fine to await
+        # here without blocking the UI.
+        raise (NotImplementedError("this Timeline cannot update"))
 
     @abstractmethod
-    def fetch(self, limit: int | None = None) -> EventGenerator:
+    async def fetch(self, limit: int | None = None) -> EventGenerator:
+        # This is the non-queue-based fetch function which is used when fetching the initial
+        # timeline.
         ...
 
 
@@ -78,7 +180,7 @@ class StatusTimeline(Timeline):
     """
 
     def __init__(self, name: str, instance: InstanceInfo, path: str, params: Params | None = None):
-        super().__init__(name, instance)
+        super().__init__(name, instance, can_update=True)
         self.path = path
         self.params = params
         self._most_recent_id = None
@@ -93,13 +195,12 @@ class StatusTimeline(Timeline):
 
             yield events
 
-    async def update(self, limit: int | None = None) -> EventGenerator:
+    async def _update(self):
         eventslist = fetch_timeline(
                 self.instance,
                 self.path,
-                self.params,
-                limit,
-                self._most_recent_id)
+                params=self.params,
+                since_id=self._most_recent_id)
 
         updated_most_recent = False
 
@@ -110,7 +211,10 @@ class StatusTimeline(Timeline):
                 updated_most_recent = True
                 self._most_recent_id = events[0].status.id
 
-            yield events
+            events.reverse()
+            for event in events:
+                # Note that we need to preserve the event order, so dispatch them one at a time.
+                await self._dispatch(event)
 
 
 class HomeTimeline(StatusTimeline):
@@ -191,7 +295,7 @@ class NotificationTimeline(Timeline):
     """
 
     def __init__(self, instance: InstanceInfo):
-        super().__init__("Notifications", instance)
+        super().__init__("Notifications", instance, can_update=True)
         self._most_recent_id = None
 
     async def notification_generator(
@@ -213,7 +317,7 @@ class NotificationTimeline(Timeline):
     def fetch(self, limit: int | None = None):
         return self.notification_generator(limit=limit)
 
-    async def update(self, limit: int | None = None) -> EventGenerator:
+    async def _update(self, limit: int | None = None):
         timeline = fetch_timeline(
                 self.instance,
                 "/api/v1/notifications",
@@ -230,7 +334,9 @@ class NotificationTimeline(Timeline):
                 updated_most_recent = True
                 self._most_recent_id = events[0].notification.id
 
-            yield events
+            events.reverse()
+            for event in events:
+                await self._dispatch(event)
 
 
 class TagTimeline(StatusTimeline):

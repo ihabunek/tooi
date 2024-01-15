@@ -1,6 +1,7 @@
 import asyncio
 from textual import work
 
+from textual import work
 from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.widgets import TabPane
@@ -18,6 +19,10 @@ from tooi.messages import ToggleStatusBoost, EventMessage, StatusEdit
 from tooi.widgets.status_detail import StatusDetail
 from tooi.widgets.event_detail import make_event_detail, EventDetailPlaceholder
 from tooi.widgets.event_list import EventList
+
+
+class NewEventPosted(EventMessage):
+    pass
 
 
 class TimelineTab(TabPane):
@@ -75,6 +80,18 @@ class TimelineTab(TabPane):
         if self.initial_focus:
             self.event_list.focus_event(self.initial_focus)
 
+        # Start our background worker to load new statuses.  We start this even if the timeline
+        # can't update, because it may have some other way to acquire new events.
+        self.fetch_events()
+
+        # Start the timeline periodic refresh, if configured.
+        if self.timeline.can_update and self.context.config.timeline_refresh > 0:
+            self.timeline.periodic_refresh(self.context.config.timeline_refresh)
+
+    def on_unmount(self, message):
+        self.timeline.close()
+        self.timeline = None
+
     def compose(self):
         yield Horizontal(
             self.event_list,
@@ -82,33 +99,28 @@ class TimelineTab(TabPane):
             id="main_window"
         )
 
+    def on_new_event_posted(self, message: NewEventPosted):
+        self.event_list.prepend_events([message.event])
+        self.query_one(EventList).refresh_events()
+
+    @work(group="fetch_events")
+    async def fetch_events(self):
+        # Fetch new events from the timeline and post messages for them.  This task runs in a
+        # separate async task, so we don't want to touch the UI directly.
+        while events := await self.timeline.get_events_wait():
+            for event in events:
+                self.post_message(NewEventPosted(event))
+
     def make_event_detail(self, event: Event):
         return make_event_detail(event)
 
     async def refresh_timeline(self):
         # Handle timelines that don't support updating.
-        if not hasattr(self.timeline, 'update'):
+        if not self.timeline.can_update:
             await self.fetch_timeline()
-            return
-
-        newevents = []
-
-        self.post_message(ShowStatusMessage("[green]Updating timeline...[/]"))
-
-        try:
-            async for eventslist in self.timeline.update():
-                newevents += eventslist
-        except Exception as exc:
-            self.post_message(ShowStatusMessage(f"[red]Could not load timeline: {str(exc)}[/]"))
-            return
-
-        # The updates are returned in inverse chronological order, so reverse them before adding.
-        newevents.reverse()
-        self.event_list.prepend_events(newevents)
-        self.post_message(ShowStatusMessage())
-
-        # Make sure older events are up to date
-        self.query_one(EventList).refresh_events()
+        else:
+            # This returns immediately; any updates will be handled by fetch_events.
+            await self.timeline.update()
 
     async def fetch_timeline(self):
         try:
