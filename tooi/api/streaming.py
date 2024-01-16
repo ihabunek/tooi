@@ -1,3 +1,14 @@
+"""
+Streaming (push) support for timelines.
+
+Streaming is handled by the InstanceStreamer class, which should only be created once per instance.
+InstanceStreamer handles connecting to the streaming endpoint, receiving events, and distributing
+them to the various subscribers.  To subscribe to streaming, use subscribe() to create a
+StreamSubscription instance.
+
+https://docs.joinmastodon.org/methods/streaming/
+"""
+
 import asyncio
 import json
 import logging
@@ -9,13 +20,8 @@ from tooi.asyncio import run_async_task
 from tooi.context import get_context
 from tooi.data.instance import InstanceInfo
 
-# Streaming (push) support for timelines.  Streaming is handled by the InstanceStreamer class, which
-# should only be created once per instance.  InstanceStreamer handles connecting to the streaming
-# endpoint, receiving events, and distributing them to the various subscribers.  To subscribe to
-# streaming, use subscribe() to create a StreamSubscription instance.
 
-
-class StreamEvent(object):
+class StreamEvent:
     """Internal type representing an event received from a stream."""
     def __init__(self, stream: str, event: str, payload):
         self.stream = stream
@@ -27,7 +33,7 @@ StreamQueue = asyncio.Queue[StreamEvent]
 logger = logging.getLogger(__name__)
 
 
-class HTTPStreamClient(object):
+class HTTPStreamClient:
     """
     Client for connecting to a streaming endpoint and fetching events.
     This implements the HTTP (non-WebSocket) protocol.
@@ -114,7 +120,7 @@ class HTTPStreamClient(object):
         await self.queue.put(event)
 
 
-class StreamSubscription(object):
+class StreamSubscription:
     # Stream types
     USER = "user"
     PUBLIC_LOCAL = "public/local"
@@ -137,7 +143,55 @@ class StreamSubscription(object):
         self.mplx = None
 
 
-class StreamMultiplexer(object):
+class StreamInstance:
+    def __init__(self, mplx: "StreamMultiplexer", stream: str):
+        self.mplx = mplx
+        self.stream = stream
+        self.subscribers: set[StreamSubscription] = set()
+        self.lock = asyncio.Lock()
+        self.client = HTTPStreamClient(self.mplx.instance, stream)
+        self.client_task = run_async_task(self.client.run())
+        self.mplx_task = run_async_task(self._run())
+
+    async def nsubscribers(self):
+        assert self.lock.locked()
+        return len(self.subscribers)
+
+    async def _run(self):
+        while True:
+            e = await self.client.queue.get()
+            async with self.lock:
+                for subscriber in self.subscribers:
+                    await subscriber.dispatch(e)
+
+    async def close(self):
+        assert self.lock.locked()
+        self.client_task.cancel()
+        self.client_task = None
+
+        self.mplx_task.cancel()
+        self.mplx_task = None
+
+        await self.client.close()
+        self.client = None
+
+    async def add_subscriber(self) -> StreamSubscription:
+        assert self.lock.locked()
+        subscription = StreamSubscription(self.mplx, self.stream)
+
+        logger.info(
+                (f"StreamInstance: stream={self.client.stream_name} "
+                 f"has {await self.nsubscribers()} refs now"))
+        self.subscribers.add(subscription)
+
+        return subscription
+
+    async def remove_subscriber(self, subscriber):
+        assert self.lock.locked()
+        self.subscribers.remove(subscriber)
+
+
+class StreamMultiplexer:
     """
     Internal class for multiplexing multiple streams into a single queue.  Call open_stream() to
     start receiving events on a stream, and close_stream() to stop receiving them.  The number of
@@ -149,53 +203,6 @@ class StreamMultiplexer(object):
     #         or: StreamInstance.lock if self.lock not held
     #        NOT: StreamInstance.lock -> self.lock
 
-    class StreamInstance(object):
-        def __init__(self, mplx: "StreamMultiplexer", stream: str):
-            self.mplx = mplx
-            self.stream = stream
-            self.subscribers: set[StreamSubscription] = set()
-            self.lock = asyncio.Lock()
-            self.client = HTTPStreamClient(self.mplx.instance, stream)
-            self.client_task = run_async_task(self.client.run())
-            self.mplx_task = run_async_task(self._run())
-
-        async def nsubscribers(self):
-            assert self.lock.locked()
-            return len(self.subscribers)
-
-        async def _run(self):
-            while True:
-                e = await self.client.queue.get()
-                async with self.lock:
-                    for subscriber in self.subscribers:
-                        await subscriber.dispatch(e)
-
-        async def close(self):
-            assert self.lock.locked()
-            self.client_task.cancel()
-            self.client_task = None
-
-            self.mplx_task.cancel()
-            self.mplx_task = None
-
-            await self.client.close()
-            self.client = None
-
-        async def add_subscriber(self) -> StreamSubscription:
-            assert self.lock.locked()
-            subscription = StreamSubscription(self.mplx, self.stream)
-
-            logger.info(
-                    (f"StreamInstance: stream={self.client.stream_name} "
-                     f"has {await self.nsubscribers()} refs now"))
-            self.subscribers.add(subscription)
-
-            return subscription
-
-        async def remove_subscriber(self, subscriber):
-            assert self.lock.locked()
-            self.subscribers.remove(subscriber)
-
     def __init__(self, instance: InstanceInfo):
         self.instance = instance
         self.streams = {}
@@ -205,7 +212,7 @@ class StreamMultiplexer(object):
         async with self.lock:
             if (sinst := self.streams.get(stream)) is None:
                 logger.info(f"StreamMultiplexer: new client for stream={stream}")
-                sinst = self.StreamInstance(self, stream)
+                sinst = StreamInstance(self, stream)
                 self.streams[stream] = sinst
 
             async with sinst.lock:
@@ -232,7 +239,7 @@ class StreamMultiplexer(object):
         self._task = run_async_task(self._run())
 
 
-class InstanceStreamer(object):
+class InstanceStreamer:
     def __init__(self, instance: InstanceInfo):
         self.instance = instance
         self.mplx = StreamMultiplexer(instance)
