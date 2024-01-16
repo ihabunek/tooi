@@ -3,7 +3,8 @@ import json
 import logging
 import re
 
-from httpx import RequestError
+from httpx import RequestError, Response
+from typing import Any
 
 from tooi.asyncio import run_async_task
 from tooi.context import get_context
@@ -17,7 +18,7 @@ from tooi.data.instance import InstanceInfo
 
 class StreamEvent(object):
     """Internal type representing an event received from a stream."""
-    def __init__(self, stream: str, event: str, payload):
+    def __init__(self, stream: str, event: str, payload: Any):
         self.stream = stream
         self.event = event
         self.payload = payload
@@ -47,7 +48,7 @@ class HTTPStreamClient(object):
         self.stream_name = stream_name
         self.url = f"/api/v1/streaming/{self.stream_name}"
         self.queue = StreamQueue()
-        self._lines = []
+        self._lines: list[str] = []
 
     async def close(self):
         pass
@@ -71,7 +72,7 @@ class HTTPStreamClient(object):
         async with self.ctx.auth.client.stream("GET", self.url, timeout=self.TIMEOUT) as stream:
             await self._parse_stream(stream)
 
-    async def _parse_stream(self, stream):
+    async def _parse_stream(self, stream: Response):
         async for line in stream.aiter_lines():
             await self._handle_line(line)
 
@@ -133,6 +134,7 @@ class StreamSubscription(object):
         await self.queue.put(e)
 
     async def close(self):
+        assert self.mplx, "Stream already closed"
         await self.mplx.close_stream(self)
         self.mplx = None
 
@@ -164,6 +166,7 @@ class StreamMultiplexer(object):
             return len(self.subscribers)
 
         async def _run(self):
+            assert self.client
             while True:
                 e = await self.client.queue.get()
                 async with self.lock:
@@ -171,7 +174,11 @@ class StreamMultiplexer(object):
                         await subscriber.dispatch(e)
 
         async def close(self):
+            assert self.client
+            assert self.client_task
+            assert self.mplx_task
             assert self.lock.locked()
+
             self.client_task.cancel()
             self.client_task = None
 
@@ -182,6 +189,7 @@ class StreamMultiplexer(object):
             self.client = None
 
         async def add_subscriber(self) -> StreamSubscription:
+            assert self.client
             assert self.lock.locked()
             subscription = StreamSubscription(self.mplx, self.stream)
 
@@ -192,13 +200,13 @@ class StreamMultiplexer(object):
 
             return subscription
 
-        async def remove_subscriber(self, subscriber):
+        async def remove_subscriber(self, subscriber: StreamSubscription):
             assert self.lock.locked()
             self.subscribers.remove(subscriber)
 
     def __init__(self, instance: InstanceInfo):
         self.instance = instance
-        self.streams = {}
+        self.streams: dict[str, StreamMultiplexer.StreamInstance] = {}
         self.lock = asyncio.Lock()
 
     async def open_stream(self, stream: str) -> StreamSubscription:
