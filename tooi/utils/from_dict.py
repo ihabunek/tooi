@@ -20,9 +20,14 @@ def from_dict(cls: Type[T], data: Data) -> T:
         hints = get_type_hints(cls)
         for field in dataclasses.fields(cls):
             field_type = _prune_optional(hints[field.name])
-            default_value = _get_default_value(field)
-            value = data.get(field.name, default_value)
-            yield field.name, _convert(field_type, value)
+
+            value = data.get(field.name, None)
+            if value is not None:
+                value = _convert(field_type, value)
+            else:
+                value = _get_default_value(field)
+
+            yield field.name, value
 
     return cls(**dict(_fields()))
 
