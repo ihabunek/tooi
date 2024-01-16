@@ -12,7 +12,7 @@ class InstanceInfo():
     instance: Instance | None
     instance_v2: InstanceV2 | None
     extended_description: ExtendedDescription | None
-    user_preferences: dict[str, Any] | None
+    user_preferences: dict[str, Any]
 
     @property
     def status_config(self) -> InstanceStatusConfguration:
@@ -33,14 +33,11 @@ class InstanceInfo():
         not present, the instance doesn't support local-only posts at all,
         otherwise it indicates if the post should be federated by default.
         """
-        if self.user_preferences:
-            return self.user_preferences.get("posting:default:federation")
+        return self.user_preferences.get("posting:default:federation")
 
     def get_default_visibility(self) -> str:
         """Returns the default visibility from user's preferences."""
-        if self.user_preferences:
-            return self.user_preferences.get("posting:default:federation", "public")
-        return "public"
+        return self.user_preferences.get("posting:default:federation", "public")
 
 
 async def get_instance_info() -> InstanceInfo:
@@ -56,7 +53,7 @@ async def get_instance_info() -> InstanceInfo:
     instance_v1 = None
     instance_v2 = None
     extended_description = None
-    user_preferences = {}
+    user_preferences: dict[str, Any] = {}
 
     if isinstance(instance_resp, Response):
         instance_v1 = from_response(Instance, instance_resp)
