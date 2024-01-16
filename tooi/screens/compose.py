@@ -60,8 +60,7 @@ class ComposeScreen(ModalScreen[None]):
                 self.federated = not in_reply_to.local_only
         else:
             self.federated = instance_info.get_federated()
-            self.visibility = instance_info.user_preferences.get(
-                    'posting:default:visibility', Visibility.Public)
+            self.visibility = instance_info.get_default_visibility()
 
         super().__init__()
 

@@ -36,6 +36,12 @@ class InstanceInfo():
         if self.user_preferences:
             return self.user_preferences.get("posting:default:federation")
 
+    def get_default_visibility(self) -> str:
+        """Returns the default visibility from user's preferences."""
+        if self.user_preferences:
+            return self.user_preferences.get("posting:default:federation", "public")
+        return "public"
+
 
 async def get_instance_info() -> InstanceInfo:
     instance_resp, instance_v2_resp, description_resp, user_preferences_resp = (
