@@ -124,22 +124,26 @@ class ComposeScreen(ModalScreen[None]):
         self.disable()
         self.set_status("Posting...", "text-muted")
 
+        spoiler_text = self.content_warning.text if self.content_warning else None
+        in_reply_to = self.in_reply_to.original.id if self.in_reply_to else None
+        local_only = not self.federated if self.federated is not None else None
+
         try:
-            args = {
-                'visibility': self.visibility,
-                'spoiler_text': self.content_warning.text if self.content_warning else None,
-            }
-
             if self.edit:
-                await statuses.edit(self.edit.id, self.text_area.text, **args)
+                await statuses.edit(
+                    self.edit.id,
+                    self.text_area.text,
+                    visibility=self.visibility,
+                    spoiler_text=spoiler_text,
+                )
             else:
-                if self.in_reply_to is not None:
-                    args['in_reply_to'] = self.in_reply_to.original.id
-
-                if self.federated is not None:
-                    args['local_only'] = not self.federated
-
-                await statuses.post(self.text_area.text, **args)
+                await statuses.post(
+                    self.text_area.text,
+                    visibility=self.visibility,
+                    spoiler_text=spoiler_text,
+                    in_reply_to=in_reply_to,
+                    local_only=local_only,
+                )
 
             self.set_status("Status posted", "text-success")
             await asyncio.sleep(0.5)
