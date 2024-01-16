@@ -19,7 +19,7 @@ async def context(status_id: str) -> Response:
 
 async def post(
     status: str,
-    visibility: Visibility = Visibility.Public,
+    visibility: Visibility | str = Visibility.Public,
     sensitive: bool = False,
     spoiler_text: str | None = None,
     in_reply_to: Optional[str] = None,
@@ -44,7 +44,7 @@ async def post(
 async def edit(
     status_id: str,
     status: str,
-    visibility: Visibility = Visibility.Public,
+    visibility: Visibility | str = Visibility.Public,
     sensitive: bool = False,
     spoiler_text: str | None = None,
 ) -> Response:
