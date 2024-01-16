@@ -39,6 +39,12 @@ class InstanceInfo():
         """Returns the default visibility from user's preferences."""
         return self.user_preferences.get("posting:default:federation", "public")
 
+    def get_always_show_sensitive(self) -> bool:
+        """
+        User's preference whether sensitive posts should be expanded by defualt.
+        """
+        return self.user_preferences.get("reading:expand:spoilers", False)
+
 
 async def get_instance_info() -> InstanceInfo:
     instance_resp, instance_v2_resp, description_resp, user_preferences_resp = (
