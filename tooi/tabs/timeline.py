@@ -64,9 +64,7 @@ class TimelineTab(TabPane):
         if self.context.config.options.always_show_sensitive is not None:
             self.always_show_sensitive = self.context.config.options.always_show_sensitive
         else:
-            self.always_show_sensitive = (
-                    instance_info.user_preferences.get('reading:expand:spoilers',
-                                                       False))
+            self.always_show_sensitive = instance_info.get_always_show_sensitive()
 
         # Start with an empty status list while we wait to load statuses.
         self.event_list = EventList([])
