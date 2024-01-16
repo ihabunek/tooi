@@ -123,28 +123,8 @@ class ComposeScreen(ModalScreen[None]):
     async def post_status(self):
         self.disable()
         self.set_status("Posting...", "text-muted")
-
-        spoiler_text = self.content_warning.text if self.content_warning else None
-        in_reply_to = self.in_reply_to.original.id if self.in_reply_to else None
-        local_only = not self.federated if self.federated is not None else None
-
         try:
-            if self.edit:
-                await statuses.edit(
-                    self.edit.id,
-                    self.text_area.text,
-                    visibility=self.visibility,
-                    spoiler_text=spoiler_text,
-                )
-            else:
-                await statuses.post(
-                    self.text_area.text,
-                    visibility=self.visibility,
-                    spoiler_text=spoiler_text,
-                    in_reply_to=in_reply_to,
-                    local_only=local_only,
-                )
-
+            await self._post_or_edit_status()
             self.set_status("Status posted", "text-success")
             await asyncio.sleep(0.5)
             self.dismiss()
@@ -152,6 +132,27 @@ class ComposeScreen(ModalScreen[None]):
             self.set_status(f"{ex}", "text-error")
             self.enable()
             self.menu.focus()
+
+    async def _post_or_edit_status(self):
+        spoiler_text = self.content_warning.text if self.content_warning else None
+        in_reply_to = self.in_reply_to.original.id if self.in_reply_to else None
+        local_only = not self.federated if self.federated is not None else None
+
+        if self.edit:
+            await statuses.edit(
+                self.edit.id,
+                self.text_area.text,
+                visibility=self.visibility,
+                spoiler_text=spoiler_text,
+            )
+        else:
+            await statuses.post(
+                self.text_area.text,
+                visibility=self.visibility,
+                spoiler_text=spoiler_text,
+                in_reply_to=in_reply_to,
+                local_only=local_only,
+            )
 
     def disable(self):
         self.text_area.disabled = True
