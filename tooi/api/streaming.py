@@ -14,7 +14,7 @@ import json
 import logging
 import re
 
-from httpx import RequestError
+from httpx import HTTPError
 
 from tooi.asyncio import run_async_task
 from tooi.context import get_context
@@ -65,16 +65,18 @@ class HTTPStreamClient:
         while True:
             try:
                 await self._stream()
-            except RequestError as exc:
+            except HTTPError as exc:
                 logger.info((
                     f"HTTPStreamClient: disconnected from stream={self.stream_name}: "
                     f"{str(exc)}"))
-                await asyncio.sleep(self.ERROR_BACKOFF)
+
+            await asyncio.sleep(self.ERROR_BACKOFF)
 
     async def _stream(self):
         logger.info(f"HTTPStreamClient: connecting to stream={self.stream_name}")
 
         async with self.ctx.auth.client.stream("GET", self.url, timeout=self.TIMEOUT) as stream:
+            stream.raise_for_status()
             await self._parse_stream(stream)
 
     async def _parse_stream(self, stream):
