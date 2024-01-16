@@ -72,7 +72,7 @@ class HTTPStreamClient:
                 await asyncio.sleep(self.ERROR_BACKOFF)
 
     async def _stream(self):
-        logger.info("HTTPStreamClient: connecting to stream={stream}")
+        logger.info(f"HTTPStreamClient: connecting to stream={self.stream_name}")
 
         async with self.ctx.auth.client.stream("GET", self.url, timeout=self.TIMEOUT) as stream:
             await self._parse_stream(stream)
