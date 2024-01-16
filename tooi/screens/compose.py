@@ -49,13 +49,7 @@ class ComposeScreen(ModalScreen[None]):
         self.edit_source = edit_source
         self.content_warning = None
         self.ctx = get_context()
-        self.federated = None
-
-        # posting:default:federation is used by Hometown's local-only
-        # (unfederated) posts feature.  We treat this as a 3-way switch; if
-        # it's not present, the instance doesn't support local-only posts at
-        # all, otherwise it indicates if the post should be federated by
-        # default.
+        self.federated: bool | None = None
 
         if edit:
             self.visibility = edit.visibility
@@ -65,7 +59,7 @@ class ComposeScreen(ModalScreen[None]):
             if in_reply_to.local_only is not None:
                 self.federated = not in_reply_to.local_only
         else:
-            self.federated = instance_info.user_preferences.get('posting:default:federation')
+            self.federated = instance_info.get_federated()
             self.visibility = instance_info.user_preferences.get(
                     'posting:default:visibility', Visibility.Public)
 

@@ -1,5 +1,6 @@
 from asyncio import gather
 from dataclasses import dataclass
+from typing import Any
 from httpx import Response
 from tooi.api import instance
 from tooi.entities import ExtendedDescription, Instance, InstanceStatusConfguration, InstanceV2
@@ -11,7 +12,7 @@ class InstanceInfo():
     instance: Instance | None
     instance_v2: InstanceV2 | None
     extended_description: ExtendedDescription | None
-    user_preferences: dict | None
+    user_preferences: dict[str, Any] | None
 
     @property
     def status_config(self) -> InstanceStatusConfguration:
@@ -24,6 +25,16 @@ class InstanceInfo():
                 max_media_attachments=4,
                 characters_reserved_per_url=23,
             )
+
+    def get_federated(self) -> bool | None:
+        """
+        posting:default:federation is used by Hometown's local-only
+        (unfederated) posts feature. We treat this as a 3-way switch; if it's
+        not present, the instance doesn't support local-only posts at all,
+        otherwise it indicates if the post should be federated by default.
+        """
+        if self.user_preferences:
+            return self.user_preferences.get("posting:default:federation")
 
 
 async def get_instance_info() -> InstanceInfo:
