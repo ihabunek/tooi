@@ -87,27 +87,25 @@ class WSStreamClient:
                 sock_read=self.TIMEOUT
         )
 
-        # Since the base URL of the stream might be different from the instance's normal base URL,
-        # we have to create our own client.
-        client = aiohttp.ClientSession()
-
-        # Note that the Mastodon API documentation recommends using query parameters for
-        # single-purpose streams.
-
         url = self.url + "/api/v1/streaming"
         params = { 'access_token': self.ctx.auth.access_token, 'stream': self.stream_name }
 
         logger.info(f"WSStreamClient: url={url} for stream={self.stream_name}")
 
-        async with client.ws_connect(url, params=params, timeout=timeout) as resp:
-            async for message_json in resp:
-                try:
-                    message = message_json.json()
-                except json.JSONDecodeError:
-                    logger.info("WSStreamClient: could not decode JSON")
-                    return
+        # Since the base URL of the stream might be different from the instance's normal base URL,
+        # we have to create our own client.
+        async with aiohttp.ClientSession() as client:
+            # Note that the Mastodon API documentation recommends using query parameters for
+            # single-purpose streams.
+            async with client.ws_connect(url, params=params, timeout=timeout) as resp:
+                async for message_json in resp:
+                    try:
+                        message = message_json.json()
+                    except json.JSONDecodeError:
+                        logger.info("WSStreamClient: could not decode JSON")
+                        return
 
-                await self._handle_message(message)
+                    await self._handle_message(message)
 
     async def _handle_message(self, message: dict[str, Any]):
         if 'event' not in message or 'payload' not in message:
