@@ -97,7 +97,7 @@ class AccountMenuScreen(ModalScreen[Message | None]):
         super().__init__()
 
     def compose_modal(self) -> ComposeResult:
-        yield Static(f"Account @{self.account.acct}", classes="modal_title")
+        yield Static(f"Account @{self.account.acct}", classes="modal_title", markup=False)
         yield Menu(
             MenuItem(code="goto_timeline", label="View timeline", key="t"),
         )
