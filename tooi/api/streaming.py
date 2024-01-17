@@ -145,7 +145,9 @@ class HTTPStreamClient:
         # TODO: This should be part of the instance.
         self.ctx = get_context()
         self.stream_name = stream_name
-        self.url = f"/api/v1/streaming/{self.stream_name}"
+        # The HTTP stream URL uses a different format for the stream name.
+        self.http_stream_name = stream_name.replace(":", "/")
+        self.url = f"/api/v1/streaming/{self.http_stream_name}"
         self.queue = StreamQueue()
         self._lines: list[str] = []
 
@@ -253,8 +255,8 @@ class HTTPStreamClient:
 class StreamSubscription:
     # Stream types
     USER = "user"
-    PUBLIC_LOCAL = "public/local"
-    PUBLIC_REMOTE = "public/remote"
+    PUBLIC_LOCAL = "public:local"
+    PUBLIC_REMOTE = "public:remote"
 
     def __init__(self, mplx: "StreamMultiplexer", stream: str):
         self.mplx = mplx
