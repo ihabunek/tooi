@@ -248,14 +248,19 @@ class StatusTimeline(Timeline):
         # We need the events in chronological order.
         events.reverse()
 
+        new_events: set[str] = set()
+
         async with self._lock:
             for event in events:
                 # Skip any events we already handled via streaming.
                 if event.id not in self._seen_events:
                     await self._dispatch(event)
 
-            # Clear the seen events cache for the next fetch.
-            self._seen_events.clear()
+                # Indicate we saw this event in case it turns up on the stream too.
+                new_events.add(event.id)
+
+            # Reset the seen events cache for the next fetch.
+            self._seen_events = new_events
 
     async def streaming(self, enable):
         if enable:
@@ -273,10 +278,13 @@ class StatusTimeline(Timeline):
                 match sevt.event:
                     case "update":
                         event = StatusEvent(self.instance, from_dict(Status, sevt.payload))
-                        # Track the events we've seen from streaming; these will be discarded in the
-                        # next fetch(), to avoid generating duplicate events.
-                        self._seen_events.add(event.id)
-                        await self._dispatch(event)
+
+                        # If we already saw this event, ignore it.
+                        if event.id not in self._seen_events:
+                            # Otherwise mark it as seen for _update().
+                            self._seen_events.add(event.id)
+                            await self._dispatch(event)
+
                     case _:
                         logger.info(f"StatusTimeline: no use for event type {sevt.event}")
 
