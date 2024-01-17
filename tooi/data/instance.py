@@ -37,7 +37,7 @@ class InstanceInfo():
 
     def get_default_visibility(self) -> str:
         """Returns the default visibility from user's preferences."""
-        return self.user_preferences.get("posting:default:federation", "public")
+        return self.user_preferences.get("posting:default:visibility", "public")
 
     def get_always_show_sensitive(self) -> bool:
         """
