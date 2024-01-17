@@ -6,7 +6,6 @@ from typing import Any, Dict, Optional
 from httpx import Response
 from uuid import uuid4
 from tooi.api import request
-from tooi.entities import StatusSource
 from tooi.screens.compose import Visibility
 
 
