@@ -307,6 +307,11 @@ class InstanceUrls:
 
 
 @dataclass
+class InstanceV2Urls:
+    streaming: str
+
+
+@dataclass
 class InstanceStats:
     user_count: int
     status_count: int
@@ -314,7 +319,7 @@ class InstanceStats:
 
 
 @dataclass
-class InstanceStatusConfguration:
+class InstanceStatusConfiguration:
     max_characters: int
     max_media_attachments: int
     characters_reserved_per_url: int
@@ -343,7 +348,18 @@ class InstanceConfiguration:
     """
     https://docs.joinmastodon.org/entities/V1_Instance/#configuration
     """
-    statuses: InstanceStatusConfguration
+    statuses: InstanceStatusConfiguration
+    media_attachments: InstanceMediaAttachmentConfiguration
+    polls: InstancePollConfiguration
+
+
+@dataclass
+class InstanceV2Configuration:
+    """
+    https://docs.joinmastodon.org/entities/Instance/#configuration
+    """
+    urls: InstanceV2Urls
+    statuses: InstanceStatusConfiguration
     media_attachments: InstanceMediaAttachmentConfiguration
     polls: InstancePollConfiguration
 
@@ -423,8 +439,7 @@ class InstanceV2:
     usage: Usage
     thumbnail: InstanceThumbnail
     languages: list[str]
-    # TODO: add v2 specific fields to configurationm
-    configuration: InstanceConfiguration
+    configuration: InstanceV2Configuration
     registrations: InstanceRegistrations
     contact: InstanceContact
     rules: list[Rule]

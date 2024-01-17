@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 from httpx import Response
 from tooi.api import instance
-from tooi.entities import ExtendedDescription, Instance, InstanceStatusConfguration, InstanceV2
+from tooi.entities import ExtendedDescription, Instance, InstanceStatusConfiguration, InstanceV2
 from tooi.entities import from_response
 
 
@@ -15,12 +15,12 @@ class InstanceInfo():
     user_preferences: dict[str, Any]
 
     @property
-    def status_config(self) -> InstanceStatusConfguration:
+    def status_config(self) -> InstanceStatusConfiguration:
         if self.instance_v2:
             return self.instance_v2.configuration.statuses
         else:
             # Mastodon default values
-            return InstanceStatusConfguration(
+            return InstanceStatusConfiguration(
                 max_characters=500,
                 max_media_attachments=4,
                 characters_reserved_per_url=23,
@@ -45,6 +45,13 @@ class InstanceInfo():
         """
         return self.user_preferences.get("reading:expand:spoilers", False)
 
+    @property
+    def streaming_url(self) -> str | None:
+        if self.instance_v2:
+            return self.instance_v2.configuration.urls.streaming
+        else:
+            return self.instance.urls.streaming_api
+
 
 async def get_instance_info() -> InstanceInfo:
     instance_resp, instance_v2_resp, description_resp, user_preferences_resp = (
@@ -60,6 +67,10 @@ async def get_instance_info() -> InstanceInfo:
     instance_v2 = None
     extended_description = None
     user_preferences: dict[str, Any] = {}
+
+    #print(instance_resp.json()['urls'])
+    #print(instance_v2_resp.json()['configuration'])
+    #import sys; sys.exit(0)
 
     if isinstance(instance_resp, Response):
         instance_v1 = from_response(Instance, instance_resp)
