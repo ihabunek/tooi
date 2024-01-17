@@ -1,5 +1,6 @@
 import asyncio
 import re
+import shlex
 import webbrowser
 
 from textual import work
@@ -174,9 +175,12 @@ class TooiApp(App[None]):
         Open a local image viewer to display the given images, which should be a list of URLs.
         This returns immediately and starts the work in a background thread.
         """
+
         async with download_temporary(urls) as (tempdir, tempfiles):
+            args = " ".join(map(shlex.quote, tempfiles))
+            cmd = self.context.config.media.image_viewer + " " + args
+
             # Spawn the image viewer.
-            process = await asyncio.create_subprocess_exec(
-                    self.context.config.media.image_viewer, *tempfiles)
+            process = await asyncio.create_subprocess_shell(cmd)
             # ... and wait for it to exit.
             await process.communicate()
