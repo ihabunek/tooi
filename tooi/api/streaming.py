@@ -84,35 +84,37 @@ class HTTPStreamClient:
             await self._handle_line(line)
 
     async def _handle_line(self, line: str):
-        # Lines beginning with ':' are comments (keepalives).
-        if len(line) == 0 or line[0] == ':':
+        # Single lines beginning with ':' are comments (keepalives).
+        if len(self._lines) == 0 and line[0:1] == ':':
             return
 
-        # Events are two lines long.  If we haven't get the second line yet, buffer this one and try
-        # again next time.
-        if len(self._lines) == 0:
+        # A blank line indicates the end of this event; queue events until we get there.
+        if len(line) > 0:
             self._lines.append(line)
             return
 
-        # We should have both lines now.
+        # If we don't have any lines for some reason, ignore this event.
+        if len(self._lines) == 0:
+            return
+
         event_line = self._lines[0]
-        data_line = line
-        self._lines = []
+        data = "\n".join(self._lines[1:])
+        self._lines.clear()
 
-        if (m := re.match(r"^event:\s*(.*)$", event_line)) is None:
-            # TODO: Disconnect or log error?
+        if event_line[0:6] != 'event:':
+            logger.info(f"HTTPStreamClient: unrecognised event line: {event_line}")
             return
 
-        event_type = m.group(1)
+        event_type = event_line[6:].strip()
 
-        if (m := re.match(r"^data:\s*(.*)$", data_line)) is None:
-            # TODO: Disconnect or log error?
+        if data[0:5] != "data:":
+            logger.info(f"HTTPStreamClient: unrecognised data line: {data}")
             return
 
-        event_json = m.group(1)
+        data_json = data[5:].strip()
 
         try:
-            event_payload = json.loads(event_json)
+            event_payload = json.loads(data_json)
         except json.JSONDecodeError:
             logger.info("HTTPStreamClient: could not decode JSON")
             return
