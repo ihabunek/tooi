@@ -1,11 +1,16 @@
 import asyncio
 import contextlib
+import re
 
 from os import path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import AsyncGenerator
 from urllib.parse import urlparse
 from tooi.context import get_context
+
+
+# RE to match valid file extensions for downloaded files
+extn_re = re.compile(r'^\.[a-zA-Z0-9]+$')
 
 
 @contextlib.asynccontextmanager
@@ -51,5 +56,8 @@ async def _download_file(url: str, tempdir: str, stack: contextlib.ExitStack):
 def _get_suffix(url: str) -> str | None:
     """Attempt to get the file extension"""
     _, ext = path.splitext(urlparse(url).path)
-    if ext:
+
+    if ext and extn_re.match(ext):
         return ext
+    else:
+        return None
