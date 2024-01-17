@@ -1,4 +1,6 @@
+from asyncio import get_running_loop
 from typing import Any
+import aiohttp
 import httpx
 import json
 
@@ -16,6 +18,15 @@ class AuthContext:
     base_url: str
     access_token: str
     client: httpx.AsyncClient
+
+    async def aioclient(self) -> aiohttp.ClientSession:
+        """Create an aiohttp client for this auth context."""
+        return aiohttp.ClientSession(
+            base_url=self.base_url,
+            loop=get_running_loop(),
+            headers={"Authorization": f"Bearer {self.access_token}"},
+        )
+
 
 
 # TODO: uses toot config
