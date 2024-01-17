@@ -6,7 +6,6 @@ from typing import Any, Dict, Optional
 from httpx import Response
 from uuid import uuid4
 from tooi.api import request
-from tooi.screens.compose import Visibility
 
 
 async def context(status_id: str) -> Response:
@@ -19,7 +18,7 @@ async def context(status_id: str) -> Response:
 
 async def post(
     status: str,
-    visibility: Visibility | str = Visibility.Public,
+    visibility: str = "public",
     sensitive: bool = False,
     spoiler_text: str | None = None,
     in_reply_to: Optional[str] = None,
@@ -44,7 +43,7 @@ async def post(
 async def edit(
     status_id: str,
     status: str,
-    visibility: Visibility | str = Visibility.Public,
+    visibility: str = "public",
     sensitive: bool = False,
     spoiler_text: str | None = None,
 ) -> Response:

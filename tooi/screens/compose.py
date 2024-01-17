@@ -1,11 +1,10 @@
 import asyncio
-from enum import StrEnum, auto
-from typing import Optional, cast
 
 from textual.app import ComposeResult
 from textual.message import Message
 from textual.reactive import Reactive, reactive
 from textual.widgets import Static, TextArea
+from typing import Optional
 
 from tooi.api import statuses
 from tooi.context import get_context
@@ -16,11 +15,12 @@ from tooi.widgets.menu import Menu, MenuItem
 from tooi.entities import Status, StatusSource
 
 
-class Visibility(StrEnum):
-    Public = auto()
-    Unlisted = auto()
-    Private = auto()
-    Direct = auto()
+VISIBILITY = {
+    "public": "Public - Visible to everyone, shown in public timelines.",
+    "unlisted": "Unlisted - Visible to public, but not included in public timelines.",
+    "private": "Private - Visible to followers only, and to any mentioned users.",
+    "direct": "Direct - Visible only to mentioned users.",
+}
 
 
 class ComposeScreen(ModalScreen[None]):
@@ -197,9 +197,9 @@ class ComposeScreen(ModalScreen[None]):
         self.query_one("#cw_label").remove()
         self.query_one("#cw_text_area").remove()
 
-    def set_visibility(self, visibility: Visibility):
+    def set_visibility(self, visibility: str):
         self.visibility = visibility
-        self.visibility_menu_item.update(f"Visibility: {visibility.name}")
+        self.visibility_menu_item.update(f"Visibility: {visibility}")
 
     def set_federation(self, federated: bool):
         self.federated = federated
@@ -283,30 +283,17 @@ class ComposeTextArea(TextArea):
             super().__init__()
 
 
-def visibility_label(visibilty: Visibility):
-    match visibilty:
-        case Visibility.Public:
-            return "Public - Visible to everyone, shown in public timelines."
-        case Visibility.Unlisted:
-            return "Unlisted - Visible to public, but not included in public timelines."
-        case Visibility.Private:
-            return "Private - Visible to followers only, and to any mentioned users."
-        case Visibility.Direct:
-            return "Direct - Visible only to mentioned users."
-
-
-class SelectVisibilityModal(ModalScreen[Visibility]):
+class SelectVisibilityModal(ModalScreen[str]):
     def compose_modal(self):
         yield Static("Select visibility", classes="modal_title")
-        yield Menu(
-            MenuItem(Visibility.Public, visibility_label(Visibility.Public)),
-            MenuItem(Visibility.Unlisted, visibility_label(Visibility.Unlisted)),
-            MenuItem(Visibility.Private, visibility_label(Visibility.Private)),
-            MenuItem(Visibility.Direct, visibility_label(Visibility.Direct)),
-        )
+        yield Menu(*self.compose_items())
+
+    def compose_items(self):
+        for code, description in VISIBILITY.items():
+            yield MenuItem(code, description)
 
     def on_menu_item_selected(self, message: Menu.ItemSelected):
-        self.dismiss(cast(Visibility, message.item.code))
+        self.dismiss(message.item.code)
 
 
 def federated_label(federated: bool) -> str:
@@ -316,7 +303,7 @@ def federated_label(federated: bool) -> str:
         return "Local only (unfederated)"
 
 
-class SelectFederationModal(ModalScreen[Visibility]):
+class SelectFederationModal(ModalScreen[bool]):
     def compose_modal(self):
         yield Static("Select federation", classes="modal_title")
         yield Menu(
