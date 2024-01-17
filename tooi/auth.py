@@ -1,10 +1,10 @@
-from asyncio import get_running_loop
+import asyncio
 from typing import Any
 import aiohttp
 import httpx
 import json
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from os import path
 
 
@@ -18,14 +18,19 @@ class AuthContext:
     base_url: str
     access_token: str
     client: httpx.AsyncClient
+    aio_client: aiohttp.ClientSession | None = None
+    _lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
-    async def aioclient(self) -> aiohttp.ClientSession:
-        """Create an aiohttp client for this auth context."""
-        return aiohttp.ClientSession(
-            base_url=self.base_url,
-            loop=get_running_loop(),
-            headers={"Authorization": f"Bearer {self.access_token}"},
-        )
+    async def get_aio_client(self) -> aiohttp.ClientSession:
+        """Return the aiohttp client for this auth context."""
+        async with self._lock:
+            if self.aio_client is None:
+                self.aio_client = aiohttp.ClientSession(
+                    base_url=self.base_url,
+                    headers={"Authorization": f"Bearer {self.access_token}"},
+                )
+
+            return self.aio_client
 
 
 

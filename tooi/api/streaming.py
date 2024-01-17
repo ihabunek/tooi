@@ -85,7 +85,7 @@ class HTTPStreamClient:
                 sock_read=self.TIMEOUT
         )
 
-        client = await self.ctx.auth.aioclient()
+        client = await self.ctx.auth.get_aio_client()
         async with client.get(self.url, timeout=timeout) as resp:
             resp.raise_for_status()
             await self._parse_stream(resp)
