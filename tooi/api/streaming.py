@@ -14,6 +14,7 @@ import asyncio
 import json
 import logging
 import re
+import urllib
 
 from tooi.asyncio import run_async_task
 from tooi.context import get_context
@@ -30,6 +31,100 @@ class StreamEvent:
 
 StreamQueue = asyncio.Queue[StreamEvent]
 logger = logging.getLogger(__name__)
+
+
+class WSStreamClient:
+    """
+    Client for connecting to a streaming endpoint and fetching events.
+    This implements the WebSocket protocol.
+    """
+
+    TIMEOUT = 120
+    ERROR_BACKOFF = 30
+
+    def __init__(
+            self,
+            instance: InstanceInfo,
+            url: str,
+            stream_name: str):
+
+        # TODO: This should be part of the instance.
+        self.ctx = get_context()
+        self.instance = instance
+        self.url = url
+        self.stream_name = stream_name
+        self.queue = StreamQueue()
+        self._lines = []
+
+    async def close(self):
+        pass
+
+    async def run(self):
+        logger.info(f"WSStreamClient: running url={self.url}")
+
+        # Run forever, silently reconnecting if we get an error.
+        while True:
+            try:
+                await self._stream()
+            except aiohttp.ClientResponseError as exc:
+                logger.info((
+                    f"WSStreamClient: disconnected from stream={self.stream_name}: "
+                    f"{exc.status} {exc.message}"))
+            except aiohttp.ClientError as exc:
+                logger.info((
+                    f"WSStreamClient: disconnected from stream={self.stream_name}: "
+                    f"{exc}"))
+
+            await asyncio.sleep(self.ERROR_BACKOFF)
+
+    async def _stream(self):
+        logger.info(f"WSStreamClient: connecting to stream={self.stream_name}")
+
+        timeout = aiohttp.ClientTimeout(
+                total=None,
+                connect=10,
+                sock_connect=10,
+                sock_read=self.TIMEOUT
+        )
+
+        # Since the base URL of the stream might be different from the instance's normal base URL,
+        # we have to create our own client.
+        client = aiohttp.ClientSession()
+
+        # Note that the Mastodon API documentation recommends using query parameters for
+        # single-purpose streams.
+
+        url = self.url + "/api/v1/streaming"
+        params = { 'access_token': self.ctx.auth.access_token, 'stream': self.stream_name }
+
+        logger.info(f"WSStreamClient: url={url} for stream={self.stream_name}")
+
+        async with client.ws_connect(url, params=params, timeout=timeout) as resp:
+            async for message_json in resp:
+                try:
+                    message = message_json.json()
+                except json.JSONDecodeError:
+                    logger.info("WSStreamClient: could not decode JSON")
+                    return
+
+                await self._handle_message(message)
+
+    async def _handle_message(self, message: dict):
+        if 'event' not in message or 'payload' not in message:
+            return
+
+        event_type = message['event']
+        payload_json = message['payload']
+
+        try:
+            payload = json.loads(payload_json)
+        except json.JSONDecodeError:
+            logger.info("WSStreamClient: could not decode JSON payload")
+            return
+
+        event = StreamEvent(self.stream_name, event_type, payload)
+        logger.info(f"WSStreamClient: push event={event_type} to queue for {self.stream_name}")
+        await self.queue.put(event)
 
 
 class HTTPStreamClient:
@@ -179,12 +274,26 @@ class StreamSubscription:
 
 
 class StreamInstance:
-    def __init__(self, mplx: "StreamMultiplexer", stream: str):
+    def __init__(self, mplx: "StreamMultiplexer", instance: InstanceInfo, stream: str):
         self.mplx = mplx
         self.stream = stream
         self.subscribers: set[StreamSubscription] = set()
         self.lock = asyncio.Lock()
-        self.client = HTTPStreamClient(self.mplx.instance, stream)
+
+        # TODO: handle if streaming_url is None
+        # also, handle ValueError from urlparse()
+        url = instance.streaming_url
+        urlparts = urllib.parse.urlparse(instance.streaming_url)
+        match urlparts.scheme:
+            case "ws" | "wss":
+                self.client = WSStreamClient(self.mplx.instance, url, stream)
+
+            case "http" | "https":
+                self.client = HTTPStreamClient(self.mplx.instance, stream)
+
+            case _:
+                raise (NotImplementedError(f"unknown streaming protocol '{urlparts.scheme}'"))
+
         self.client_task = run_async_task(self.client.run())
         self.mplx_task = run_async_task(self._run())
 
@@ -247,7 +356,7 @@ class StreamMultiplexer:
         async with self.lock:
             if (sinst := self.streams.get(stream)) is None:
                 logger.info(f"StreamMultiplexer: new client for stream={stream}")
-                sinst = StreamInstance(self, stream)
+                sinst = StreamInstance(self, self.instance, stream)
                 self.streams[stream] = sinst
 
             async with sinst.lock:
