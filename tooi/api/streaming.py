@@ -9,12 +9,11 @@ StreamSubscription instance.
 https://docs.joinmastodon.org/methods/streaming/
 """
 
+import aiohttp
 import asyncio
 import json
 import logging
 import re
-
-from httpx import HTTPError
 
 from tooi.asyncio import run_async_task
 from tooi.context import get_context
@@ -65,22 +64,48 @@ class HTTPStreamClient:
         while True:
             try:
                 await self._stream()
-            except HTTPError as exc:
+            except aiohttp.ClientResponseError as exc:
                 logger.info((
                     f"HTTPStreamClient: disconnected from stream={self.stream_name}: "
-                    f"{str(exc)}"))
+                    f"{exc.status} {exc.message}"))
+            except aiohttp.ClientError as exc:
+                logger.info((
+                    f"HTTPStreamClient: disconnected from stream={self.stream_name}: "
+                    f"{exc}"))
 
             await asyncio.sleep(self.ERROR_BACKOFF)
 
     async def _stream(self):
         logger.info(f"HTTPStreamClient: connecting to stream={self.stream_name}")
 
-        async with self.ctx.auth.client.stream("GET", self.url, timeout=self.TIMEOUT) as stream:
-            stream.raise_for_status()
-            await self._parse_stream(stream)
+        timeout = aiohttp.ClientTimeout(
+                total=None,
+                connect=10,
+                sock_connect=10,
+                sock_read=self.TIMEOUT
+        )
+
+        client = await self.ctx.auth.aioclient()
+        async with client.get(self.url, timeout=timeout) as resp:
+            resp.raise_for_status()
+            await self._parse_stream(resp)
 
     async def _parse_stream(self, stream):
-        async for line in stream.aiter_lines():
+        while True:
+            linebytes = await stream.content.readline()
+
+            # Normally, the line should end with '\n'.  If it's empty, that means we got EOF.
+            if len(linebytes) == 0:
+                return
+
+            line = linebytes.decode('utf-8')
+
+            # If the line doesn't end with \n, the response was truncated.
+            if line[-1:] != '\n':
+                return
+
+            # Remove \n, and an \r if there is one.
+            line = line.rstrip("\r\n")
             await self._handle_line(line)
 
     async def _handle_line(self, line: str):
