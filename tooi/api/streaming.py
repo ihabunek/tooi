@@ -94,10 +94,10 @@ class WSStreamClient:
 
         # Since the base URL of the stream might be different from the instance's normal base URL,
         # we have to create our own client.
-        async with aiohttp.ClientSession() as client:
+        async with aiohttp.ClientSession(timeout=timeout) as client:
             # Note that the Mastodon API documentation recommends using query parameters for
             # single-purpose streams.
-            async with client.ws_connect(url, params=params, timeout=timeout) as resp:
+            async with client.ws_connect(url, params=params) as resp:
                 async for message_json in resp:
                     try:
                         message = message_json.json()
