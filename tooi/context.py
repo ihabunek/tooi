@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from threading import local
-from typing import Optional
 
 from tooi.auth import AuthContext, load_auth_context
 from tooi.settings import Configuration
