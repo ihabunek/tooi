@@ -386,9 +386,6 @@ class StreamMultiplexer:
 
             del self.streams[stream]
 
-    def run(self):
-        self._task = run_async_task(self._run())
-
 
 class InstanceStreamer:
     def __init__(self, instance: InstanceInfo):
