@@ -98,7 +98,13 @@ class HTTPStreamClient:
             if len(linebytes) == 0:
                 return
 
-            line = linebytes.decode('utf-8')
+            try:
+                line = linebytes.decode('utf-8')
+            except UnicodeDecodeError:
+                logger.info((
+                        f"HTTPStreamClient: error decoding UTF-8 data, "
+                        f"stream={self.stream_name}"))
+                return
 
             # If the line doesn't end with \n, the response was truncated.
             if line[-1:] != '\n':
