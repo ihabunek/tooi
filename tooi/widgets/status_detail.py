@@ -74,8 +74,11 @@ class StatusDetail(VerticalScroll):
             yield BoostedBy(self.status)
 
         hide_sensitive = self.sensitive and not self.revealed
-        sensitive_classes = "status_sensitive " + ("show" if hide_sensitive else "hide")
-        revealed_classes = "status_revealed " + ("hide" if hide_sensitive else "show")
+        states = ["hide" "show"]
+        if hide_sensitive:
+            states.reverse()
+        sensitive_classes = f"status_sensitive {states[0]}"
+        revealed_classes = f"status_revealed {states[1]}"
 
         yield AccountHeader(status.account, classes="status_header")
         yield Vertical(*self.compose_sensitive(status), classes=sensitive_classes)

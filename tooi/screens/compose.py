@@ -95,10 +95,10 @@ class ComposeScreen(ModalScreen[None]):
 
         self.character_count = ComposeCharacterCount(self.instance_info, self.text_area.text)
 
+        action = "Compose"
         if self.edit:
-            yield Header("Edit toot")
-        else:
-            yield Header("Compose toot")
+            action = "Edit"
+        yield Header(f"{action} toot")
         yield self.text_area
         yield self.character_count
         yield self.menu
@@ -215,13 +215,15 @@ class ComposeScreen(ModalScreen[None]):
             return self.edit_source.text
 
         if self.in_reply_to:
-            mention_accounts = [
-                    user for user in (
-                        [self.in_reply_to.original.account.acct]
-                        + [m.acct for m in self.in_reply_to.original.mentions])
-                    if user != self.ctx.auth.acct and user != self.ctx.auth.acct.split('@')[0]
-                ]
-            return " ".join([f"@{m}" for m in mention_accounts]) + " "
+            accounts = [
+                self.in_reply_to.original.account.acct,
+                *(m.acct for m in self.in_reply_to.original.mentions),
+            ]
+            return "".join(
+                f"@{user} "
+                for user in accounts
+                if user != self.ctx.auth.acct and user != self.ctx.auth.acct.split('@')[0]
+            )
 
         return ""
 

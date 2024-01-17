@@ -70,8 +70,7 @@ class MenuItem(ListItem):
         text = Text(label)
 
         # Attempt to automatically mark the shortcuts to menu items
-        if key is not None and len(key) == 1:
-            if match := re.search(key, label, re.IGNORECASE):
-                text.stylize("bold underline", match.start(), match.end())
+        if key is not None and len(key) == 1 and (match := re.search(key, label, re.IGNORECASE)):
+            text.stylize("bold underline", match.start(), match.end())
 
         return text

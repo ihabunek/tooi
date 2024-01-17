@@ -134,11 +134,11 @@ class Timeline(ABC):
         """
 
         # Wait for the first event.
-        event = await self._queue.get()
+        events = [await self._queue.get()]
         self._queue.task_done()
 
         # We got at least one event, fetch any more that happen to be pending.
-        events = [event] + await self.get_events()
+        events.extend(await self.get_events())
 
         return events
 
@@ -333,8 +333,7 @@ class NotificationTimeline(Timeline):
                 updated_most_recent = True
                 self._most_recent_id = events[0].notification.id
 
-            events.reverse()
-            for event in events:
+            for event in reversed(events):
                 await self._dispatch(event)
 
 
@@ -384,9 +383,9 @@ class ContextTimeline(Timeline):
     async def context_timeline_generator(self, status: Status, limit: int | None = None):
         response = await statuses.context(status.original.id)
         data = response.json()
-        ancestors = [from_dict(Status, s) for s in data["ancestors"]]
-        descendants = [from_dict(Status, s) for s in data["descendants"]]
-        all_statuses = ancestors + [status] + descendants
+        ancestors = (from_dict(Status, s) for s in data["ancestors"])
+        descendants = (from_dict(Status, s) for s in data["descendants"])
+        all_statuses = [*ancestors, status, *descendants]
         yield [StatusEvent(self.instance, s) for s in all_statuses]
 
     def fetch(self, limit: int | None = None):

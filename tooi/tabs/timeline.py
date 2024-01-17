@@ -114,12 +114,11 @@ class TimelineTab(TabPane):
         return make_event_detail(event)
 
     async def refresh_timeline(self):
-        # Handle timelines that don't support updating.
-        if not self.timeline.can_update:
-            await self.fetch_timeline()
-        else:
-            # This returns immediately; any updates will be handled by fetch_events.
-            await self.timeline.update()
+        timeline_func = self.fetch_timeline  # Handle timelines that don't support updating.
+        if self.timeline.can_update:
+            timeline_func = self.timeline.update
+        # This returns immediately; any updates will be handled by fetch_events.
+        await timeline_func()
 
     async def fetch_timeline(self):
         try:
@@ -161,63 +160,62 @@ class TimelineTab(TabPane):
         original = message.status.original
 
         try:
+            favourite_setting = set_favourite
             if original.favourited:
-                await unset_favourite(original.id)
-            else:
-                await set_favourite(original.id)
+                favourite_setting = unset_favourite
+            await favourite_setting(original.id)
         except APIError as exc:
-            self.app.show_error("Error", f"Could not (un)favourite status: {str(exc)}")
+            set_ = "set"
+            if original.favourited:
+                set_ = "unset"
+            self.app.show_error("Error", f"Could not {set_} favourite status: {str(exc)}")
 
     def action_status_favourite(self):
-        if event := self.event_list.current:
-            if event.status:
-                self.post_message(ToggleStatusFavourite(event.status))
+        if (event := self.event_list.current) and event.status:
+            self.post_message(ToggleStatusFavourite(event.status))
 
     async def on_toggle_status_boost(self, message: ToggleStatusBoost):
         original = message.status.original
         try:
+            boost_setting = boost
             if original.reblogged:
-                await unboost(original.id)
-            else:
-                await boost(original.id)
+                boost_setting = unboost
+            await boost_setting(original.id)
         except APIError as exc:
-            self.app.show_error("Error", f"Could not (un)boost status: {str(exc)}")
+            boost_ = "boost"  # The underscore is for avoiding shadowing
+            if original.reblogged:
+                boost_ = "unboost"
+            self.app.show_error("Error", f"Could not {boost_} status: {str(exc)}")
 
     def action_status_boost(self):
-        if event := self.event_list.current:
-            if event.status:
-                self.post_message(ToggleStatusBoost(event.status))
+        if (event := self.event_list.current) and event.status:
+            self.post_message(ToggleStatusBoost(event.status))
 
     def action_show_sensitive(self):
         if isinstance(self.event_detail, StatusDetail) and self.event_detail.sensitive:
             self.event_detail.reveal()
 
     def action_show_account(self):
-        if event := self.event_list.current:
-            if event.status:
-                self.post_message(ShowAccount(event.status.original.account))
+        if (event := self.event_list.current) and event.status:
+            self.post_message(ShowAccount(event.status.original.account))
 
     def action_show_source(self):
-        if event := self.event_list.current:
-            if event.status:
-                self.post_message(ShowSource(event.status))
+        if (event := self.event_list.current) and event.status:
+            self.post_message(ShowSource(event.status))
 
     def action_show_thread(self):
-        if event := self.event_list.current:
-            if event.status:
-                self.post_message(ShowThread(event.status))
+        if (event := self.event_list.current) and event.status:
+            self.post_message(ShowThread(event.status))
 
     async def action_status_edit(self):
-        if event := self.event_list.current:
-            if event.status:
-                response = await get_status_source(event.status.original.id)
-                source = from_dict(StatusSource, response.json())
-                self.post_message(StatusEdit(event.status.original, source))
+        if (event := self.event_list.current) and event.status:
+            response = await get_status_source(event.status.original.id)
+            source = from_dict(StatusSource, response.json())
+            self.post_message(StatusEdit(event.status.original, source))
 
     def action_status_reply(self):
-        if event := self.event_list.current:
-            if event.status:
-                self.post_message(StatusReply(event.status))
+        if (event := self.event_list.current) and event.status:
+            self.post_message(StatusReply(event.status))
 
     def action_scroll_left(self):
         self.event_list.focus()
@@ -230,15 +228,14 @@ class TimelineTab(TabPane):
             self.app.show_error("Error", "No image viewer has been configured")
             return
 
-        if event := self.event_list.current:
-            if event.status:
-                images = [e.url for e in event.status.original.media_attachments
-                          if e.type == "image"]
+        if (event := self.event_list.current) and event.status:
+            images = [e.url for e in event.status.original.media_attachments
+                      if e.type == "image"]
 
-                if len(images) == 0:
-                    return
+            if not images:
+                return
 
-                self.app.view_images(images)
+            self.app.view_images(images)
 
     async def maybe_fetch_next_batch(self):
         if self.generator and self.should_fetch():
