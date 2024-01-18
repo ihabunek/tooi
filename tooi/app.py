@@ -17,7 +17,7 @@ from tooi.api.timeline import FederatedTimeline, ContextTimeline, NotificationTi
 from tooi.asyncio import create_async_context, set_async_context
 from tooi.context import get_context
 from tooi.data.instance import get_instance_info
-from tooi.messages import GotoAccountTimeline, GotoHashtagTimeline, GotoHomeTimeline, GotoLocalTimeline
+from tooi.messages import GotoAccountTimeline, GotoHashtagTimeline, GotoHomeTimeline, GotoLocalTimeline, ShowError
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread, ShowNotifications
 from tooi.messages import ShowHashtagPicker, StatusReply, GotoFederatedTimeline
 from tooi.messages import GotoPersonalTimeline, StatusEdit
@@ -165,6 +165,9 @@ class TooiApp(App[None]):
 
     async def on_show_notifications(self, message: ShowNotifications):
         await self.tabs.open_timeline_tab(NotificationTimeline(self.instance))
+
+    def on_show_error(self, message: ShowError):
+        self.show_error(message.title, message.message)
 
     async def _open_timeline(self, timeline: Timeline):
         await self.tabs.open_timeline_tab(timeline)
