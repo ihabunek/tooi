@@ -125,6 +125,8 @@ class TimelineTab(TabPane):
         try:
             self.generator = self.timeline.fetch()
             events = await anext(self.generator)
+        except StopAsyncIteration:
+            events = []  # No statuses
         except APIError as exc:
             self.post_message(ShowStatusMessage(f"[red]Could not load timeline: {str(exc)}[/]"))
             return
