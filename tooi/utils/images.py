@@ -8,16 +8,21 @@ from rich.color import Color
 from rich.color_triplet import ColorTriplet
 from rich.style import Style
 from rich.text import Text
-from typing import Iterator
+from typing import IO, Iterator
 
 
 @lru_cache
-def render_half_block_remote_image(url: str, width: int, height: int):
-    with load_image(url, width, height) as image:
-        return generate_half_block_image(image)
+def render_half_block_remote_image(url: str, width: int, height: int) -> Text:
+    with _load_remote_image(url, width, height) as image:
+        return render_half_block_image(image)
 
 
-def generate_half_block_image(image: Image.Image) -> Text:
+def render_half_block_local_image(path: str, width: int, height: int) -> Text:
+    with _load_local_image(path, width, height) as image:
+        return render_half_block_image(image)
+
+
+def render_half_block_image(image: Image.Image) -> Text:
     # Pillow specifies that pixel access is slow, but does not suggest an
     # alternative. This seems to be pretty fast for this use case though.
     # https://pillow.readthedocs.io/en/stable/reference/PixelAccess.html
@@ -45,7 +50,7 @@ def generate_half_block_image(image: Image.Image) -> Text:
 # No sense making this async since PIL doesn't support async so this needs
 # to be run in a thread.
 @contextmanager
-def load_image(url: str, width: int, height: int) -> Iterator[Image.Image]:
+def _load_remote_image(url: str, width: int, height: int) -> Iterator[Image.Image]:
     # TODO: cache fetched images to disk in XDG_CACHE_DIR?
     # This would allow cache to persist between runs
     with tempfile.SpooledTemporaryFile(max_size=5 * 1024 * 1024) as tmp:
@@ -54,6 +59,16 @@ def load_image(url: str, width: int, height: int) -> Iterator[Image.Image]:
             for data in response.iter_bytes():
                 tmp.write(data)
 
-        image = Image.open(tmp)
-        image.thumbnail((width, height))
-        yield image.convert("RGB")
+        yield _open_and_resize(tmp, width, height)
+
+
+@contextmanager
+def _load_local_image(path: str, width: int, height: int) -> Iterator[Image.Image]:
+    with open(path, "rb") as f:
+        yield _open_and_resize(f, width, height)
+
+
+def _open_and_resize(fp: IO[bytes], width: int, height: int) -> Image.Image:
+    image = Image.open(fp)
+    image.thumbnail((width, height))
+    return image.convert("RGB")
