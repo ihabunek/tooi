@@ -44,6 +44,7 @@ def render_half_block_image(image: Image.Image) -> Text:
             text.append(half_block, style)
         text.append("\n")
 
+    text.rstrip()
     return text
 
 
