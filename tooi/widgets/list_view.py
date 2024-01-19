@@ -1,5 +1,6 @@
 from textual.binding import Binding
 from textual import widgets
+from textual.message import Message
 
 
 class ListView(widgets.ListView):
@@ -10,3 +11,14 @@ class ListView(widgets.ListView):
         Binding("down,j", "cursor_down", "Cursor Down", show=False),
         # TODO: add page up/down
     ]
+
+    class FocusPrevious(Message):
+        """Emitted when pressing UP when on first item"""
+
+    class FocusNext(Message):
+        """Emitted when pressing DOWN on the last item"""
+
+    def action_cursor_up(self):
+        if self.index == 0:
+            self.post_message(self.FocusPrevious())
+        super().action_cursor_up()
