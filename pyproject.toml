@@ -24,7 +24,8 @@ dependencies = [
     "click",
     "httpx",
     "html2text",
-    "textual>=0.38.1",
+    # Pull textual from branch to get wrapping in TextArea, remove when merged
+    "textual @ git+https://github.com/Textualize/textual.git@text-area-wrapping-widget-changes",
     "tomlkit",
     "pillow",
 ]
