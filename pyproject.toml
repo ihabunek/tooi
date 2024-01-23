@@ -27,6 +27,8 @@ dependencies = [
     "textual>=0.38.1",
     "tomlkit",
     "pillow",
+    "aiohttp",
+    "aiodns",
 ]
 
 [tool.setuptools]

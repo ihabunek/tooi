@@ -87,8 +87,12 @@ class TimelineTab(TabPane):
         if self.timeline.can_update and self.context.config.options.timeline_refresh > 0:
             self.timeline.periodic_refresh(self.context.config.options.timeline_refresh)
 
-    def on_unmount(self, message):
-        self.timeline.close()
+        # Start streaming.
+        if self.context.config.options.streaming and self.timeline.can_stream:
+            await self.timeline.streaming(True)
+
+    async def on_unmount(self, message):
+        await self.timeline.close()
         self.timeline = None
 
     def compose(self):
@@ -135,7 +139,10 @@ class TimelineTab(TabPane):
         self.query_one("#main_window").mount(self.event_detail)
 
     def on_event_highlighted(self, message: EventHighlighted):
-        self.show_status_detail(message.event)
+        # Update event details only if focused event has changed
+        current_event = self.event_detail.event
+        if not current_event or current_event.id != message.event.id:
+            self.show_status_detail(message.event)
 
     @work(exclusive=True, group="show_status_detail")
     async def show_status_detail(self, event: Event):

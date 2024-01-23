@@ -3,6 +3,7 @@ Timelines API
 https://docs.joinmastodon.org/methods/timelines/
 """
 import asyncio
+import logging
 import re
 
 from abc import ABC, abstractmethod
@@ -14,6 +15,7 @@ from httpx._types import QueryParamTypes
 
 from tooi.api import request, statuses
 from tooi.api.accounts import get_account_by_name
+from tooi.api.streaming import StreamSubscription
 from tooi.asyncio import run_async_task, AsyncAtomic
 from tooi.data.events import Event, NotificationEvent, StatusEvent
 from tooi.data.instance import InstanceInfo
@@ -26,6 +28,7 @@ EventGenerator = AsyncGenerator[List[Event], None]
 
 # Max 80, as of Mastodon 4.1.0
 DEFAULT_LIMIT = 40
+logger = logging.getLogger(__name__)
 
 
 def _get_next_path(headers: Headers) -> str | None:
@@ -76,10 +79,15 @@ class Timeline(ABC):
     # perhaps removed entirely (set to zero).
     QUEUE_SIZE = 128
 
-    def __init__(self, name, instance: InstanceInfo, can_update: bool = False):
+    def __init__(self,
+                 name,
+                 instance: InstanceInfo,
+                 can_update: bool = False,
+                 can_stream: bool = False):
         self.instance = instance
         self.name = name
         self.can_update = can_update
+        self.can_stream = can_stream
         self._update_running = AsyncAtomic[bool](False)
         self._update_task = None
         self._periodic_refresh_task = None
@@ -89,7 +97,7 @@ class Timeline(ABC):
         if not self.can_update:
             raise (NotImplementedError("this Timeline cannot update"))
 
-    def close(self):
+    async def close(self):
         if update_task := self._update_task:
             update_task.cancel()
 
@@ -103,6 +111,9 @@ class Timeline(ABC):
     def periodic_refresh(self, frequency: int):
         self._assert_can_update()
         self._periodic_refresh_task = run_async_task(self._periodic_refresh(frequency))
+
+    def streaming(self, enable: bool):
+        raise (NotImplementedError("this Timeline cannot stream"))
 
     async def _periodic_refresh(self, frequency: int):
         while True:
@@ -178,11 +189,36 @@ class StatusTimeline(Timeline):
     StatusTimeline is the base class for timelines which only return statuses.
     """
 
-    def __init__(self, name: str, instance: InstanceInfo, path: str, params: Params | None = None):
-        super().__init__(name, instance, can_update=True)
+    def __init__(
+            self,
+            name: str,
+            instance: InstanceInfo,
+            path: str,
+            params: Params | None = None,
+            stream_name: str | None = None):
+
+        super().__init__(name, instance, can_update=True, can_stream=(stream_name is not None))
         self.path = path
         self.params = params
+        self._stream_name = stream_name
+        self._subscription = None
         self._most_recent_id = None
+        self._streaming_task = None
+        self._seen_events: set[str] = set()
+        # _lock protects self._seen_events
+        self._lock = asyncio.Lock()
+
+    async def close(self):
+        async with self._lock:
+            if self._streaming_task is not None:
+                self._streaming_task.cancel()
+                self._streaming_task = None
+
+            if self._subscription is not None:
+                await self._subscription.close()
+                self._subscription = None
+
+        await super().close()
 
     async def fetch(self, limit: int | None = None) -> EventGenerator:
         async for eventlist in fetch_timeline(self.instance, self.path, self.params, limit):
@@ -195,25 +231,62 @@ class StatusTimeline(Timeline):
             yield events
 
     async def _update(self):
-        eventslist = fetch_timeline(
+        # Fetch all the events before taking the lock
+        events: list[Event] = []
+        generator = fetch_timeline(
                 self.instance,
                 self.path,
                 params=self.params,
                 since_id=self._most_recent_id)
+        async for eventlist in generator:
+            events += [StatusEvent(self.instance, from_dict(Status, s)) for s in eventlist]
 
-        updated_most_recent = False
+        # Use the first (most recent) event id for _most_recent_id.
+        if len(events) > 0:
+            self._most_recent_id = events[0].status.id
 
-        async for eventlist in eventslist:
-            events = [StatusEvent(self.instance, from_dict(Status, s)) for s in eventlist]
+        # We need the events in chronological order.
+        events.reverse()
 
-            if (not updated_most_recent) and len(events) > 0:
-                updated_most_recent = True
-                self._most_recent_id = events[0].status.id
+        new_events: set[str] = set()
 
-            events.reverse()
+        async with self._lock:
             for event in events:
-                # Note that we need to preserve the event order, so dispatch them one at a time.
-                await self._dispatch(event)
+                # Skip any events we already handled via streaming.
+                if event.id not in self._seen_events:
+                    await self._dispatch(event)
+
+                # Indicate we saw this event in case it turns up on the stream too.
+                new_events.add(event.id)
+
+            # Reset the seen events cache for the next fetch.
+            self._seen_events = new_events
+
+    async def streaming(self, enable):
+        if enable:
+            async with self._lock:
+                self._subscription = await self.instance.streamer.subscribe(self._stream_name)
+                self._streaming_task = run_async_task(self._stream())
+        else:
+            pass
+
+    async def _stream(self):
+        while True:
+            sevt = await self._subscription.get()
+
+            async with self._lock:
+                match sevt.event:
+                    case "update":
+                        event = StatusEvent(self.instance, from_dict(Status, sevt.payload))
+
+                        # If we already saw this event, ignore it.
+                        if event.id not in self._seen_events:
+                            # Otherwise mark it as seen for _update().
+                            self._seen_events.add(event.id)
+                            await self._dispatch(event)
+
+                    case _:
+                        logger.info(f"StatusTimeline: no use for event type {sevt.event}")
 
 
 class HomeTimeline(StatusTimeline):
@@ -223,13 +296,29 @@ class HomeTimeline(StatusTimeline):
     """
 
     def __init__(self, instance: InstanceInfo):
-        super().__init__("Home", instance, "/api/v1/timelines/home")
+        super().__init__(
+                "Home",
+                instance,
+                "/api/v1/timelines/home",
+                stream_name=StreamSubscription.USER)
 
 
 class PublicTimeline(StatusTimeline):
     """PublicTimeline loads events from the public timeline."""
-    def __init__(self, name: str, instance: InstanceInfo, local: bool):
-        super().__init__(name, instance, "/api/v1/timelines/public", {"local": local})
+    def __init__(
+            self,
+            name: str,
+            instance: InstanceInfo,
+            local: bool,
+            stream_name: str | None = None):
+
+        super().__init__(
+                name,
+                instance,
+                "/api/v1/timelines/public",
+                {"local": local},
+                stream_name=stream_name)
+
         self.local = local
 
 
@@ -239,7 +328,7 @@ class LocalTimeline(PublicTimeline):
     This timeline only ever returns events of type StatusEvent.
     """
     def __init__(self, instance: InstanceInfo):
-        super().__init__("Local", instance, True)
+        super().__init__("Local", instance, True, stream_name=StreamSubscription.PUBLIC_LOCAL)
 
 
 class FederatedTimeline(PublicTimeline):
@@ -248,7 +337,7 @@ class FederatedTimeline(PublicTimeline):
     This timeline only ever returns events of type StatusEvent.
     """
     def __init__(self, instance: InstanceInfo):
-        super().__init__("Federated", instance, False)
+        super().__init__("Federated", instance, False, stream_name=StreamSubscription.PUBLIC_REMOTE)
 
 
 class AccountTimeline(StatusTimeline):
@@ -294,8 +383,25 @@ class NotificationTimeline(Timeline):
     """
 
     def __init__(self, instance: InstanceInfo):
-        super().__init__("Notifications", instance, can_update=True)
+        super().__init__("Notifications", instance, can_update=True, can_stream=True)
         self._most_recent_id = None
+        self._streaming_task = None
+        self._subscription = None
+        self._seen_events: set[str] = set()
+        # _lock protects self._seen_events
+        self._lock = asyncio.Lock()
+
+    async def close(self):
+        async with self._lock:
+            if self._streaming_task is not None:
+                self._streaming_task.cancel()
+                self._streaming_task = None
+
+            if self._subscription is not None:
+                await self._subscription.close()
+                self._subscription = None
+
+        await super().close()
 
     async def notification_generator(
             self,
@@ -323,19 +429,59 @@ class NotificationTimeline(Timeline):
                 limit=limit,
                 since_id=self._most_recent_id)
 
-        updated_most_recent = False
+        # Fetch all the events before taking the lock
+        events = []
 
         async for items in timeline:
             notifications = from_dict_list(Notification, items)
-            events = [NotificationEvent(self.instance, n) for n in notifications]
+            events += [NotificationEvent(self.instance, n) for n in notifications]
 
-            if (not updated_most_recent) and len(events) > 0:
-                updated_most_recent = True
-                self._most_recent_id = events[0].notification.id
+        # Use the first (most recent) event id for _most_recent_id.
+        if len(events) > 0:
+            self._most_recent_id = events[0].status.id
 
-            events.reverse()
+        # We need the events in chronological order.
+        events.reverse()
+
+        async with self._lock:
             for event in events:
-                await self._dispatch(event)
+                # Skip any events we already handled via streaming.
+                if event.id not in self._seen_events:
+                    await self._dispatch(event)
+
+            # Clear the seen events cache for the next fetch.
+            self._seen_events.clear()
+
+    async def streaming(self, enable):
+        if enable:
+            async with self._lock:
+                self._subscription = await self.instance.streamer.subscribe(
+                        StreamSubscription.USER)
+                self._streaming_task = run_async_task(self._stream())
+        else:
+            pass
+
+    async def _stream(self):
+        while True:
+            sevt = await self._subscription.get()
+
+            async with self._lock:
+                match sevt.event:
+                    case "update" | "delete" | "status.update":
+                        # Ignore events handled by other timelines.
+                        pass
+
+                    case "notification":
+                        event = NotificationEvent(
+                                    self.instance,
+                                    from_dict(Notification, sevt.payload))
+                        # Track the events we've seen from streaming; these will be discarded in the
+                        # next fetch(), to avoid generating duplicate events.
+                        self._seen_events.add(event.id)
+                        await self._dispatch(event)
+
+                    case _:
+                        logger.info(f"NotificationTimeline: no use for event type {sevt.event}")
 
 
 class TagTimeline(StatusTimeline):

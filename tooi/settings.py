@@ -21,6 +21,7 @@ class Options:
     always_show_sensitive: Optional[bool] = None
     relative_timestamps: bool = False
     timeline_refresh: int = 0
+    streaming: bool = False
 
 
 @dataclass

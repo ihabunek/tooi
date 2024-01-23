@@ -86,6 +86,9 @@ class EventDetailPlaceholder(Static, can_focus=True):
     """
 
     def __init__(self):
+        # TODO: move event to a superclass, requires a bit of refactoring to
+        # avoid circular imports.
+        self.event = None
         super().__init__("Nothing selected")
 
 
