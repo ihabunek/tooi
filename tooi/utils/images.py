@@ -2,25 +2,19 @@ import httpx
 import tempfile
 
 from contextlib import contextmanager
-from datetime import datetime
 from functools import lru_cache
 from PIL import Image
 from rich.color import Color
 from rich.color_triplet import ColorTriplet
 from rich.style import Style
 from rich.text import Text
-from textual.app import log
 from typing import Iterator
 
 
 @lru_cache
 def render_half_block_remote_image(url: str, width: int, height: int):
     with load_image(url, width, height) as image:
-        start = datetime.now()
-        i = generate_half_block_image(image)
-        duration = datetime.now() - start
-        log(f"{duration=}")
-        return i
+        return generate_half_block_image(image)
 
 
 def generate_half_block_image(image: Image.Image) -> Text:
