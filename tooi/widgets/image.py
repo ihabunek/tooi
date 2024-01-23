@@ -12,7 +12,7 @@ class HalfblockImage(Static):
         self.attachment = attachment
         # TODO: Display an image-sized placeholder instead
         super().__init__("Loading...")
-        self.load()
+        self.worker = self.load()
 
     @work(exit_on_error=False, thread=True)
     def load(self):
@@ -25,3 +25,6 @@ class HalfblockImage(Static):
             self.update(event.worker.result)
         if event.state == WorkerState.ERROR:
             self.update(f"[red]Failed loading image:\n{markup.escape(str(event.worker.error))}[/]")
+
+    def on_unmount(self) -> None:
+        self.worker.cancel()
