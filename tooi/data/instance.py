@@ -49,7 +49,8 @@ class InstanceInfo():
     def streaming_url(self) -> str | None:
         if self.instance_v2:
             return self.instance_v2.configuration.urls.streaming
-        else:
+
+        if self.instance:
             return self.instance.urls.streaming_api
 
 
