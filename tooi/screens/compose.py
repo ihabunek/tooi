@@ -7,7 +7,7 @@ from textual.widgets import Static, TextArea
 from typing import Optional
 
 from tooi.api import statuses
-from tooi.context import get_context
+from tooi.context import account_name, get_context
 from tooi.data.instance import InstanceInfo
 from tooi.screens.modal import ModalScreen
 from tooi.widgets.header import Header
@@ -215,13 +215,16 @@ class ComposeScreen(ModalScreen[None]):
             return self.edit_source.text
 
         if self.in_reply_to:
-            mention_accounts = [
-                    user for user in (
-                        [self.in_reply_to.original.account.acct]
-                        + [m.acct for m in self.in_reply_to.original.mentions])
-                    if user != self.ctx.auth.acct and user != self.ctx.auth.acct.split('@')[0]
-                ]
-            return " ".join([f"@{m}" for m in mention_accounts]) + " "
+            status = self.in_reply_to.original
+            author = status.account.acct
+            mentions = [m.acct for m in status.mentions]
+
+            reply_tos: set[str] = set()
+            for acct in [author, *mentions]:
+                if account_name(acct) != self.ctx.auth.acct:
+                    reply_tos.add(acct)
+
+            return " ".join([f"@{acct}" for acct in reply_tos]) + " "
 
         return ""
 
