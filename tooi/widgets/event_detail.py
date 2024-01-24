@@ -49,8 +49,7 @@ class EventDetailPlaceholder(EventDetail):
 
 
 def make_event_detail(event: Event) -> Widget:
-    from tooi.widgets.notification_detail import FavouriteDetail, NewFollowerDetail, ReblogDetail
-    from tooi.widgets.notification_detail import UnknownEventDetail
+    from tooi.widgets import notification_detail as n
     from tooi.widgets.status_detail import StatusDetail
 
     match event:
@@ -59,14 +58,16 @@ def make_event_detail(event: Event) -> Widget:
         case NotificationEvent():
             match event.notification.type:
                 case "follow":
-                    return NewFollowerDetail(event)
+                    return n.NewFollowerDetail(event)
                 case "mention":
-                    return StatusDetail(event)
+                    return n.MentionDetail(event)
                 case "favourite":
-                    return FavouriteDetail(event)
+                    return n.FavouriteDetail(event)
+                case "poll":
+                    return n.PollDetail(event)
                 case "reblog":
-                    return ReblogDetail(event)
+                    return n.ReblogDetail(event)
                 case _:
-                    return UnknownEventDetail(event)
+                    return n.UnknownEventDetail(event)
         case _:
             raise NotImplementedError()

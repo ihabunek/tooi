@@ -1,9 +1,28 @@
 from textual.widgets import Static
 
-from tooi.context import get_context
+from tooi.context import account_name, get_context
 from tooi.data.events import NotificationEvent
 from tooi.widgets.event_detail import EventDetail
 from tooi.widgets.status_detail import StatusDetail, StatusHeader
+
+
+class MentionDetail(StatusDetail):
+    def compose_header(self):
+        assert self.event
+        name = self.event.account.display_name
+        yield StatusHeader(f"{name} mentioned you")
+
+
+class PollDetail(StatusDetail):
+    def compose_header(self):
+        assert self.event
+        ctx = get_context()
+        author = account_name(self.event.account)
+
+        if author == ctx.auth.acct:
+            yield StatusHeader("A poll you authored has ended")
+        else:
+            yield StatusHeader("A poll you voted in has ended")
 
 
 class ReblogDetail(StatusDetail):
