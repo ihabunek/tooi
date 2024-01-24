@@ -207,7 +207,7 @@ class StatusMeta(Static):
         self.ctx = get_context()
         super().__init__()
 
-    def visibility_string(self, status):
+    def visibility_string(self, status: Status):
         vis = f"{status.visibility.capitalize()}"
         if status.local_only:
             vis += " (local only)"
