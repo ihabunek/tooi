@@ -1,4 +1,5 @@
 from rich import markup
+from rich.console import RenderableType
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical, VerticalScroll
@@ -68,11 +69,10 @@ class StatusDetail(VerticalScroll):
         return (self.context.config.options.always_show_sensitive
                 or (self.status.original.id in self._revealed))
 
-    def compose(self):
+    def compose(self) -> ComposeResult:
         status = self.status.original
 
-        if self.status.reblog:
-            yield BoostedBy(self.status)
+        yield from self.compose_header()
 
         hide_sensitive = self.sensitive and not self.revealed
         sensitive_classes = "status_sensitive " + ("show" if hide_sensitive else "hide")
@@ -82,6 +82,10 @@ class StatusDetail(VerticalScroll):
         yield Vertical(*self.compose_sensitive(status), classes=sensitive_classes)
         yield Vertical(*self.compose_revealed(status), classes=revealed_classes)
         yield StatusMeta(status)
+
+    def compose_header(self) -> ComposeResult:
+        if self.status.reblog:
+            yield StatusHeader(f"boosted by {self.status.account.acct}")
 
     def reveal(self):
         if self.sensitive and not self.revealed:
@@ -114,20 +118,16 @@ class StatusDetail(VerticalScroll):
             yield StatusMediaAttachment(attachment)
 
 
-class BoostedBy(Static):
+class StatusHeader(Static):
     DEFAULT_CSS = """
-    BoostedBy {
+    StatusHeader {
         color: gray;
         border-bottom: ascii gray;
     }
     """
 
-    def __init__(self, status: Status):
-        self.status = status
-        super().__init__("", markup=False)
-
-    def render(self):
-        return f"boosted by {self.status.account.acct}"
+    def __init__(self, renderable: RenderableType = ""):
+        super().__init__(renderable, markup=False)
 
 
 class StatusCard(Widget):

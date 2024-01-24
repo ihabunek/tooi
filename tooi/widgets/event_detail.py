@@ -4,32 +4,30 @@ from textual.widgets import Static
 
 from tooi.context import get_context
 from tooi.data.events import Event, NotificationEvent, StatusEvent
-from tooi.widgets.status_detail import StatusDetail
+from tooi.widgets.status_detail import StatusDetail, StatusHeader
 
 
 class MentionDetail(StatusDetail):
-    def __init__(self, event: NotificationEvent, revealed: bool = False):
+    def __init__(self, event: NotificationEvent):
         super().__init__(event)
-
-    # TODO: Perhaps display a "You were mentioned by..." header.
-    def compose(self):
-        yield from StatusDetail.compose(self)
 
 
 class ReblogDetail(StatusDetail):
-    def __init__(self, event: NotificationEvent, revealed: bool = False):
+    def __init__(self, event: NotificationEvent):
         super().__init__(event)
 
-    def compose(self):
-        yield from StatusDetail.compose(self)
+    def compose_header(self):
+        name = self.event.account.display_name
+        yield StatusHeader(f"{name} boosted your post")
 
 
 class FavouriteDetail(StatusDetail):
-    def __init__(self, event: NotificationEvent, revealed: bool = False):
+    def __init__(self, event: NotificationEvent):
         super().__init__(event)
 
-    def compose(self):
-        yield from StatusDetail.compose(self)
+    def compose_header(self):
+        name = self.event.account.display_name
+        yield StatusHeader(f"{name} favourited your post")
 
 
 class NewFollowerDetail(VerticalScroll):
