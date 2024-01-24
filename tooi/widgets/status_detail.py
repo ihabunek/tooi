@@ -1,8 +1,7 @@
 from rich import markup
 from rich.console import RenderableType
 from textual.app import ComposeResult
-from textual.binding import Binding
-from textual.containers import Vertical, VerticalScroll
+from textual.containers import Vertical
 from textual.widget import Widget
 from textual.widgets import Static
 
@@ -11,23 +10,17 @@ from tooi.context import get_context
 from tooi.entities import MediaAttachment, Status
 from tooi.utils.datetime import format_datetime, format_relative
 from tooi.widgets.account import AccountHeader
+from tooi.widgets.event_detail import EventDetail
 from tooi.widgets.image import HalfblockImage
 from tooi.widgets.link import Link
 from tooi.widgets.markdown import Markdown
 from tooi.widgets.poll import Poll
 
 
-class StatusDetail(VerticalScroll):
+class StatusDetail(EventDetail):
     _revealed: set[str] = set()
 
     DEFAULT_CSS = """
-    StatusDetail {
-        width: 2fr;
-        padding: 0 1;
-    }
-    StatusDetail:focus {
-        background: $panel;
-    }
     .status_header {
         height: auto;
     }
@@ -47,19 +40,9 @@ class StatusDetail(VerticalScroll):
     }
     """
 
-    BINDINGS = [
-        Binding("up,k", "scroll_up", "Scroll Up", show=False),
-        Binding("down,j", "scroll_down", "Scroll Down", show=False),
-        Binding("home", "scroll_home", "Scroll Home", show=False),
-        Binding("end", "scroll_end", "Scroll End", show=False),
-        Binding("pageup", "page_up", "Page Up", show=False),
-        Binding("pagedown", "page_down", "Page Down", show=False),
-    ]
-
     def __init__(self, event: Event):
+        super().__init__(event)
         assert event.status is not None
-        super().__init__()
-        self.event = event
         self.context = get_context()
         self.status = event.status
         self.sensitive = self.status.original.sensitive
