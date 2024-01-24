@@ -17,7 +17,7 @@ class PollDetail(StatusDetail):
     def compose_header(self):
         assert self.event
         ctx = get_context()
-        author = account_name(self.event.account)
+        author = account_name(self.event.account.acct)
 
         if author == ctx.auth.acct:
             yield StatusHeader("A poll you authored has ended")
@@ -42,7 +42,7 @@ class FavouriteDetail(StatusDetail):
 class NewFollowerDetail(EventDetail):
     def compose(self):
         assert self.event
-        acct = account_name(self.event.account)
+        acct = account_name(self.event.account.acct)
         yield Static(f"{acct} followed you.", markup=False)
 
 

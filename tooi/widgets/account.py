@@ -23,7 +23,7 @@ class AccountHeader(Widget):
         self.account = account
 
     def compose(self):
-        acct = account_name(self.account)
+        acct = account_name(self.account.acct)
         yield Static(f"@{acct}", markup=False, classes="account_acct")
         if self.account.display_name:
             yield Static(self.account.display_name, markup=False, classes="account_name")

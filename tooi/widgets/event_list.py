@@ -143,7 +143,7 @@ class EventListItem(ListItem, can_focus=True):
         yield Label(self.format_timestamp(), markup=False, classes="event_list_timestamp")
         yield Label(self._format_flags(), markup=False, classes="event_list_flags")
         yield Label(
-                account_name(self.event.account),
+                account_name(self.event.account.acct),
                 markup=False,
                 classes="event_list_acct")
         if self.event.status:

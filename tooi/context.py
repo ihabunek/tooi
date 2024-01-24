@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from threading import local
 
 from tooi.auth import AuthContext, load_auth_context
-from tooi.entities import Account
 from tooi.settings import Configuration
 
 
@@ -31,9 +30,14 @@ def get_context() -> Context:
     return _local.context
 
 
-def account_name(account: Account) -> str:
-    if "@" in account.acct:
-        return account.acct
+def account_name(acct: str) -> str:
+    """
+    Mastodon does not include the instance name for local account, this
+    functions adds the current instance name to the account name if it's
+    missing.
+    """
+    if "@" in acct:
+        return acct
 
     ctx = get_context()
-    return f"{account.acct}@{ctx.auth.domain}"
+    return f"{acct}@{ctx.auth.domain}"
