@@ -17,7 +17,7 @@ from tooi.messages import EventHighlighted, EventSelected, StatusReply, ShowStat
 from tooi.messages import ToggleStatusBoost, EventMessage, StatusEdit
 from tooi.utils.from_dict import from_dict
 from tooi.widgets.status_detail import StatusDetail
-from tooi.widgets.event_detail import make_event_detail, EventDetailPlaceholder
+from tooi.widgets.notification_detail import make_event_detail, EventDetailPlaceholder
 from tooi.widgets.event_list import EventList
 
 
