@@ -23,9 +23,7 @@ class FavouriteDetail(StatusDetail):
 class NewFollowerDetail(EventDetail):
     def compose(self):
         assert self.event
-        ctx = get_context()
-        acct = self.event.account.acct
-        acct = acct if "@" in acct else f"{acct}@{ctx.auth.domain}"
+        acct = account_name(self.event.account)
         yield Static(f"{acct} followed you.", markup=False)
 
 

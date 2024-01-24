@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from threading import local
 
 from tooi.auth import AuthContext, load_auth_context
+from tooi.entities import Account
 from tooi.settings import Configuration
 
 
@@ -28,3 +29,11 @@ def create_context() -> Context:
 
 def get_context() -> Context:
     return _local.context
+
+
+def account_name(account: Account) -> str:
+    if "@" in account.acct:
+        return account.acct
+
+    ctx = get_context()
+    return f"{account.acct}@{ctx.auth.domain}"

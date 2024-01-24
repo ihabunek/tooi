@@ -1,8 +1,7 @@
 from textual.widgets import ListItem, Label
 
 from tooi.data.events import Event, NotificationEvent, StatusEvent
-from tooi.context import get_context
-from tooi.entities import Account
+from tooi.context import account_name, get_context
 from tooi.messages import EventHighlighted, EventSelected
 from tooi.utils.datetime import format_datetime, format_relative
 from tooi.widgets.list_view import ListView
@@ -144,7 +143,7 @@ class EventListItem(ListItem, can_focus=True):
         yield Label(self.format_timestamp(), markup=False, classes="event_list_timestamp")
         yield Label(self._format_flags(), markup=False, classes="event_list_flags")
         yield Label(
-                self._format_account_name(self.event.account),
+                account_name(self.event.account),
                 markup=False,
                 classes="event_list_acct")
         if self.event.status:
@@ -164,11 +163,6 @@ class EventListItem(ListItem, can_focus=True):
         # a chance to render.
         for label in self.query(".event_list_timestamp"):
             label.update(self.format_timestamp())
-
-    def _format_account_name(self, account: Account) -> str:
-        ctx = get_context()
-        acct = account.acct
-        return acct if "@" in acct else f"{acct}@{ctx.auth.domain}"
 
     def _format_flags(self) -> str:
         FLAG_STATUS_BOOSTED = 0
