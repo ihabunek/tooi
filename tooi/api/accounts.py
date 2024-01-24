@@ -10,7 +10,7 @@ from tooi.utils.from_dict import from_dict
 
 async def get_account_by_id(account_id: str) -> Account:
     """Look up an account by database id and return its info."""
-    path = "/api/v1/accounts/{account_id}"
+    path = f"/api/v1/accounts/{account_id}"
 
     response = await request("GET", path)
     return from_dict(Account, response.json())
