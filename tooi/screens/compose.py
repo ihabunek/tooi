@@ -67,8 +67,7 @@ class ComposeScreen(ModalScreen[None]):
     def compose_modal(self) -> ComposeResult:
         initial_text = self._get_initial_text()
         self.text_area = ComposeTextArea(id="compose_text_area", initial_text=initial_text)
-        if initial_text:
-            self.text_area.cursor_location = (0, len(initial_text))
+        self.text_area.action_cursor_line_end()
 
         self.menu = Menu()
 
