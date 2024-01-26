@@ -14,6 +14,7 @@ from tooi.utils.from_dict import from_dict
 DISABLE_SETTINGS = False
 TOOI_CONFIG_DIR_NAME = "tooi"
 TOOI_SETTINGS_FILE_NAME = "settings.toml"
+TOOI_STYLESHEET_FILE_NAME = "styles.tcss"
 
 
 @dataclass
@@ -54,6 +55,10 @@ def get_config_dir():
 
 def get_settings_path():
     return join(get_config_dir(), TOOI_SETTINGS_FILE_NAME)
+
+
+def get_stylesheet_path():
+    return join(get_config_dir(), TOOI_STYLESHEET_FILE_NAME)
 
 
 def _load_settings() -> dict[str, Any]:

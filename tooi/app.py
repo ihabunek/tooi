@@ -3,6 +3,7 @@ import re
 import shlex
 import webbrowser
 
+from os import path
 from textual import work
 from textual.app import App
 from textual.message import Message
@@ -29,6 +30,7 @@ from tooi.screens.main import MainScreen
 from tooi.screens.messagebox import MessageBox
 from tooi.screens.source import SourceScreen
 from tooi.screens.status_context import StatusMenuScreen
+from tooi.settings import get_stylesheet_path
 from tooi.utils.temp import download_temporary
 from tooi.widgets.link import Link
 
@@ -48,8 +50,13 @@ class TooiApp(App[None]):
     ]
 
     def __init__(self):
-        super().__init__()
+        super().__init__(css_path=self._get_css_paths())
         set_async_context(create_async_context(self))
+
+    def _get_css_paths(self):
+        base_css = "app.css"
+        user_css = get_stylesheet_path()
+        return [base_css, user_css] if path.exists(user_css) else [base_css]
 
     async def on_mount(self):
         self.push_screen("loading")
