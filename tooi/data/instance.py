@@ -69,10 +69,6 @@ async def get_instance_info() -> InstanceInfo:
     extended_description = None
     user_preferences: dict[str, Any] = {}
 
-    #print(instance_resp.json()['urls'])
-    #print(instance_v2_resp.json()['configuration'])
-    #import sys; sys.exit(0)
-
     if isinstance(instance_resp, Response):
         instance_v1 = from_response(Instance, instance_resp)
 
