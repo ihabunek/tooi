@@ -7,7 +7,7 @@ import logging
 import re
 
 from abc import ABC, abstractmethod
-from typing import AsyncGenerator, List, Optional
+from typing import AsyncGenerator, Optional, Sequence
 from urllib.parse import quote, urlparse
 
 from httpx import Headers
@@ -16,14 +16,14 @@ from httpx._types import QueryParamTypes
 from tooi.api import request, statuses
 from tooi.api.accounts import get_account_by_name
 from tooi.api.streaming import StreamSubscription
-from tooi.asyncio import run_async_task, AsyncAtomic
+from tooi.asyncio import AsyncWorker, run_async_task, AsyncAtomic
 from tooi.data.events import Event, NotificationEvent, StatusEvent
 from tooi.data.instance import InstanceInfo
 from tooi.entities import Status, Notification
 from tooi.utils.from_dict import from_dict, from_dict_list
 
 Params = Optional[QueryParamTypes]
-EventGenerator = AsyncGenerator[List[Event], None]
+EventGenerator = AsyncGenerator[Sequence[Event], None]
 
 
 # Max 80, as of Mastodon 4.1.0
@@ -80,7 +80,7 @@ class Timeline(ABC):
     QUEUE_SIZE = 128
 
     def __init__(self,
-                 name,
+                 name: str,
                  instance: InstanceInfo,
                  can_update: bool = False,
                  can_stream: bool = False):
@@ -91,7 +91,7 @@ class Timeline(ABC):
         self._update_running = AsyncAtomic[bool](False)
         self._update_task = None
         self._periodic_refresh_task = None
-        self._queue = asyncio.Queue(maxsize=self.QUEUE_SIZE)
+        self._queue: asyncio.Queue[Event] = asyncio.Queue(maxsize=self.QUEUE_SIZE)
 
     def _assert_can_update(self):
         if not self.can_update:
@@ -126,7 +126,7 @@ class Timeline(ABC):
         get_events() or get_events_wait() were called.  This function always returns immediately.
         If no events are available, an empty list will be returned.
         """
-        events = []
+        events: list[Event] = []
 
         while True:
             try:
@@ -171,7 +171,7 @@ class Timeline(ABC):
 
         self._update_task = run_async_task(_run_update())
 
-    async def _update(self):
+    async def _update(self) -> None:
         # This function is called to instruct the timeline implementation to fetch more events and
         # dispatch them.  This function will be called in a separate runner, so it's fine to await
         # here without blocking the UI.
@@ -200,10 +200,10 @@ class StatusTimeline(Timeline):
         super().__init__(name, instance, can_update=True, can_stream=(stream_name is not None))
         self.path = path
         self.params = params
-        self._stream_name = stream_name
-        self._subscription = None
-        self._most_recent_id = None
-        self._streaming_task = None
+        self._stream_name: str | None = stream_name
+        self._subscription: StreamSubscription | None = None
+        self._most_recent_id: str | None = None
+        self._streaming_task: AsyncWorker | None = None
         self._seen_events: set[str] = set()
         # _lock protects self._seen_events
         self._lock = asyncio.Lock()
@@ -384,9 +384,9 @@ class NotificationTimeline(Timeline):
 
     def __init__(self, instance: InstanceInfo):
         super().__init__("Notifications", instance, can_update=True, can_stream=True)
-        self._most_recent_id = None
+        self._most_recent_id: str | None = None
         self._streaming_task = None
-        self._subscription = None
+        self._subscription: StreamSubscription | None = None
         self._seen_events: set[str] = set()
         # _lock protects self._seen_events
         self._lock = asyncio.Lock()
@@ -430,7 +430,7 @@ class NotificationTimeline(Timeline):
                 since_id=self._most_recent_id)
 
         # Fetch all the events before taking the lock
-        events = []
+        events: list[Event] = []
 
         async for items in timeline:
             notifications = from_dict_list(Notification, items)
@@ -462,6 +462,7 @@ class NotificationTimeline(Timeline):
             pass
 
     async def _stream(self):
+        assert self._subscription
         while True:
             sevt = await self._subscription.get()
 
