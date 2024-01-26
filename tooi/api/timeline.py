@@ -154,7 +154,9 @@ class Timeline(ABC):
         return events
 
     async def _dispatch(self, event: Event):
-        # Push a new event into the queue.  This will block if the queue is full.
+        """
+        Push a new event into the queue.  This will block if the queue is full.
+        """
         await self._queue.put(event)
 
     async def _interlocked_update(self):
@@ -172,16 +174,19 @@ class Timeline(ABC):
         self._update_task = run_async_task(_run_update())
 
     async def _update(self) -> None:
-        # This function is called to instruct the timeline implementation to fetch more events and
-        # dispatch them.  This function will be called in a separate runner, so it's fine to await
-        # here without blocking the UI.
+        """
+        This function is called to instruct the timeline implementation to fetch
+        more events and dispatch them.  This function will be called in a
+        separate runner, so it's fine to await here without blocking the UI.
+        """
         raise (NotImplementedError("this Timeline cannot update"))
 
     @abstractmethod
     async def fetch(self, limit: int | None = None) -> EventGenerator:
-        # This is the non-queue-based fetch function which is used when fetching the initial
-        # timeline.
-        ...
+        """
+        This is the non-queue-based fetch function which is used when fetching
+        the initial timeline.
+        """
 
 
 class StatusTimeline(Timeline):
