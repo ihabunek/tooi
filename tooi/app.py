@@ -67,7 +67,7 @@ class TooiApp(App[None]):
         self.switch_screen(self.tabs)
 
     def show_error(self, title: str, message: str):
-        self.push_screen(MessageBox(title, message, classes="error"))
+        self.push_screen(MessageBox(title, message))
 
     def action_compose(self):
         self.push_screen(ComposeScreen(self.instance))
