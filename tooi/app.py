@@ -22,6 +22,7 @@ from tooi.messages import ShowHashtagPicker, StatusReply, GotoFederatedTimeline
 from tooi.messages import GotoPersonalTimeline, StatusEdit
 from tooi.screens.account import AccountScreen
 from tooi.screens.compose import ComposeScreen
+from tooi.screens.file_picker import FilePicker
 from tooi.screens.goto import GotoScreen, GotoHashtagScreen
 from tooi.screens.help import HelpScreen
 from tooi.screens.instance import InstanceScreen
