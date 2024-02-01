@@ -52,6 +52,7 @@ def _parse_auth_context(config: dict[str, Any]):
     client = httpx.AsyncClient(
         base_url=base_url,
         headers={"Authorization": f"Bearer {access_token}"},
+        timeout=30,
     )
 
     return AuthContext(active_user, domain, base_url, access_token, client)
