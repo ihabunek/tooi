@@ -32,7 +32,7 @@ class StatusEvent(Event):
     """
     def __init__(self, instance: InstanceInfo, status: Status):
         self._status = status
-        super().__init__(f"status:{status.id}", instance)
+        super().__init__(f"status-{status.id}", instance)
 
     @property
     def status(self) -> Status:
@@ -53,7 +53,7 @@ class NotificationEvent(Event):
     """
     def __init__(self, instance: InstanceInfo, notification: Notification):
         self.notification = notification
-        super().__init__(f"notification:{notification.id}", instance)
+        super().__init__(f"notification-{notification.id}", instance)
 
     @property
     def created_at(self) -> datetime:
