@@ -134,7 +134,7 @@ class ComposeScreen(ModalScreen[None]):
     def action_quit(self):
         self.app.pop_screen()
 
-    def on_menu_focus_previous(self):
+    def on_list_view_focus_previous(self):
         self.focus_previous()
 
     def on_text_area_changed(self, message: TextArea.Changed):
