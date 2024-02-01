@@ -12,6 +12,7 @@ class ComposeTextArea(TextArea):
         min-height: 4;
         max-height: 15;
         border: round gray;
+        padding: 0;
     }
     ComposeTextArea:focus {
         border: round white;
