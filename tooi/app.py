@@ -15,7 +15,7 @@ from tooi.api.streaming import InstanceStreamer
 from tooi.api.timeline import Timeline, HomeTimeline, LocalTimeline, TagTimeline, AccountTimeline
 from tooi.api.timeline import FederatedTimeline, ContextTimeline, NotificationTimeline
 from tooi.asyncio import create_async_context, set_async_context
-from tooi.context import get_context
+from tooi.context import get_context, is_mine
 from tooi.data.instance import get_instance_info
 from tooi.messages import GotoAccountTimeline, GotoHashtagTimeline, GotoHomeTimeline, GotoLocalTimeline, ShowError
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread, ShowNotifications
@@ -75,11 +75,7 @@ class TooiApp(App[None]):
         self.push_screen(ComposeScreen(self.instance))
 
     def on_status_edit(self, message: StatusEdit):
-        acct = message.status.account.acct
-        if "@" not in acct:
-            acct += f"@{self.context.auth.domain}"
-
-        if acct == self.context.auth.acct:
+        if is_mine(message.status):
             self.push_screen(ComposeScreen(
                 self.instance,
                 edit=message.status,
