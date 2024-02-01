@@ -10,6 +10,7 @@ from typing import NamedTuple
 
 from tooi.api import request
 from tooi.screens.modal import ModalScreen
+from tooi.utils.file import format_size
 from tooi.widgets.compose import ComposeTextArea
 from tooi.widgets.image import HalfblockImage
 from tooi.entities import from_dict, MediaAttachment
@@ -49,9 +50,10 @@ class MediaItem(Widget):
         super().__init__()
 
     def compose(self):
+        file_size = format_size(self.file_size)
         with Horizontal(classes="container"):
             with Vertical(classes="preview"):
-                yield Static(f"{self.path.name} ({self.file_size}b)", markup=False)
+                yield Static(f"{self.path.name} ({file_size})", markup=False)
                 # TODO: handle video/audio
                 # TODO: resize image dynamically
                 yield HalfblockImage(str(self.path), 20, 20)
