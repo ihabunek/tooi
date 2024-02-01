@@ -75,10 +75,10 @@ class ComposeCharacterCount(Static):
     }
     """
 
-    def __init__(self, instance_info: InstanceInfo, text: str):
+    def __init__(self, text: str, max_chars: int):
         super().__init__()
         self.chars = len(text)
-        self.max_chars = instance_info.status_config.max_characters
+        self.max_chars = max_chars
 
     def update_chars(self, text: str):
         self.chars = len(text)

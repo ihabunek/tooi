@@ -112,7 +112,10 @@ class ComposeScreen(ModalScreen[None]):
 
         self.status = Static(id="compose_status", markup=False)
 
-        self.character_count = ComposeCharacterCount(self.instance_info, self.text_area.text)
+        self.character_count = ComposeCharacterCount(
+            self.text_area.text,
+            self.instance_info.status_config.max_characters,
+        )
 
         if self.edit:
             yield Header("Edit toot")
