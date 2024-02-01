@@ -23,6 +23,7 @@ async def post(
     spoiler_text: str | None = None,
     in_reply_to: Optional[str] = None,
     local_only: bool | None = None,
+    media_ids: list[str] | None = None,
 ) -> Response:
     # Idempotency key assures the same status is not posted multiple times
     # if the request is retried.
@@ -35,6 +36,7 @@ async def post(
         "spoiler_text": spoiler_text,
         "in_reply_to_id": in_reply_to,
         "local_only": local_only,
+        "media_ids": media_ids,
     })
 
     return await request("POST", "/api/v1/statuses", headers=headers, json=payload)
@@ -46,6 +48,7 @@ async def edit(
     visibility: str = "public",
     sensitive: bool = False,
     spoiler_text: str | None = None,
+    media_ids: list[str] | None = None,
 ) -> Response:
     """
     Edit an existing status.
@@ -57,6 +60,7 @@ async def edit(
         "visibility": visibility,
         "sensitive": sensitive,
         "spoiler_text": spoiler_text,
+        "media_ids": media_ids,
     })
 
     return await request("PUT", f"/api/v1/statuses/{status_id}", json=payload)

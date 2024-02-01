@@ -4,6 +4,7 @@ import shlex
 import webbrowser
 
 from os import path
+from pathlib import Path
 from textual import work
 from textual.app import App
 from textual.message import Message
@@ -16,7 +17,7 @@ from tooi.api.timeline import FederatedTimeline, ContextTimeline, NotificationTi
 from tooi.asyncio import create_async_context, set_async_context
 from tooi.context import get_context
 from tooi.data.instance import get_instance_info
-from tooi.messages import GotoAccountTimeline, GotoHashtagTimeline, GotoHomeTimeline, GotoLocalTimeline
+from tooi.messages import GotoAccountTimeline, GotoHashtagTimeline, GotoHomeTimeline, GotoLocalTimeline, ShowError
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread, ShowNotifications
 from tooi.messages import ShowHashtagPicker, StatusReply, GotoFederatedTimeline
 from tooi.messages import GotoPersonalTimeline, StatusEdit
@@ -31,6 +32,7 @@ from tooi.screens.messagebox import MessageBox
 from tooi.screens.source import SourceScreen
 from tooi.screens.status_context import StatusMenuScreen
 from tooi.settings import get_stylesheet_path
+from tooi.utils.file import FilePickerError, pick_file
 from tooi.utils.temp import download_temporary
 from tooi.widgets.link import Link
 
@@ -164,6 +166,9 @@ class TooiApp(App[None]):
     async def on_show_notifications(self, message: ShowNotifications):
         await self.tabs.open_timeline_tab(NotificationTimeline(self.instance))
 
+    def on_show_error(self, message: ShowError):
+        self.show_error(message.title, message.message)
+
     async def _open_timeline(self, timeline: Timeline):
         await self.tabs.open_timeline_tab(timeline)
 
@@ -193,3 +198,19 @@ class TooiApp(App[None]):
             process = await asyncio.create_subprocess_shell(cmd)
             # ... and wait for it to exit.
             await process.communicate()
+
+    async def pick_file(self) -> Path | None:
+        # TODO: this is not ideal because it needs to stop the app
+        # Consider alternatives:
+        # - a textual file picker
+        # - using a builtin terminal like this one:
+        #   https://github.com/mitosch/textual-terminal
+        assert self._driver
+        try:
+            self._driver.stop_application_mode()
+            return await pick_file()
+        except FilePickerError as ex:
+            self.post_message(ShowError("Failed attaching media", str(ex)))
+        finally:
+            self._driver.start_application_mode()
+            self.refresh()

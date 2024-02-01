@@ -105,3 +105,10 @@ class ShowStatusMessage(Message):
     def __init__(self, text: str | None = None):
         super().__init__()
         self.text = text
+
+
+class ShowError(Message):
+    def __init__(self, title: str, message: str):
+        super().__init__()
+        self.title = title
+        self.message = message

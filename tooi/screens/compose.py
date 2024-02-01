@@ -1,18 +1,20 @@
 import asyncio
+import re
 
 from textual.app import ComposeResult
-from textual.message import Message
-from textual.reactive import Reactive, reactive
-from textual.widgets import Static, TextArea
-from typing import Optional
+from textual.containers import Vertical
+from textual.widgets import Label, Static, TextArea
+from typing import Optional, cast
 
 from tooi.api import statuses
 from tooi.context import account_name, get_context
 from tooi.data.instance import InstanceInfo
+from tooi.entities import MediaAttachment, Status, StatusSource
+from tooi.screens.media import AttachMediaModal, AttachedMedia
 from tooi.screens.modal import ModalScreen
+from tooi.widgets.compose import ComposeCharacterCount, ComposeTextArea
 from tooi.widgets.header import Header
 from tooi.widgets.menu import Menu, MenuItem
-from tooi.entities import Status, StatusSource
 
 
 VISIBILITY = {
@@ -35,6 +37,10 @@ class ComposeScreen(ModalScreen[None]):
     #cw_text_area {
         margin-bottom: 1;
     }
+    .media_list {
+        height: auto;
+        margin-bottom: 1;
+    }
     """
 
     def __init__(self,
@@ -50,6 +56,7 @@ class ComposeScreen(ModalScreen[None]):
         self.content_warning = None
         self.ctx = get_context()
         self.federated: bool | None = None
+        self.attachments: list[MediaAttachment] = edit.media_attachments if edit else []
 
         if edit:
             self.visibility = edit.visibility
@@ -66,13 +73,28 @@ class ComposeScreen(ModalScreen[None]):
 
     def compose_modal(self) -> ComposeResult:
         initial_text = self._get_initial_text()
+        max_chars = self.instance_info.status_config.max_characters
+
         self.text_area = ComposeTextArea(id="compose_text_area", initial_text=initial_text)
         self.text_area.action_cursor_line_end()
+
+        initial_attachments = [
+            Label(f"#{attachment.id}: [dim]{attachment.description}[/]")
+            for attachment in self.attachments
+        ]
+        self.media_list = Vertical(
+            Label("Attached media:"),
+            *initial_attachments,
+            classes="media_list"
+        )
 
         self.menu = Menu()
 
         self.toggle_cw_menu_item = MenuItem("add_cw", "Add content warning")
         self.menu.append(self.toggle_cw_menu_item)
+
+        self.attach_media_menu_item = MenuItem("attach_media", "Attach media")
+        self.menu.append(self.attach_media_menu_item)
 
         self.visibility_menu_item = MenuItem("visibility", f"Visibility: {self.visibility}")
         self.menu.append(self.visibility_menu_item)
@@ -92,28 +114,32 @@ class ComposeScreen(ModalScreen[None]):
 
         self.status = Static(id="compose_status", markup=False)
 
-        self.character_count = ComposeCharacterCount(self.instance_info, self.text_area.text)
-
         if self.edit:
             yield Header("Edit toot")
         else:
             yield Header("Compose toot")
+
         yield self.text_area
-        yield self.character_count
+        yield ComposeCharacterCount(initial_text, max_chars)
+        yield self.media_list
         yield self.menu
         yield self.status
 
-    def on_compose_text_area_focus_next(self, message: "ComposeTextArea.FocusNext"):
+    @property
+    def character_count(self) -> ComposeCharacterCount:
+        return self.query_one(ComposeCharacterCount)
+
+    def on_compose_text_area_focus_next(self, message: ComposeTextArea.FocusNext):
         self.app.action_focus_next()
 
-    def on_compose_text_area_focus_previous(self, message: "ComposeTextArea.FocusPrevious"):
+    def on_compose_text_area_focus_previous(self, message: ComposeTextArea.FocusPrevious):
         if message.from_id != "compose_text_area":
             self.app.action_focus_previous()
 
     def action_quit(self):
         self.app.pop_screen()
 
-    def on_menu_focus_previous(self):
+    def on_list_view_focus_previous(self):
         self.focus_previous()
 
     def on_text_area_changed(self, message: TextArea.Changed):
@@ -136,6 +162,7 @@ class ComposeScreen(ModalScreen[None]):
         spoiler_text = self.content_warning.text if self.content_warning else None
         in_reply_to = self.in_reply_to.original.id if self.in_reply_to else None
         local_only = not self.federated if self.federated is not None else None
+        media_ids = [a.id for a in self.attachments] if self.attachments else None
 
         if self.edit:
             await statuses.edit(
@@ -143,6 +170,7 @@ class ComposeScreen(ModalScreen[None]):
                 self.text_area.text,
                 visibility=self.visibility,
                 spoiler_text=spoiler_text,
+                media_ids=media_ids,
             )
         else:
             await statuses.post(
@@ -151,6 +179,7 @@ class ComposeScreen(ModalScreen[None]):
                 spoiler_text=spoiler_text,
                 in_reply_to=in_reply_to,
                 local_only=local_only,
+                media_ids=media_ids,
             )
 
     def disable(self):
@@ -161,7 +190,7 @@ class ComposeScreen(ModalScreen[None]):
         self.text_area.disabled = False
         self.menu.disabled = False
 
-    def on_menu_item_selected(self, message: Menu.ItemSelected):
+    async def on_menu_item_selected(self, message: Menu.ItemSelected):
         match message.item.code:
             case "visibility":
                 self.app.push_screen(SelectVisibilityModal(), self.set_visibility)
@@ -171,12 +200,29 @@ class ComposeScreen(ModalScreen[None]):
                 asyncio.create_task(self.post_status())
             case "add_cw":
                 self.add_content_warning()
+            case "attach_media":
+                await self.attach_media()
             case "remove_cw":
                 self.remove_content_warning()
             case "cancel":
                 self.dismiss()
             case _:
                 pass
+
+    async def attach_media(self):
+        from tooi.app import TooiApp
+        app = cast(TooiApp, self.app)  # make type checker happy
+        path = await app.pick_file()
+        if path:
+            app.push_screen(AttachMediaModal(path), self.on_media_attached)
+
+    def on_media_attached(self, media: AttachedMedia):
+        self.attachments.append(media.attachment)
+        label = f"* {media.path.name}"
+        if media.attachment.description:
+            description = re.sub(r"\s+", " ", media.attachment.description)
+            label += f" [dim]{description}[/]"
+        self.media_list.mount(Label(label))
 
     def add_content_warning(self):
         self.toggle_cw_menu_item.code = "remove_cw"
@@ -186,7 +232,7 @@ class ComposeScreen(ModalScreen[None]):
         self.vertical.mount(
             Static("Content warning:", markup=False, id="cw_label"),
             self.content_warning,
-            after=self.query_one("ComposeCharacterCount")
+            after=self.character_count
         )
         self.content_warning.focus()
 
@@ -228,63 +274,6 @@ class ComposeScreen(ModalScreen[None]):
         return ""
 
 
-class ComposeTextArea(TextArea):
-    # TODO: not sure how to highlight a textarea by changing the background color
-    # currently employing borders which take up some room.
-    DEFAULT_CSS = """
-    ComposeTextArea {
-        height: auto;
-        min-height: 4;
-        max-height: 15;
-        border: round gray;
-    }
-    ComposeTextArea:focus {
-        border: round white;
-    }
-    """
-
-    def __init__(
-        self,
-        initial_text="",
-        show_line_numbers=False,
-        id: str | None = None,
-        classes: str | None = None,
-        disabled: bool = False,
-    ):
-        super().__init__(text=initial_text, id=id, classes=classes, disabled=disabled)
-        self.show_line_numbers = show_line_numbers
-
-    def action_cursor_down(self, select: bool = False) -> None:
-        """If on last line, focus next widget. Allows moving down below textarea."""
-        target = self.get_cursor_down_location()
-        if self.cursor_location == target:
-            self.post_message(self.FocusNext(self.id))
-        else:
-            super().action_cursor_down(select)
-
-    def action_cursor_up(self, select: bool = False) -> None:
-        """If on first line, focus previous widget. Allows moving up above textarea."""
-        target = self.get_cursor_up_location()
-        if self.cursor_location == target:
-            self.post_message(self.FocusPrevious(self.id))
-        else:
-            super().action_cursor_up(select)
-
-    class FocusPrevious(Message):
-        """Emitted when pressing UP when on first item"""
-
-        def __init__(self, from_id: str | None):
-            self.from_id = from_id
-            super().__init__()
-
-    class FocusNext(Message):
-        """Emitted when pressing DOWN on the last item"""
-
-        def __init__(self, from_id: str | None):
-            self.from_id = from_id
-            super().__init__()
-
-
 class SelectVisibilityModal(ModalScreen[str]):
     def compose_modal(self):
         yield Static("Select visibility", classes="modal_title")
@@ -315,32 +304,3 @@ class SelectFederationModal(ModalScreen[bool]):
 
     def on_menu_item_selected(self, message: Menu.ItemSelected):
         self.dismiss(message.item.code)
-
-
-class ComposeCharacterCount(Static):
-    chars: Reactive[int] = reactive(0)
-
-    DEFAULT_CSS = """
-    ComposeCharacterCount {
-        text-align: right;
-        color: gray;
-    }
-    ComposeCharacterCount.warning {
-        color: red;
-    }
-    """
-
-    def __init__(self, instance_info: InstanceInfo, text: str):
-        super().__init__()
-        self.chars = len(text)
-        self.max_chars = instance_info.status_config.max_characters
-
-    def update_chars(self, text: str):
-        self.chars = len(text)
-        if self.chars > self.max_chars:
-            self.add_class("warning")
-        else:
-            self.remove_class("warning")
-
-    def render(self):
-        return f"{self.chars}/{self.max_chars}"
