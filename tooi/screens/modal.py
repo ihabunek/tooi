@@ -12,7 +12,7 @@ class ModalScreen(screen.ModalScreen[screen.ScreenResultType]):
     .modal_container {
         max-width: 80;
         height: auto;
-        border: solid gray;
+        border: round gray;
     }
     .modal_title {
         text-align: center;

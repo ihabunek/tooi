@@ -1,18 +1,21 @@
 import asyncio
+import re
 
 from textual.app import ComposeResult
+from textual.containers import Vertical
 from textual.message import Message
 from textual.reactive import Reactive, reactive
-from textual.widgets import Static, TextArea
-from typing import Optional
+from textual.widgets import Label, Static, TextArea
+from typing import Optional, cast
 
 from tooi.api import statuses
 from tooi.context import account_name, get_context
 from tooi.data.instance import InstanceInfo
+from tooi.entities import MediaAttachment, Status, StatusSource
+from tooi.screens.media import AttachMediaModal, AttachedMedia
 from tooi.screens.modal import ModalScreen
 from tooi.widgets.header import Header
 from tooi.widgets.menu import Menu, MenuItem
-from tooi.entities import Status, StatusSource
 
 
 VISIBILITY = {
@@ -35,6 +38,10 @@ class ComposeScreen(ModalScreen[None]):
     #cw_text_area {
         margin-bottom: 1;
     }
+    .media_list {
+        height: auto;
+        margin-bottom: 1;
+    }
     """
 
     def __init__(self,
@@ -50,6 +57,7 @@ class ComposeScreen(ModalScreen[None]):
         self.content_warning = None
         self.ctx = get_context()
         self.federated: bool | None = None
+        self.attachments: list[MediaAttachment] = edit.media_attachments if edit else []
 
         if edit:
             self.visibility = edit.visibility
@@ -69,10 +77,23 @@ class ComposeScreen(ModalScreen[None]):
         self.text_area = ComposeTextArea(id="compose_text_area", initial_text=initial_text)
         self.text_area.action_cursor_line_end()
 
+        initial_attachments = [
+            Label(f"#{attachment.id}: [dim]{attachment.description}[/]")
+            for attachment in self.attachments
+        ]
+        self.media_list = Vertical(
+            Label("Attached media:"),
+            *initial_attachments,
+            classes="media_list"
+        )
+
         self.menu = Menu()
 
         self.toggle_cw_menu_item = MenuItem("add_cw", "Add content warning")
         self.menu.append(self.toggle_cw_menu_item)
+
+        self.attach_media_menu_item = MenuItem("attach_media", "Attach media")
+        self.menu.append(self.attach_media_menu_item)
 
         self.visibility_menu_item = MenuItem("visibility", f"Visibility: {self.visibility}")
         self.menu.append(self.visibility_menu_item)
@@ -100,6 +121,7 @@ class ComposeScreen(ModalScreen[None]):
             yield Header("Compose toot")
         yield self.text_area
         yield self.character_count
+        yield self.media_list
         yield self.menu
         yield self.status
 
@@ -136,6 +158,7 @@ class ComposeScreen(ModalScreen[None]):
         spoiler_text = self.content_warning.text if self.content_warning else None
         in_reply_to = self.in_reply_to.original.id if self.in_reply_to else None
         local_only = not self.federated if self.federated is not None else None
+        media_ids = [a.id for a in self.attachments] if self.attachments else None
 
         if self.edit:
             await statuses.edit(
@@ -143,6 +166,7 @@ class ComposeScreen(ModalScreen[None]):
                 self.text_area.text,
                 visibility=self.visibility,
                 spoiler_text=spoiler_text,
+                media_ids=media_ids,
             )
         else:
             await statuses.post(
@@ -151,6 +175,7 @@ class ComposeScreen(ModalScreen[None]):
                 spoiler_text=spoiler_text,
                 in_reply_to=in_reply_to,
                 local_only=local_only,
+                media_ids=media_ids,
             )
 
     def disable(self):
@@ -161,7 +186,7 @@ class ComposeScreen(ModalScreen[None]):
         self.text_area.disabled = False
         self.menu.disabled = False
 
-    def on_menu_item_selected(self, message: Menu.ItemSelected):
+    async def on_menu_item_selected(self, message: Menu.ItemSelected):
         match message.item.code:
             case "visibility":
                 self.app.push_screen(SelectVisibilityModal(), self.set_visibility)
@@ -171,12 +196,29 @@ class ComposeScreen(ModalScreen[None]):
                 asyncio.create_task(self.post_status())
             case "add_cw":
                 self.add_content_warning()
+            case "attach_media":
+                await self.attach_media()
             case "remove_cw":
                 self.remove_content_warning()
             case "cancel":
                 self.dismiss()
             case _:
                 pass
+
+    async def attach_media(self):
+        from tooi.app import TooiApp
+        app = cast(TooiApp, self.app)  # make type checker happy
+        path = await app.pick_file()
+        if path:
+            app.push_screen(AttachMediaModal(path), self.on_media_attached)
+
+    def on_media_attached(self, media: AttachedMedia):
+        self.attachments.append(media.attachment)
+        label = f"* {media.path.name}"
+        if media.attachment.description:
+            description = re.sub(r"\s+", " ", media.attachment.description)
+            label += f" [dim]{description}[/]"
+        self.media_list.mount(Label(label))
 
     def add_content_warning(self):
         self.toggle_cw_menu_item.code = "remove_cw"
