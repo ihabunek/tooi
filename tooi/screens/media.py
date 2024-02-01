@@ -31,7 +31,7 @@ class MediaItem(Widget):
             height: auto;
         }
         .preview {
-            width: 22;
+            width: 42;
             height: auto;
         }
         .description {
@@ -56,7 +56,7 @@ class MediaItem(Widget):
                 yield Static(f"{self.path.name} ({file_size})", markup=False)
                 # TODO: handle video/audio
                 # TODO: resize image dynamically
-                yield HalfblockImage(str(self.path), 20, 20)
+                yield HalfblockImage(str(self.path), 40, 30)
             with Vertical(classes="description"):
                 yield Static("Description:")
                 yield ComposeTextArea()
