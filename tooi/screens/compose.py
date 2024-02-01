@@ -3,8 +3,6 @@ import re
 
 from textual.app import ComposeResult
 from textual.containers import Vertical
-from textual.message import Message
-from textual.reactive import Reactive, reactive
 from textual.widgets import Label, Static, TextArea
 from typing import Optional, cast
 
@@ -14,6 +12,7 @@ from tooi.data.instance import InstanceInfo
 from tooi.entities import MediaAttachment, Status, StatusSource
 from tooi.screens.media import AttachMediaModal, AttachedMedia
 from tooi.screens.modal import ModalScreen
+from tooi.widgets.compose import ComposeCharacterCount, ComposeTextArea
 from tooi.widgets.header import Header
 from tooi.widgets.menu import Menu, MenuItem
 
@@ -125,10 +124,10 @@ class ComposeScreen(ModalScreen[None]):
         yield self.menu
         yield self.status
 
-    def on_compose_text_area_focus_next(self, message: "ComposeTextArea.FocusNext"):
+    def on_compose_text_area_focus_next(self, message: ComposeTextArea.FocusNext):
         self.app.action_focus_next()
 
-    def on_compose_text_area_focus_previous(self, message: "ComposeTextArea.FocusPrevious"):
+    def on_compose_text_area_focus_previous(self, message: ComposeTextArea.FocusPrevious):
         if message.from_id != "compose_text_area":
             self.app.action_focus_previous()
 
@@ -228,7 +227,7 @@ class ComposeScreen(ModalScreen[None]):
         self.vertical.mount(
             Static("Content warning:", markup=False, id="cw_label"),
             self.content_warning,
-            after=self.query_one("ComposeCharacterCount")
+            after=self.query_one(ComposeCharacterCount)
         )
         self.content_warning.focus()
 
@@ -270,63 +269,6 @@ class ComposeScreen(ModalScreen[None]):
         return ""
 
 
-class ComposeTextArea(TextArea):
-    # TODO: not sure how to highlight a textarea by changing the background color
-    # currently employing borders which take up some room.
-    DEFAULT_CSS = """
-    ComposeTextArea {
-        height: auto;
-        min-height: 4;
-        max-height: 15;
-        border: round gray;
-    }
-    ComposeTextArea:focus {
-        border: round white;
-    }
-    """
-
-    def __init__(
-        self,
-        initial_text="",
-        show_line_numbers=False,
-        id: str | None = None,
-        classes: str | None = None,
-        disabled: bool = False,
-    ):
-        super().__init__(text=initial_text, id=id, classes=classes, disabled=disabled)
-        self.show_line_numbers = show_line_numbers
-
-    def action_cursor_down(self, select: bool = False) -> None:
-        """If on last line, focus next widget. Allows moving down below textarea."""
-        target = self.get_cursor_down_location()
-        if self.cursor_location == target:
-            self.post_message(self.FocusNext(self.id))
-        else:
-            super().action_cursor_down(select)
-
-    def action_cursor_up(self, select: bool = False) -> None:
-        """If on first line, focus previous widget. Allows moving up above textarea."""
-        target = self.get_cursor_up_location()
-        if self.cursor_location == target:
-            self.post_message(self.FocusPrevious(self.id))
-        else:
-            super().action_cursor_up(select)
-
-    class FocusPrevious(Message):
-        """Emitted when pressing UP when on first item"""
-
-        def __init__(self, from_id: str | None):
-            self.from_id = from_id
-            super().__init__()
-
-    class FocusNext(Message):
-        """Emitted when pressing DOWN on the last item"""
-
-        def __init__(self, from_id: str | None):
-            self.from_id = from_id
-            super().__init__()
-
-
 class SelectVisibilityModal(ModalScreen[str]):
     def compose_modal(self):
         yield Static("Select visibility", classes="modal_title")
@@ -357,32 +299,3 @@ class SelectFederationModal(ModalScreen[bool]):
 
     def on_menu_item_selected(self, message: Menu.ItemSelected):
         self.dismiss(message.item.code)
-
-
-class ComposeCharacterCount(Static):
-    chars: Reactive[int] = reactive(0)
-
-    DEFAULT_CSS = """
-    ComposeCharacterCount {
-        text-align: right;
-        color: gray;
-    }
-    ComposeCharacterCount.warning {
-        color: red;
-    }
-    """
-
-    def __init__(self, instance_info: InstanceInfo, text: str):
-        super().__init__()
-        self.chars = len(text)
-        self.max_chars = instance_info.status_config.max_characters
-
-    def update_chars(self, text: str):
-        self.chars = len(text)
-        if self.chars > self.max_chars:
-            self.add_class("warning")
-        else:
-            self.remove_class("warning")
-
-    def render(self):
-        return f"{self.chars}/{self.max_chars}"

@@ -10,6 +10,7 @@ from typing import NamedTuple
 
 from tooi.api import request
 from tooi.screens.modal import ModalScreen
+from tooi.widgets.compose import ComposeTextArea
 from tooi.widgets.image import HalfblockImage
 from tooi.entities import from_dict, MediaAttachment
 
@@ -48,8 +49,6 @@ class MediaItem(Widget):
         super().__init__()
 
     def compose(self):
-        from tooi.screens.compose import ComposeTextArea
-
         with Horizontal(classes="container"):
             with Vertical(classes="preview"):
                 yield Static(f"{self.path.name} ({self.file_size}b)", markup=False)
@@ -126,7 +125,6 @@ class AttachMediaModal(ModalScreen["AttachedMedia"]):
 
     @property
     def description(self):
-        from tooi.screens.compose import ComposeTextArea
         return self.query_one(ComposeTextArea).text
 
     def compose_modal(self):
