@@ -73,6 +73,8 @@ class ComposeScreen(ModalScreen[None]):
 
     def compose_modal(self) -> ComposeResult:
         initial_text = self._get_initial_text()
+        max_chars = self.instance_info.status_config.max_characters
+
         self.text_area = ComposeTextArea(id="compose_text_area", initial_text=initial_text)
         self.text_area.action_cursor_line_end()
 
@@ -112,20 +114,20 @@ class ComposeScreen(ModalScreen[None]):
 
         self.status = Static(id="compose_status", markup=False)
 
-        self.character_count = ComposeCharacterCount(
-            self.text_area.text,
-            self.instance_info.status_config.max_characters,
-        )
-
         if self.edit:
             yield Header("Edit toot")
         else:
             yield Header("Compose toot")
+
         yield self.text_area
-        yield self.character_count
+        yield ComposeCharacterCount(initial_text, max_chars)
         yield self.media_list
         yield self.menu
         yield self.status
+
+    @property
+    def character_count(self) -> ComposeCharacterCount:
+        return self.query_one(ComposeCharacterCount)
 
     def on_compose_text_area_focus_next(self, message: ComposeTextArea.FocusNext):
         self.app.action_focus_next()
@@ -230,7 +232,7 @@ class ComposeScreen(ModalScreen[None]):
         self.vertical.mount(
             Static("Content warning:", markup=False, id="cw_label"),
             self.content_warning,
-            after=self.query_one(ComposeCharacterCount)
+            after=self.character_count
         )
         self.content_warning.focus()
 

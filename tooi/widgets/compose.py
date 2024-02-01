@@ -2,8 +2,6 @@ from textual.message import Message
 from textual.reactive import Reactive, reactive
 from textual.widgets import Static, TextArea
 
-from tooi.data.instance import InstanceInfo
-
 
 class ComposeTextArea(TextArea):
     # TODO: not sure how to highlight a textarea by changing the background color
