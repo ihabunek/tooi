@@ -66,6 +66,10 @@ async def edit(
     return await request("PUT", f"/api/v1/statuses/{status_id}", json=payload)
 
 
+async def delete(status_id: str) -> Response:
+    return await request("DELETE", f"/api/v1/statuses/{status_id}")
+
+
 def drop_empty_values(data: Dict[Any, Any]) -> Dict[Any, Any]:
     """Remove keys whose values are null"""
     return {k: v for k, v in data.items() if v is not None}

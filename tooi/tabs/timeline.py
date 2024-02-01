@@ -9,13 +9,14 @@ from tooi.data.events import Event
 from tooi.api import APIError
 from tooi.api.statuses import set_favourite, unset_favourite, boost, unboost, get_status_source
 from tooi.api.timeline import Timeline
-from tooi.context import get_context
+from tooi.context import get_context, is_mine
 from tooi.data.instance import InstanceInfo
 from tooi.entities import StatusSource
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread, ToggleStatusFavourite
 from tooi.messages import EventHighlighted, EventSelected, StatusReply, ShowStatusMessage
 from tooi.messages import ToggleStatusBoost, EventMessage, StatusEdit
 from tooi.utils.from_dict import from_dict
+from tooi.widgets.dialog import DeleteStatusDialog
 from tooi.widgets.status_detail import StatusDetail
 from tooi.widgets.event_detail import make_event_detail, EventDetailPlaceholder
 from tooi.widgets.event_list import EventList
@@ -39,6 +40,8 @@ class TimelineTab(TabPane):
         Binding("r", "status_reply", "Reply"),
         Binding("f", "status_favourite", "(Un)Favourite"),
         Binding("b", "status_boost", "(Un)Boost"),
+        Binding("d", "status_delete", "Delete"),
+
         Binding("left,h", "scroll_left", "Scroll Left", show=False),
         Binding("right,l", "scroll_right", "Scroll Right", show=False),
         Binding("s", "show_sensitive", "Show Sensitive", show=False),
@@ -196,6 +199,16 @@ class TimelineTab(TabPane):
         if event := self.event_list.current:
             if event.status:
                 self.post_message(ToggleStatusBoost(event.status))
+
+    def action_status_delete(self):
+        if (event := self.event_list.current) and (status := event.status) and is_mine(status):
+            def on_dismiss(deleted: bool):
+                if deleted:
+                    self.on_event_deleted(event)
+            self.app.push_screen(DeleteStatusDialog(status), on_dismiss)
+
+    def on_event_deleted(self, event: Event):
+        self.event_list.remove_event(event)
 
     def action_show_sensitive(self):
         if isinstance(self.event_detail, StatusDetail) and self.event_detail.sensitive:

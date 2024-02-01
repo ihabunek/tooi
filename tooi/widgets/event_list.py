@@ -67,6 +67,11 @@ class EventList(ListView):
         for item in self.query(EventListItem)[self.MAX_LENGTH:]:
             item.remove()
 
+    def remove_event(self, event: Event):
+        self.query(f"#{_event_list_item(event)}").remove()
+        # Without this the focused line is not highlighted after removal
+        self.index = self.index
+
     def focus_event(self, event_id: str):
         for i, item in enumerate(self.query(EventListItem)):
             if item.event.id == event_id:
@@ -135,7 +140,7 @@ class EventListItem(ListItem, can_focus=True):
     }
 
     def __init__(self, event: Event):
-        super().__init__(classes="event_list_item")
+        super().__init__(classes="event_list_item", id=_event_list_item(event))
         self.event = event
         self.ctx = get_context()
 
@@ -191,3 +196,8 @@ class EventListItem(ListItem, can_focus=True):
                 pass
 
         return "".join(flags)
+
+
+def _event_list_item(event: Event):
+    """Unique ID for an EventListItem"""
+    return f"event_list_item-{event.id}"
