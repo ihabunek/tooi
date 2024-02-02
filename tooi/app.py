@@ -205,4 +205,4 @@ class TooiApp(App[None]):
             try:
                 return await pick_file()
             except FilePickerError as ex:
-                self.post_message(ShowError("Failed attaching media", str(ex)))
+                self.post_message(ShowError("File picker failed", str(ex)))
