@@ -173,8 +173,10 @@ class TimelineTab(TabPane):
         try:
             if original.favourited:
                 await statuses.unfavourite(original.id)
+                self.post_message(ShowStatusMessage("[green]✓ Status unfavourited[/]", 3))
             else:
                 await statuses.favourite(original.id)
+                self.post_message(ShowStatusMessage("[green]✓ Status favourited[/]", 3))
         except APIError as exc:
             self.app.show_error("Error", f"Could not (un)favourite status: {str(exc)}")
 
@@ -188,8 +190,10 @@ class TimelineTab(TabPane):
         try:
             if original.reblogged:
                 await statuses.unboost(original.id)
+                self.post_message(ShowStatusMessage("[green]✓ Status unboosted[/]", 3))
             else:
                 await statuses.boost(original.id)
+                self.post_message(ShowStatusMessage("[green]✓ Status boosted[/]", 3))
         except APIError as exc:
             self.app.show_error("Error", f"Could not (un)boost status: {str(exc)}")
 
