@@ -7,7 +7,7 @@ from textual.widgets import TabPane
 
 from tooi.data.events import Event
 from tooi.api import APIError
-from tooi.api.statuses import set_favourite, unset_favourite, boost, unboost, get_status_source
+from tooi.api.statuses import favourite, unfavourite, boost, unboost, source
 from tooi.api.timeline import Timeline
 from tooi.context import get_context, is_mine
 from tooi.data.instance import InstanceInfo
@@ -174,9 +174,9 @@ class TimelineTab(TabPane):
 
         try:
             if original.favourited:
-                await unset_favourite(original.id)
+                await unfavourite(original.id)
             else:
-                await set_favourite(original.id)
+                await favourite(original.id)
         except APIError as exc:
             self.app.show_error("Error", f"Could not (un)favourite status: {str(exc)}")
 
@@ -232,7 +232,7 @@ class TimelineTab(TabPane):
     async def action_status_edit(self):
         if event := self.event_list.current:
             if event.status:
-                response = await get_status_source(event.status.original.id)
+                response = await source(event.status.original.id)
                 source = from_dict(StatusSource, response.json())
                 self.post_message(StatusEdit(event.status.original, source))
 

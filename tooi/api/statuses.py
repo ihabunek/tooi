@@ -75,7 +75,7 @@ def drop_empty_values(data: Dict[Any, Any]) -> Dict[Any, Any]:
     return {k: v for k, v in data.items() if v is not None}
 
 
-async def get_status_source(status_id: str):
+async def source(status_id: str):
     """
     Fetch the original plaintext source for a status. Only works on locally-posted statuses.
     https://docs.joinmastodon.org/methods/statuses/#source
@@ -84,12 +84,12 @@ async def get_status_source(status_id: str):
     return await request("GET", path)
 
 
-async def set_favourite(status_id: str):
+async def favourite(status_id: str):
     path = f"/api/v1/statuses/{status_id}/favourite"
     return await request("POST", path)
 
 
-async def unset_favourite(status_id: str):
+async def unfavourite(status_id: str):
     path = f"/api/v1/statuses/{status_id}/unfavourite"
     return await request("POST", path)
 
