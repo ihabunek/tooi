@@ -5,21 +5,19 @@ from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.widgets import TabPane
 
-from tooi.data.events import Event
 from tooi.api import APIError
-from tooi.api.statuses import favourite, unfavourite, boost, unboost, source
 from tooi.api.timeline import Timeline
 from tooi.context import get_context, is_mine
+from tooi.data import statuses
+from tooi.data.events import Event
 from tooi.data.instance import InstanceInfo
-from tooi.entities import StatusSource
-from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread, ToggleStatusFavourite
 from tooi.messages import EventHighlighted, EventSelected, StatusReply, ShowStatusMessage
+from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread, ToggleStatusFavourite
 from tooi.messages import ToggleStatusBoost, EventMessage, StatusEdit
-from tooi.utils.from_dict import from_dict
 from tooi.widgets.dialog import DeleteStatusDialog
-from tooi.widgets.status_detail import StatusDetail
 from tooi.widgets.event_detail import make_event_detail, EventDetailPlaceholder
 from tooi.widgets.event_list import EventList
+from tooi.widgets.status_detail import StatusDetail
 
 
 class NewEventPosted(EventMessage):
@@ -174,9 +172,9 @@ class TimelineTab(TabPane):
 
         try:
             if original.favourited:
-                await unfavourite(original.id)
+                await statuses.unfavourite(original.id)
             else:
-                await favourite(original.id)
+                await statuses.favourite(original.id)
         except APIError as exc:
             self.app.show_error("Error", f"Could not (un)favourite status: {str(exc)}")
 
@@ -189,9 +187,9 @@ class TimelineTab(TabPane):
         original = message.status.original
         try:
             if original.reblogged:
-                await unboost(original.id)
+                await statuses.unboost(original.id)
             else:
-                await boost(original.id)
+                await statuses.boost(original.id)
         except APIError as exc:
             self.app.show_error("Error", f"Could not (un)boost status: {str(exc)}")
 
@@ -232,8 +230,7 @@ class TimelineTab(TabPane):
     async def action_status_edit(self):
         if event := self.event_list.current:
             if event.status:
-                response = await source(event.status.original.id)
-                source = from_dict(StatusSource, response.json())
+                source = await statuses.source(event.status.original.id)
                 self.post_message(StatusEdit(event.status.original, source))
 
     def action_status_reply(self):
