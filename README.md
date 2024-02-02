@@ -7,10 +7,69 @@ is a portmantou of [toot](https://toot.bezdomni.net/) and
 
 It uses the [Textual framework](https://textual.textualize.io/).
 
-This project is in its early days and not feature complete.
-
 * Source code: https://github.com/ihabunek/tooi
+* Python package: https://pypi.org/project/toot-tooi/
 * IRC chat: #toot channel on libera.chat
+
+NB: Coud not get `tooi` as Python project name, if someone knows python people
+ask them kindly to approve
+[this request](https://github.com/pypi/support/issues/3097).
+
+## Project status
+
+**This project is in its early days and things _will_ change without notice.**
+
+While we aim to keep the project usable at all times, expect that things may
+break before we hit version 1.0.
+
+## Installation
+
+Currently tooi requires [toot](https://github.com/ihabunek/toot/) for logging
+into instances.
+
+The recommended method of installation is using [pipx](https://pipx.pypa.io/stable/) which installs python projects into their own virtual environments.
+
+1. Follow the [pipx installation guide](https://pipx.pypa.io/stable/installation/)
+   to set it up.
+
+2. Install toot and tooi by running:
+   ```
+   pipx install toot
+   pipx install toot-tooi
+   ```
+
+Alternatively, if you know what you're doing, install both projects from pypi
+using your favourite method.
+
+## Usage
+
+Launch the program by running `tooi`.
+
+Tooi will authenticate as the currently active `toot` user. So check who you're
+logged in as by running `toot whoami`.
+
+Run `tooi --help` to see the available commandline options.
+
+## Key bindings
+
+Use arrow keys and `H`/`J`/`K`/`L` to move up/down/left/right.
+
+`Tab` and `Shift-Tab` move between focusable components.
+
+`Space` or `Enter` to activate buttons and menu items.
+
+Timeline bindings:
+
+* `a` - show account
+* `b` - boost
+* `d` - delete
+* `e` - edit status
+* `f` - favourite
+* `m` - show media
+* `r` - reply
+* `s` - show sensitive
+* `t` - show thread
+* `u` - show toot source
 
 ## Setting up a dev environment
 
