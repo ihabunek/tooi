@@ -43,31 +43,42 @@ using your favourite method.
 
 ## Usage
 
-Launch the program by running `tooi`.
+Before first use, run `toot login` to log into your mastodon instance.
 
-Tooi will authenticate as the currently active `toot` user. So check who you're
-logged in as by running `toot whoami`.
+Tooi will authenticate as the currently active `toot` user. You can check who
+you're logged in as by running `toot whoami`, and switch accounts using `toot
+activate`.
+
+Launch the program by running `tooi`.
 
 Run `tooi --help` to see the available commandline options.
 
 ## Key bindings
 
-Use arrow keys and `H`/`J`/`K`/`L` to move up/down/left/right.
+Generic bindings:
 
-`Tab` and `Shift-Tab` move between focusable components.
+* Arrow keys or `h`/`j`/`k`/`l` - move up/down/left/right
+* `Tab` and `Shift+Tab` - move between focusable components
+* `Space` or `Enter` - activate buttons and menu items
 
-`Space` or `Enter` to activate buttons and menu items.
+Managing tabs:
 
-Timeline bindings:
+* `.` - refresh timeline
+* `/` - open search tab
+* `1` - `9` - switch between open tabs
+* `Ctrl+d` - close current tab
+* `g` - open new tab ("goto")
+
+Status bindings:
 
 * `a` - show account
-* `b` - boost
-* `d` - delete
+* `b` - boost status
+* `d` - delete status
 * `e` - edit status
-* `f` - favourite
+* `f` - favourite status
 * `m` - show media
-* `r` - reply
-* `s` - show sensitive
+* `r` - reply to status
+* `s` - reveal sensitive
 * `t` - show thread
 * `u` - show toot source
 
