@@ -97,14 +97,17 @@ class MainScreen(Screen[None]):
             with self.app.batch_update():
                 tab = tabs[tabnr - 1]
                 tc.active = tab.id
-                tab.batch_show_update()
+                if isinstance(tab, TimelineTab):
+                    tab.batch_show_update()
 
     async def action_close_current_tab(self):
         with self.app.batch_update():
             tc = self.query_one(TabbedContent)
             await tc.remove_pane(tc.active)
             if tc.active:
-                tc.get_pane(tc.active).batch_show_update()
+                tab = tc.get_pane(tc.active)
+                if isinstance(tab, TimelineTab):
+                    tab.batch_show_update()
 
     async def action_refresh_timeline(self):
         tc = self.query_one(TabbedContent)
