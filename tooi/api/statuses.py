@@ -86,19 +86,19 @@ async def get_status_source(status_id: str):
 
 async def set_favourite(status_id: str):
     path = f"/api/v1/statuses/{status_id}/favourite"
-    await request("POST", path)
+    return await request("POST", path)
 
 
 async def unset_favourite(status_id: str):
     path = f"/api/v1/statuses/{status_id}/unfavourite"
-    await request("POST", path)
+    return await request("POST", path)
 
 
 async def boost(status_id: str):
     path = f"/api/v1/statuses/{status_id}/reblog"
-    await request("POST", path)
+    return await request("POST", path)
 
 
 async def unboost(status_id: str):
     path = f"/api/v1/statuses/{status_id}/unreblog"
-    await request("POST", path)
+    return await request("POST", path)
