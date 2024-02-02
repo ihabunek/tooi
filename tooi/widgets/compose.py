@@ -21,8 +21,7 @@ class ComposeTextArea(TextArea):
 
     def __init__(
         self,
-        initial_text="",
-        show_line_numbers=False,
+        initial_text: str = "",
         id: str | None = None,
         classes: str | None = None,
         disabled: bool = False,
@@ -35,7 +34,6 @@ class ComposeTextArea(TextArea):
             classes=classes,
             disabled=disabled
         )
-        self.show_line_numbers = show_line_numbers
 
     def action_cursor_down(self, select: bool = False) -> None:
         """If on last line, focus next widget. Allows moving down below textarea."""
