@@ -85,20 +85,36 @@ async def source(status_id: str):
 
 
 async def favourite(status_id: str):
+    """
+    Add a status to your favourites list.
+    https://docs.joinmastodon.org/methods/statuses/#favourite
+    """
     path = f"/api/v1/statuses/{status_id}/favourite"
     return await request("POST", path)
 
 
 async def unfavourite(status_id: str):
+    """
+    Remove a status from your favourites list.
+    https://docs.joinmastodon.org/methods/statuses/#unfavourite
+    """
     path = f"/api/v1/statuses/{status_id}/unfavourite"
     return await request("POST", path)
 
 
 async def boost(status_id: str):
+    """
+    Reshare a status on your own profile.
+    https://docs.joinmastodon.org/methods/statuses/#boost
+    """
     path = f"/api/v1/statuses/{status_id}/reblog"
     return await request("POST", path)
 
 
 async def unboost(status_id: str):
+    """
+    Undo a reshare of a status.
+    https://docs.joinmastodon.org/methods/statuses/#unreblog
+    """
     path = f"/api/v1/statuses/{status_id}/unreblog"
     return await request("POST", path)
