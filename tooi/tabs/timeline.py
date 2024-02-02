@@ -11,6 +11,7 @@ from tooi.context import get_context, is_mine
 from tooi.data import statuses
 from tooi.data.events import Event
 from tooi.data.instance import InstanceInfo
+from tooi.entities import Status
 from tooi.messages import EventHighlighted, EventSelected, StatusReply, ShowStatusMessage
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread, ToggleStatusFavourite
 from tooi.messages import ToggleStatusBoost, EventMessage, StatusEdit
@@ -180,10 +181,9 @@ class TimelineTab(TabPane):
         except APIError as exc:
             self.app.show_error("Error", f"Could not (un)favourite status: {str(exc)}")
 
-    def action_status_favourite(self):
-        if event := self.event_list.current:
-            if event.status:
-                self.post_message(ToggleStatusFavourite(event.status))
+    async def action_status_favourite(self):
+        if status := self._current_status():
+            self.post_message(ToggleStatusFavourite(status))
 
     async def on_toggle_status_boost(self, message: ToggleStatusBoost):
         original = message.status.original
@@ -198,9 +198,8 @@ class TimelineTab(TabPane):
             self.app.show_error("Error", f"Could not (un)boost status: {str(exc)}")
 
     def action_status_boost(self):
-        if event := self.event_list.current:
-            if event.status:
-                self.post_message(ToggleStatusBoost(event.status))
+        if status := self._current_status():
+            self.post_message(ToggleStatusBoost(status))
 
     def action_status_delete(self):
         if (event := self.event_list.current) and (status := event.status) and is_mine(status):
@@ -217,30 +216,25 @@ class TimelineTab(TabPane):
             self.event_detail.reveal()
 
     def action_show_account(self):
-        if event := self.event_list.current:
-            if event.status:
-                self.post_message(ShowAccount(event.status.original.account))
+        if status := self._current_status():
+            self.post_message(ShowAccount(status.original.account))
 
     def action_show_source(self):
-        if event := self.event_list.current:
-            if event.status:
-                self.post_message(ShowSource(event.status))
+        if status := self._current_status():
+            self.post_message(ShowSource(status))
 
     def action_show_thread(self):
-        if event := self.event_list.current:
-            if event.status:
-                self.post_message(ShowThread(event.status))
+        if status := self._current_status():
+            self.post_message(ShowThread(status))
 
     async def action_status_edit(self):
-        if event := self.event_list.current:
-            if event.status:
-                source = await statuses.source(event.status.original.id)
-                self.post_message(StatusEdit(event.status.original, source))
+        if status := self._current_status():
+            source = await statuses.source(status.original.id)
+            self.post_message(StatusEdit(status.original, source))
 
     def action_status_reply(self):
-        if event := self.event_list.current:
-            if event.status:
-                self.post_message(StatusReply(event.status))
+        if status := self._current_status():
+            self.post_message(StatusReply(status))
 
     def action_scroll_left(self):
         self.event_list.focus()
@@ -253,14 +247,9 @@ class TimelineTab(TabPane):
             self.app.show_error("Error", "No image viewer has been configured")
             return
 
-        if event := self.event_list.current:
-            if event.status:
-                images = [e.url for e in event.status.original.media_attachments
-                          if e.type == "image"]
-
-                if len(images) == 0:
-                    return
-
+        if status := self._current_status():
+            images = [e.url for e in status.original.media_attachments if e.type == "image"]
+            if images:
                 self.app.view_images(images)
 
     async def maybe_fetch_next_batch(self):
@@ -279,3 +268,7 @@ class TimelineTab(TabPane):
         if not self.fetching and self.event_list.index is not None:
             diff = self.event_list.count - self.event_list.index
             return diff < 10
+
+    def _current_status(self) -> Status | None:
+        if event := self.event_list.current:
+            return event.status
