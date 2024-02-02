@@ -53,6 +53,7 @@ CONTEXT = dict(
     is_flag=True,
     help="Use real-time streaming to fetch timeline updates",
 )
+@click.version_option(package_name="toot-tooi")
 def tooi(
         always_show_sensitive: Optional[bool],
         relative_timestamps: bool,
