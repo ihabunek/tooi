@@ -201,12 +201,8 @@ class TooiApp(App[None]):
         # - a textual file picker
         # - using a builtin terminal like this one:
         #   https://github.com/mitosch/textual-terminal
-        assert self._driver
-        try:
-            self._driver.stop_application_mode()
-            return await pick_file()
-        except FilePickerError as ex:
-            self.post_message(ShowError("Failed attaching media", str(ex)))
-        finally:
-            self._driver.start_application_mode()
-            self.refresh()
+        with self.suspend():
+            try:
+                return await pick_file()
+            except FilePickerError as ex:
+                self.post_message(ShowError("Failed attaching media", str(ex)))
