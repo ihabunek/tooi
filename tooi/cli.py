@@ -1,11 +1,13 @@
 import click
-import logging
 import dataclasses
+import logging
+import sys
 
 from textual.logging import TextualHandler
 from typing import Optional
 
 from tooi.app import TooiApp
+from tooi.auth import NotLoggedInError
 from tooi.context import create_context, set_context
 from tooi.settings import get_settings
 
@@ -57,7 +59,14 @@ def tooi(
         timeline_refresh: int,
         streaming: bool):
 
-    ctx = create_context()
+    try:
+        ctx = create_context()
+    except NotLoggedInError:
+        click.secho("Not logged in. Please run `toot login`", fg="red")
+        click.secho("Note that tooi at this point requires toot for authentication.", fg="red")
+        click.secho("https://toot.bezdomni.net/installation.html", fg="red")
+        sys.exit(1)
+
     ctx.config = get_settings()
     ctx.config.options.always_show_sensitive = always_show_sensitive
     ctx.config.options.relative_timestamps = relative_timestamps
@@ -69,7 +78,6 @@ def tooi(
         ctx.config.options.timeline_refresh = 120
 
     set_context(ctx)
-
     app = TooiApp()
     app.run()
 

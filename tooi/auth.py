@@ -1,14 +1,18 @@
-import asyncio
-from typing import Any
 import aiohttp
+import asyncio
 import httpx
 import json
 
 from dataclasses import dataclass, field
 from os import path
+from typing import Any
 
 
 AUTH_CONTEXT_PATH = path.expanduser("~/.config/toot/config.json")
+
+
+class NotLoggedInError(Exception):
+    ...
 
 
 @dataclass
@@ -33,7 +37,6 @@ class AuthContext:
             return self.aio_client
 
 
-
 # TODO: uses toot config
 def load_auth_context() -> AuthContext:
     actx = _read_auth_context()
@@ -42,6 +45,10 @@ def load_auth_context() -> AuthContext:
 
 def _parse_auth_context(config: dict[str, Any]):
     active_user = config["active_user"]
+
+    if not active_user:
+        raise NotLoggedInError()
+
     user_data = config["users"][active_user]
     instance_data = config["apps"][user_data["instance"]]
     domain = instance_data["instance"]
