@@ -3,7 +3,9 @@ from textual.widgets import Label
 
 
 class StatusBar(Label):
-    timer: Timer
+    def __init__(self):
+        self.timer: Timer | None = None
+        super().__init__()
 
     # TODO: support multiple messages
     def set_message(self, text: str, timeout: float | None = None):
@@ -13,7 +15,7 @@ class StatusBar(Label):
         self.update(text)
 
         if timeout:
-            self.timer = Timer(self, timeout, callback=self.clear, repeat=1)
+            self.timer = self.set_timer(timeout, callback=self.clear)
 
     def clear(self):
         self.update()

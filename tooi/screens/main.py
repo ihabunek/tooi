@@ -88,7 +88,7 @@ class MainScreen(Screen[None]):
         if message.text is None:
             status_bar.clear()
         else:
-            status_bar.update(message.text)
+            status_bar.set_message(message.text, message.timeout)
 
     def action_select_tab(self, tabnr: int):
         tc = self.query_one(TabbedContent)

@@ -102,9 +102,10 @@ class StatusEdit(StatusMessage):
 
 
 class ShowStatusMessage(Message):
-    def __init__(self, text: str | None = None):
+    def __init__(self, text: str | None = None, timeout: float | None = None):
         super().__init__()
         self.text = text
+        self.timeout = timeout
 
 
 class ShowError(Message):
