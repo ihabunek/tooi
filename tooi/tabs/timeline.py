@@ -95,7 +95,6 @@ class TimelineTab(TabPane):
 
     async def on_unmount(self):
         await self.timeline.close()
-        self.timeline = None
 
     def compose(self):
         yield Horizontal(
