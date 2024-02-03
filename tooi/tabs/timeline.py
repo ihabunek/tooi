@@ -75,7 +75,7 @@ class TimelineTab(TabPane):
     def batch_show_update(self):
         self.event_list.focus()
 
-    async def on_mount(self, message):
+    async def on_mount(self):
         self.event_detail.focus()
         await self.fetch_timeline()
         if self.initial_focus:
@@ -93,7 +93,7 @@ class TimelineTab(TabPane):
         if self.context.config.options.streaming and self.timeline.can_stream:
             await self.timeline.streaming(True)
 
-    async def on_unmount(self, message):
+    async def on_unmount(self):
         await self.timeline.close()
         self.timeline = None
 
