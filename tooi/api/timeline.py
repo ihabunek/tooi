@@ -424,7 +424,7 @@ class NotificationTimeline(Timeline):
 
             yield events
 
-    def fetch(self, limit: int | None = None):
+    async def fetch(self, limit: int | None = None):
         return self.notification_generator(limit=limit)
 
     async def _update(self, limit: int | None = None):
@@ -541,7 +541,7 @@ class ContextTimeline(Timeline):
         all_statuses = ancestors + [status] + descendants
         yield [StatusEvent(self.instance, s) for s in all_statuses]
 
-    def fetch(self, limit: int | None = None):
+    async def fetch(self, limit: int | None = None):
         return self.context_timeline_generator(self._status, limit)
 
 
