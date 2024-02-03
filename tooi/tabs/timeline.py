@@ -164,8 +164,9 @@ class TimelineTab(TabPane):
         self.query_one("#main_window").mount(self.event_detail)
         asyncio.create_task(self.maybe_fetch_next_batch())
 
-    def on_status_selected(self, message: EventSelected):
-        self.post_message(ShowStatusMenu(message.status))
+    def on_event_selected(self, message: EventSelected):
+        if message.event.status:
+            self.post_message(ShowStatusMenu(message.event.status))
 
     async def on_toggle_status_favourite(self, message: ToggleStatusFavourite):
         original = message.status.original
