@@ -115,9 +115,6 @@ class TimelineTab(TabPane):
             for event in events:
                 self.post_message(NewEventPosted(event))
 
-    def make_event_detail(self, event: Event):
-        return make_event_detail(event)
-
     async def refresh_timeline(self):
         # Handle timelines that don't support updating.
         if not self.timeline.can_update:
@@ -160,7 +157,7 @@ class TimelineTab(TabPane):
         await asyncio.sleep(0.05)
 
         self.event_detail.remove()
-        self.event_detail = self.make_event_detail(event)
+        self.event_detail = make_event_detail(event)
         self.query_one("#main_window").mount(self.event_detail)
         asyncio.create_task(self.maybe_fetch_next_batch())
 

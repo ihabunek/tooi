@@ -48,7 +48,7 @@ class EventDetailPlaceholder(EventDetail):
         yield Static("Nothing selected")
 
 
-def make_event_detail(event: Event) -> Widget:
+def make_event_detail(event: Event) -> EventDetail:
     from tooi.widgets import notification_detail as n
     from tooi.widgets.status_detail import StatusDetail
 
