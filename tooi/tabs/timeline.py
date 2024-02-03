@@ -12,7 +12,7 @@ from tooi.data import statuses
 from tooi.data.events import Event
 from tooi.data.instance import InstanceInfo
 from tooi.entities import Status
-from tooi.messages import EventHighlighted, EventSelected, StatusReply, ShowStatusMessage
+from tooi.messages import EventHighlighted, EventSelected, ShowError, StatusReply, ShowStatusMessage
 from tooi.messages import ShowAccount, ShowSource, ShowStatusMenu, ShowThread, ToggleStatusFavourite
 from tooi.messages import ToggleStatusBoost, EventMessage, StatusEdit
 from tooi.widgets.dialog import DeleteStatusDialog
@@ -179,7 +179,7 @@ class TimelineTab(TabPane):
                 await statuses.favourite(original.id)
                 self.post_message(ShowStatusMessage("[green]✓ Status favourited[/]", 3))
         except APIError as exc:
-            self.app.show_error("Error", f"Could not (un)favourite status: {str(exc)}")
+            self.post_message(ShowError("Error", f"Could not (un)favourite status: {str(exc)}"))
 
     async def action_status_favourite(self):
         if status := self._current_status():
@@ -195,7 +195,7 @@ class TimelineTab(TabPane):
                 await statuses.boost(original.id)
                 self.post_message(ShowStatusMessage("[green]✓ Status boosted[/]", 3))
         except APIError as exc:
-            self.app.show_error("Error", f"Could not (un)boost status: {str(exc)}")
+            self.post_message(ShowError("Error", f"Could not (un)boost status: {str(exc)}"))
 
     def action_status_boost(self):
         if status := self._current_status():
@@ -244,7 +244,7 @@ class TimelineTab(TabPane):
 
     def action_show_media(self):
         if self.context.config.media.image_viewer is None:
-            self.app.show_error("Error", "No image viewer has been configured")
+            self.post_message(ShowError("Error", "No image viewer has been configured"))
             return
 
         if status := self._current_status():
