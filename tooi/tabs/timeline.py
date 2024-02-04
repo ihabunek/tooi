@@ -59,7 +59,7 @@ class TimelineTab(TabPane):
 
         self.context = get_context()
         self.timeline = timeline
-        self.generator = None
+        self.generator = timeline.fetch()
         self.fetching = False
         self.initial_focus = initial_focus
 
@@ -125,7 +125,6 @@ class TimelineTab(TabPane):
 
     async def fetch_timeline(self):
         try:
-            self.generator = self.timeline.fetch()
             events = await anext(self.generator)
         except StopAsyncIteration:
             events = []  # No statuses
@@ -250,7 +249,7 @@ class TimelineTab(TabPane):
                 self.app.view_images(images)
 
     async def maybe_fetch_next_batch(self):
-        if self.generator and self.should_fetch():
+        if self.should_fetch():
             self.fetching = True
             self.post_message(ShowStatusMessage("[green]Loading statuses...[/]"))
             # TODO: handle exceptions
