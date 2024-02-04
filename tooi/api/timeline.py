@@ -408,11 +408,7 @@ class NotificationTimeline(Timeline):
 
         await super().close()
 
-    async def notification_generator(
-            self,
-            params: Params = None,
-            limit: int | None = None) -> EventGenerator:
-
+    async def fetch(self, params: Params = None, limit: int | None = None) -> EventGenerator:
         path = "/api/v1/notifications"
         async for items in fetch_timeline(self.instance, path, params, limit):
             notifications = from_dict_list(Notification, items)
@@ -423,9 +419,6 @@ class NotificationTimeline(Timeline):
                 self._most_recent_id = events[0].notification.id
 
             yield events
-
-    async def fetch(self, limit: int | None = None):
-        return self.notification_generator(limit=limit)
 
     async def _update(self, limit: int | None = None):
         timeline = fetch_timeline(
@@ -533,16 +526,13 @@ class ContextTimeline(Timeline):
         super().__init__("Thread", instance)
         self._status = status
 
-    async def context_timeline_generator(self, status: Status, limit: int | None = None):
+    async def fetch(self, status: Status, limit: int | None = None) -> EventGenerator:
         response = await statuses.context(status.original.id)
         data = response.json()
         ancestors = [from_dict(Status, s) for s in data["ancestors"]]
         descendants = [from_dict(Status, s) for s in data["descendants"]]
         all_statuses = ancestors + [status] + descendants
         yield [StatusEvent(self.instance, s) for s in all_statuses]
-
-    async def fetch(self, limit: int | None = None):
-        return self.context_timeline_generator(self._status, limit)
 
 
 # def bookmark_timeline_generator(instance: InstanceInfo, limit: int = 40):
