@@ -409,9 +409,9 @@ class NotificationTimeline(Timeline):
 
         await super().close()
 
-    async def fetch(self, params: Params = None, limit: int | None = None) -> EventGenerator:
+    async def fetch(self, limit: int | None = None) -> EventGenerator:
         path = "/api/v1/notifications"
-        async for items in fetch_timeline(self.instance, path, params, limit):
+        async for items in fetch_timeline(self.instance, path, limit=limit):
             notifications = from_dict_list(Notification, items)
             events = [NotificationEvent(self.instance, n) for n in notifications]
 
@@ -527,12 +527,12 @@ class ContextTimeline(Timeline):
         super().__init__("Thread", instance)
         self._status = status
 
-    async def fetch(self, status: Status, limit: int | None = None) -> EventGenerator:
-        response = await statuses.context(status.original.id)
+    async def fetch(self, limit: int | None = None) -> EventGenerator:
+        response = await statuses.context(self._status.original.id)
         data = response.json()
         ancestors = [from_dict(Status, s) for s in data["ancestors"]]
         descendants = [from_dict(Status, s) for s in data["descendants"]]
-        all_statuses = ancestors + [status] + descendants
+        all_statuses = ancestors + [self._status] + descendants
         yield [StatusEvent(self.instance, s) for s in all_statuses]
 
 
