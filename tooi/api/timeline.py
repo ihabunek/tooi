@@ -187,6 +187,7 @@ class Timeline(ABC):
         This is the non-queue-based fetch function which is used when fetching
         the initial timeline.
         """
+        ...
 
 
 class StatusTimeline(Timeline):
