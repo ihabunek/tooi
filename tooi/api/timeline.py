@@ -7,11 +7,8 @@ import logging
 import re
 
 from abc import ABC, abstractmethod
-from typing import AsyncGenerator, Optional, Sequence
+from typing import AsyncGenerator, Mapping, Optional, Sequence, Union
 from urllib.parse import quote, urlparse
-
-from httpx import Headers
-from httpx._types import QueryParamTypes
 
 from tooi.api import request, statuses
 from tooi.api.accounts import get_account_by_name
@@ -22,8 +19,9 @@ from tooi.data.instance import InstanceInfo
 from tooi.entities import Status, Notification
 from tooi.utils.from_dict import from_dict, from_dict_list
 
-Params = Optional[QueryParamTypes]
 EventGenerator = AsyncGenerator[Sequence[Event], None]
+PrimitiveData = Optional[Union[str, int, float, bool]]
+QueryParams = Mapping[str, PrimitiveData]
 
 
 # Max 80, as of Mastodon 4.1.0
@@ -31,7 +29,7 @@ DEFAULT_LIMIT = 40
 logger = logging.getLogger(__name__)
 
 
-def _get_next_path(headers: Headers) -> str | None:
+def _get_next_path(headers: Mapping[str, str]) -> str | None:
     """Given timeline response headers, returns the path to the next batch"""
     links = headers.get("Link", "")
     matches = re.match(r'<([^>]+)>; rel="next"', links)
@@ -44,11 +42,11 @@ def _get_next_path(headers: Headers) -> str | None:
 async def fetch_timeline(
         instance: InstanceInfo,
         path: str,
-        params: Params | None = None,
+        params: QueryParams | None = None,
         limit: int | None = None,
         since_id: str | None = None):
 
-    _params = dict(params or {})
+    _params: QueryParams = dict(params or {})
     _params["limit"] = limit or DEFAULT_LIMIT
     _params["since_id"] = since_id
 
@@ -200,7 +198,7 @@ class StatusTimeline(Timeline):
             name: str,
             instance: InstanceInfo,
             path: str,
-            params: Params | None = None,
+            params: QueryParams | None = None,
             stream_name: str | None = None):
 
         super().__init__(name, instance, can_update=True, can_stream=(stream_name is not None))
