@@ -9,7 +9,7 @@ from tooi.api import APIError
 from tooi.api.timeline import Timeline
 from tooi.context import get_context, is_mine
 from tooi.data import statuses
-from tooi.data.events import Event
+from tooi.data.events import Event, StatusEvent
 from tooi.data.instance import InstanceInfo
 from tooi.entities import Status
 from tooi.messages import EventHighlighted, EventSelected, ShowError, StatusReply, ShowStatusMessage
@@ -22,6 +22,10 @@ from tooi.widgets.status_detail import StatusDetail
 
 
 class NewEventPosted(EventMessage):
+    pass
+
+
+class EventUpdated(EventMessage):
     pass
 
 
@@ -48,7 +52,7 @@ class TimelineTab(TabPane):
 
     def __init__(
         self,
-        instance_info: InstanceInfo,
+        instance: InstanceInfo,
         timeline: Timeline,
         *,
         initial_focus: str | None = None,
@@ -62,11 +66,12 @@ class TimelineTab(TabPane):
         self.generator = timeline.fetch()
         self.fetching = False
         self.initial_focus = initial_focus
+        self.instance = instance
 
         if self.context.config.options.always_show_sensitive is not None:
             self.always_show_sensitive = self.context.config.options.always_show_sensitive
         else:
-            self.always_show_sensitive = instance_info.get_always_show_sensitive()
+            self.always_show_sensitive = instance.get_always_show_sensitive()
 
         # Start with an empty status list while we wait to load statuses.
         self.event_list = EventList([])
@@ -169,11 +174,13 @@ class TimelineTab(TabPane):
 
         try:
             if original.favourited:
-                await statuses.unfavourite(original.id)
+                status = await statuses.unfavourite(original.id)
                 self.post_message(ShowStatusMessage("[green]✓ Status unfavourited[/]", 3))
             else:
-                await statuses.favourite(original.id)
+                status = await statuses.favourite(original.id)
                 self.post_message(ShowStatusMessage("[green]✓ Status favourited[/]", 3))
+
+            self.post_message(EventUpdated(StatusEvent(self.instance, status)))
         except APIError as exc:
             self.post_message(ShowError("Error", f"Could not (un)favourite status: {str(exc)}"))
 
@@ -185,11 +192,13 @@ class TimelineTab(TabPane):
         original = message.status.original
         try:
             if original.reblogged:
-                await statuses.unboost(original.id)
+                status = await statuses.unboost(original.id)
                 self.post_message(ShowStatusMessage("[green]✓ Status unboosted[/]", 3))
             else:
-                await statuses.boost(original.id)
+                status = await statuses.boost(original.id)
                 self.post_message(ShowStatusMessage("[green]✓ Status boosted[/]", 3))
+
+            self.post_message(EventUpdated(StatusEvent(self.instance, status)))
         except APIError as exc:
             self.post_message(ShowError("Error", f"Could not (un)boost status: {str(exc)}"))
 
