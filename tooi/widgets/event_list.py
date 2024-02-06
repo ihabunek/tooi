@@ -49,6 +49,10 @@ class EventList(ListView):
         except QueryError:
             return None
 
+    def update_event(self, event: Event):
+        if item := self.get_event_item(event):
+            item.update_event(event)
+
     @property
     def current(self) -> Event | None:
         if self.highlighted_child is None:
@@ -171,6 +175,13 @@ class EventListItem(ListItem, can_focus=True):
         yield Label(self._format_flags(), markup=False, classes="event_list_flags")
         yield Label(self._format_account(), markup=False, classes="event_list_acct")
         yield Label(self._format_preview(), markup=False, classes="event_list_status_preview")
+
+    def update_event(self, event: Event):
+        self.event = event
+        self.query_one(".event_list_timestamp", Label).update(self._format_timestamp())
+        self.query_one(".event_list_flags", Label).update(self._format_flags())
+        self.query_one(".event_list_acct", Label).update(self._format_account())
+        self.query_one(".event_list_status_preview", Label).update(self._format_preview())
 
     def _format_timestamp(self):
         if self.ctx.config.options.relative_timestamps:

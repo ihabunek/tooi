@@ -8,7 +8,7 @@ from tooi.api.timeline import HomeTimeline, Timeline
 from tooi.data.instance import InstanceInfo
 from tooi.messages import ShowStatusMessage
 from tooi.tabs.search import SearchTab
-from tooi.tabs.timeline import TimelineTab
+from tooi.tabs.timeline import EventUpdated, TimelineTab
 from tooi.widgets.header import Header
 from tooi.widgets.status_bar import StatusBar
 
@@ -89,6 +89,10 @@ class MainScreen(Screen[None]):
             status_bar.clear()
         else:
             status_bar.set_message(message.text, message.timeout)
+
+    def on_event_updated(self, message: EventUpdated):
+        for tab in self.query(TimelineTab):
+            tab.update_event(message.event)
 
     def action_select_tab(self, tabnr: int):
         tc = self.query_one(TabbedContent)
