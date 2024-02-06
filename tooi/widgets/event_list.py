@@ -167,29 +167,32 @@ class EventListItem(ListItem, can_focus=True):
         self.ctx = get_context()
 
     def compose(self):
-        yield Label(self.format_timestamp(), markup=False, classes="event_list_timestamp")
+        yield Label(self._format_timestamp(), markup=False, classes="event_list_timestamp")
         yield Label(self._format_flags(), markup=False, classes="event_list_flags")
-        yield Label(
-                account_name(self.event.account.acct),
-                markup=False,
-                classes="event_list_acct")
-        if self.event.status:
-            yield Label(
-                    self.event.status.original.spoiler_text or
-                        self.event.status.original.content_md,
-                    classes="event_list_status_preview")
+        yield Label(self._format_account(), markup=False, classes="event_list_acct")
+        yield Label(self._format_preview(), markup=False, classes="event_list_status_preview")
 
-    def format_timestamp(self):
+    def _format_timestamp(self):
         if self.ctx.config.options.relative_timestamps:
             return f"{format_relative(self.event.created_at):>3}"
         else:
             return format_datetime(self.event.created_at)
 
+    def _format_account(self):
+        return account_name(self.event.account.acct)
+
+    def _format_preview(self):
+        if self.event.status:
+            original = self.event.status.original
+            return original.spoiler_text or original.content_md
+        else:
+            return ""
+
     def refresh_event(self):
         # Don't use query_one since the timestamp might not exist if we're updated before we've had
         # a chance to render.
         for label in self.query(".event_list_timestamp"):
-            label.update(self.format_timestamp())
+            label.update(self._format_timestamp())
 
     def _format_flags(self) -> str:
         FLAG_STATUS_BOOSTED = 0
