@@ -144,11 +144,11 @@ class TimelineTab(TabPane):
         # Update event details only if focused event has changed
         current_event = self.event_detail.event
         if not current_event or current_event.id != message.event.id:
-            self.show_status_detail(message.event)
+            self.show_event_detail(message.event)
 
-    @work(exclusive=True, group="show_status_detail")
-    async def show_status_detail(self, event: Event):
-        # TODO: This is slow, try updating the existing StatusDetail instead of
+    @work(exclusive=True, group="show_event_detail")
+    async def show_event_detail(self, event: Event):
+        # TODO: This is slow, try updating the existing EventDetail instead of
         # creating a new one. This requires some fiddling since compose() is
         # called only once, so updating needs to be implemented manually.
         # See: https://github.com/Textualize/textual/discussions/1683
