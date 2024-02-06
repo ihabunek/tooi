@@ -1,9 +1,11 @@
+from textual.css.query import QueryError
 from textual.widgets import ListItem, Label
 
 from tooi.data.events import Event, NotificationEvent, StatusEvent
 from tooi.context import account_name, get_context
 from tooi.messages import EventHighlighted, EventSelected
 from tooi.utils.datetime import format_datetime, format_relative
+from tooi.utils.string import make_unique_id
 from tooi.widgets.list_view import ListView
 
 
@@ -28,8 +30,24 @@ class EventList(ListView):
     """
 
     def __init__(self, events: list[Event]):
-        super().__init__()
+        id = make_unique_id()  # Used for making unique identifiers for list items
+        super().__init__(id=id)
         self.append_events(events)
+
+    def item_id(self, event: Event):
+        """Make an unique ID for a list item, used for querying.
+
+        NB: this presumes we won't ever have the same event twice in the list
+        which may or may not be correct.
+        """
+        return f"{self.id}-{event.id}"
+
+    def get_event_item(self, event: Event) -> "EventListItem | None":
+        """Return list item containing the given event or None if it does not exist."""
+        try:
+            return self.query_one(f"#{self.item_id(event)}", EventListItem)
+        except QueryError:
+            return None
 
     @property
     def current(self) -> Event | None:
@@ -42,9 +60,12 @@ class EventList(ListView):
         self.clear()
         self.append_events(next_events)
 
+    def make_list_item(self, event: Event):
+        return EventListItem(event, id=self.item_id(event))
+
     def append_events(self, next_events: list[Event]):
         for event in next_events:
-            self.mount(EventListItem(event))
+            self.mount(self.make_list_item(event))
 
         if self.highlighted_child is None:
             self.index = 0
@@ -54,7 +75,7 @@ class EventList(ListView):
 
     def prepend_events(self, next_events: list[Event]):
         for event in next_events:
-            self.mount(EventListItem(event), before=0)
+            self.mount(self.make_list_item(event), before=0)
 
         if self.current is None:
             self.index = 0
@@ -68,7 +89,8 @@ class EventList(ListView):
             item.remove()
 
     def remove_event(self, event: Event):
-        self.query(f"#{_event_list_item(event)}").remove()
+        if item := self.get_event_item(event):
+            item.remove()
         # Without this the focused line is not highlighted after removal
         self.index = self.index
 
@@ -139,8 +161,8 @@ class EventListItem(ListItem, can_focus=True):
         "follow": ">",
     }
 
-    def __init__(self, event: Event):
-        super().__init__(classes="event_list_item", id=_event_list_item(event))
+    def __init__(self, event: Event, id: str | None = None):
+        super().__init__(classes="event_list_item", id=id)
         self.event = event
         self.ctx = get_context()
 
@@ -196,8 +218,3 @@ class EventListItem(ListItem, can_focus=True):
                 pass
 
         return "".join(flags)
-
-
-def _event_list_item(event: Event):
-    """Unique ID for an EventListItem"""
-    return f"event_list_item-{event.id}"
