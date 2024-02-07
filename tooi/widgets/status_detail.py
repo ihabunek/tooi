@@ -208,10 +208,13 @@ class StatusMeta(Static):
 
     def render(self):
         status = self.status.original
+        reblogged = self.status.reblogged
+        favourited = self.status.favourited
+
         parts = [
             f"[bold]{markup.escape(self.format_timestamp())}[/]",
-            f"{status.reblogs_count} boosts",
-            f"{status.favourites_count} favourites",
+            highlight(f"{status.reblogs_count} boosts", "yellow", reblogged),
+            highlight(f"{status.favourites_count} favourites", "yellow", favourited),
             f"{status.replies_count} replies",
             markup.escape(self.visibility_string(status)),
         ]
@@ -220,6 +223,11 @@ class StatusMeta(Static):
             parts.append(status.application.name)
 
         return " · ".join(parts)
+
+
+# TODO: this is not stylable via css so should probably be replaced by a widget
+def highlight(text: str, color: str, cond: bool | None = True):
+    return f"[{color}]{text}[/]" if cond else text
 
 
 class StatusSensitiveNotice(Static):
