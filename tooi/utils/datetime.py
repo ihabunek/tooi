@@ -1,8 +1,11 @@
 from datetime import datetime, timedelta, timezone
 
 
-def format_datetime(dttm: datetime) -> str:
-    return dttm.astimezone().strftime("%Y-%m-%d %H:%M")
+def format_datetime(dttm: datetime, relative: bool = False) -> str:
+    if relative:
+        return format_relative(dttm)
+    else:
+        return dttm.astimezone().strftime("%Y-%m-%d %H:%M")
 
 
 def format_relative(dttm: datetime) -> str:

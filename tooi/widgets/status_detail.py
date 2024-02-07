@@ -8,7 +8,7 @@ from textual.widgets import Static
 from tooi.data.events import Event
 from tooi.context import get_context
 from tooi.entities import MediaAttachment, Status
-from tooi.utils.datetime import format_datetime, format_relative
+from tooi.utils.datetime import format_datetime
 from tooi.widgets.account import AccountHeader
 from tooi.widgets.event_detail import EventDetail
 from tooi.widgets.image import HalfblockImage
@@ -197,18 +197,14 @@ class StatusMeta(Static):
         return vis
 
     def format_timestamp(self):
-        edited_ts = ""
+        relative = get_context().config.options.relative_timestamps
+        created_ts = format_datetime(self.status.created_at, relative=relative)
 
-        if self.ctx.config.options.relative_timestamps:
-            created_ts = format_relative(self.status.created_at)
-            if self.status.edited_at:
-                edited_ts = f" (edited {format_relative(self.status.edited_at)} ago)"
-        else:
-            created_ts = format_datetime(self.status.created_at)
-            if self.status.edited_at:
-                edited_ts = f" (edited at {format_datetime(self.status.edited_at)})"
+        if self.status.edited_at:
+            edited_ts = format_datetime(self.status.edited_at, relative=relative)
+            return f"{created_ts} (edited {edited_ts} ago)"
 
-        return created_ts + edited_ts
+        return created_ts
 
     def render(self):
         status = self.status.original
