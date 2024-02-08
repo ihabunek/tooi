@@ -1,6 +1,5 @@
 from textual.binding import Binding
 from textual.containers import VerticalScroll
-from textual.widget import Widget
 from textual.widgets import Static
 
 from tooi.data.events import Event, NotificationEvent, StatusEvent
@@ -29,6 +28,13 @@ class EventDetail(VerticalScroll):
     def __init__(self, event: Event | None = None):
         self.event = event
         super().__init__()
+
+    def update_event(self, event: Event):
+        self.event = event
+        self.on_event_updated()
+
+    def on_event_updated(self) -> None:
+        """Children can override this to update after the event has changed"""
 
 
 class EventDetailPlaceholder(EventDetail):

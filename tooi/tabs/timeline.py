@@ -167,6 +167,8 @@ class TimelineTab(TabPane):
 
     def update_event(self, event: Event):
         self.event_list.update_event(event)
+        if self.event_detail.event and self.event_detail.event.id == event.id:
+            self.event_detail.update_event(event)
 
     def on_event_selected(self, message: EventSelected):
         if message.event.status:

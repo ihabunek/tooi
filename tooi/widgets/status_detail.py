@@ -4,6 +4,7 @@ from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.widget import Widget
 from textual.widgets import Static
+from typing_extensions import override
 
 from tooi.data.events import Event
 from tooi.context import get_context
@@ -69,6 +70,12 @@ class StatusDetail(EventDetail):
     def compose_header(self) -> ComposeResult:
         if self.status.reblog:
             yield StatusHeader(f"boosted by {self.status.account.acct}")
+
+    @override
+    def on_event_updated(self):
+        """Called when the status has updated. Currently only updates the StatusMeta."""
+        assert self.event and self.event.status
+        self.query_one(StatusMeta).update_status(self.event.status)
 
     def reveal(self):
         if self.sensitive and not self.revealed:
@@ -223,6 +230,10 @@ class StatusMeta(Static):
             parts.append(status.application.name)
 
         return " · ".join(parts)
+
+    def update_status(self, status: Status):
+        self.status = status
+        self.refresh()
 
 
 # TODO: this is not stylable via css so should probably be replaced by a widget
