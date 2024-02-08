@@ -8,8 +8,8 @@ from textual.widgets import TabPane
 from tooi.api import APIError
 from tooi.api.timeline import Timeline
 from tooi.context import get_context, is_mine
-from tooi.data import statuses
-from tooi.data.events import Event, StatusEvent
+from tooi.data import events, statuses
+from tooi.data.events import Event
 from tooi.data.instance import InstanceInfo
 from tooi.entities import Status
 from tooi.messages import EventHighlighted, EventSelected, ShowError, StatusReply, ShowStatusMessage
@@ -175,41 +175,52 @@ class TimelineTab(TabPane):
             self.post_message(ShowStatusMenu(message.event.status))
 
     async def on_toggle_status_favourite(self, message: ToggleStatusFavourite):
-        original = message.status.original
+        assert message.event.status
+        original = message.event.status.original
 
         try:
             if original.favourited:
-                status = await statuses.unfavourite(original.id)
+                await statuses.unfavourite(original.id)
                 self.post_message(ShowStatusMessage("[green]✓ Status unfavourited[/]", 3))
             else:
-                status = await statuses.favourite(original.id)
+                await statuses.favourite(original.id)
                 self.post_message(ShowStatusMessage("[green]✓ Status favourited[/]", 3))
-
-            self.post_message(EventUpdated(StatusEvent(self.instance, status)))
         except APIError as exc:
             self.post_message(ShowError("Error", f"Could not (un)favourite status: {str(exc)}"))
 
+        await self._post_event_update(message.event)
+
     async def action_status_favourite(self):
-        if status := self._current_status():
-            self.post_message(ToggleStatusFavourite(status))
+        if (event := self.event_list.current) and event.status is not None:
+            self.post_message(ToggleStatusFavourite(event))
 
     async def on_toggle_status_boost(self, message: ToggleStatusBoost):
-        original = message.status.original
+        assert message.event.status
+        original = message.event.status.original
+
         try:
             if original.reblogged:
-                status = await statuses.unboost(original.id)
+                await statuses.unboost(original.id)
                 self.post_message(ShowStatusMessage("[green]✓ Status unboosted[/]", 3))
             else:
-                status = await statuses.boost(original.id)
+                await statuses.boost(original.id)
                 self.post_message(ShowStatusMessage("[green]✓ Status boosted[/]", 3))
-
-            self.post_message(EventUpdated(StatusEvent(self.instance, status)))
         except APIError as exc:
             self.post_message(ShowError("Error", f"Could not (un)boost status: {str(exc)}"))
 
+        await self._post_event_update(message.event)
+
+    async def _post_event_update(self, event: Event):
+        # NB: It might be possible to avoid having to reload the event, but it's
+        # way more complicated than it seems at first. For an attempt, which
+        # doesn't event work with notification events, see here:
+        # https://paste.sr.ht/~ihabunek/f160e10528f71ed3eef67dbe8c74cb569dc62c9f
+        updated_event = await events.reload(event)
+        self.post_message(EventUpdated(updated_event))
+
     def action_status_boost(self):
-        if status := self._current_status():
-            self.post_message(ToggleStatusBoost(status))
+        if (event := self.event_list.current) and event.status is not None:
+            self.post_message(ToggleStatusBoost(event))
 
     def action_status_delete(self):
         if (event := self.event_list.current) and (status := event.status) and is_mine(status):

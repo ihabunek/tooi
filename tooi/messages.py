@@ -61,11 +61,11 @@ class ShowHashtagPicker(Message):
     pass
 
 
-class ToggleStatusFavourite(StatusMessage):
+class ToggleStatusFavourite(EventMessage):
     pass
 
 
-class ToggleStatusBoost(StatusMessage):
+class ToggleStatusBoost(EventMessage):
     pass
 
 
