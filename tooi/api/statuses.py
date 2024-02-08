@@ -8,6 +8,14 @@ from uuid import uuid4
 from tooi.api import request
 
 
+async def get(status_id: str) -> Response:
+    """
+    Fetch a single status.
+    https://docs.joinmastodon.org/methods/statuses/#get
+    """
+    return await request("GET", f"/api/v1/statuses/{status_id}")
+
+
 async def context(status_id: str) -> Response:
     """
     View statuses above and below this status in the thread.

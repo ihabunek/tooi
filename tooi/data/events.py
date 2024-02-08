@@ -1,5 +1,6 @@
 from abc import ABC, abstractproperty
 from datetime import datetime
+from tooi.data import notifications, statuses
 
 from tooi.data.instance import InstanceInfo
 from tooi.entities import Account, Status, Notification
@@ -66,3 +67,15 @@ class NotificationEvent(Event):
     @property
     def status(self) -> Status | None:
         return self.notification.status
+
+
+async def reload(event: Event) -> Event:
+    match event:
+        case StatusEvent():
+            status = await statuses.get(event.status.id)
+            return StatusEvent(event.instance, status)
+        case NotificationEvent():
+            notification = await notifications.get(event.notification.id)
+            return NotificationEvent(event.instance, notification)
+        case _:
+            raise ValueError(f"Unknown event class: {event}")

@@ -2,6 +2,11 @@ from tooi.api import statuses
 from tooi.entities import Status, StatusSource, from_response
 
 
+async def get(status_id: str) -> Status:
+    response = await statuses.get(status_id)
+    return from_response(Status, response)
+
+
 async def favourite(status_id: str) -> Status:
     response = await statuses.favourite(status_id)
     return from_response(Status, response)
