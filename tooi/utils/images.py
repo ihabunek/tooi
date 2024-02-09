@@ -16,19 +16,19 @@ Pixels = Iterable[list[ColorTuple]]
 
 
 @lru_cache
-def render_half_block_remote_image(url: str, width: int, height: int) -> Text:
+def render_remote(url: str, width: int, height: int) -> Text:
     with _load_remote_image(url, width, height) as image:
-        return _encode_half_block_image(_get_image_pixels(image))
+        return _encode(_image_pixels(image))
 
 
-def render_half_block_local_image(path: str, width: int, height: int) -> Text:
+def render_local(path: str, width: int, height: int) -> Text:
     with _load_local_image(path, width, height) as image:
-        return _encode_half_block_image(_get_image_pixels(image))
+        return _encode(_image_pixels(image))
 
 
 @lru_cache
-def render_half_block_blurhash(blurhash: str, width: int, height: int, aspect_ratio: float | None = None) -> Text:
-    return _encode_half_block_image(_get_blurhash_pixels(blurhash, width, height, aspect_ratio))
+def render_blurhash(blurhash: str, width: int, height: int, aspect_ratio: float | None = None) -> Text:
+    return _encode(_blurhash_pixels(blurhash, width, height, aspect_ratio))
 
 
 # No sense making this async since PIL doesn't support async so this needs
@@ -58,12 +58,12 @@ def _open_and_resize(fp: IO[bytes], width: int, height: int) -> Image.Image:
     return image.convert("RGB")
 
 
-def _get_image_pixels(image: Image.Image) -> Generator[list[ColorTuple], None, None]:
+def _image_pixels(image: Image.Image) -> Generator[list[ColorTuple], None, None]:
     pixels: list[tuple[int, int, int]] = list(image.getdata())  # type: ignore
     yield from batched(pixels, image.width)
 
 
-def _get_blurhash_pixels(bhash: str, width: int, height: int, aspect_ratio: float | None = None) \
+def _blurhash_pixels(bhash: str, width: int, height: int, aspect_ratio: float | None = None) \
         -> Generator[list[ColorTuple], None, None]:
     if aspect_ratio:
         width, height = _adjust_aspect_ratio(width, height, aspect_ratio)
@@ -84,7 +84,7 @@ def _adjust_aspect_ratio(width: int, height: int, target_aspect_ratio: float) ->
     return width, height
 
 
-def _encode_half_block_image(pixels: Pixels) -> Text:
+def _encode(pixels: Pixels) -> Text:
     # Pillow specifies that pixel access is slow, but does not suggest an
     # alternative. This seems to be pretty fast for this use case though.
     # https://pillow.readthedocs.io/en/stable/reference/PixelAccess.html

@@ -2,7 +2,7 @@ from rich import markup
 from textual import work
 from textual.widgets import Static
 from textual.worker import Worker, WorkerState
-from tooi.utils.images import render_half_block_local_image, render_half_block_remote_image
+from tooi.utils import images
 
 
 class HalfblockImage(Static):
@@ -19,9 +19,9 @@ class HalfblockImage(Static):
     @work(exit_on_error=False, thread=True)
     def load(self):
         if self.path_or_url.lower().startswith("http"):
-            return render_half_block_remote_image(self.path_or_url, self.width, self.height)
+            return images.render_remote(self.path_or_url, self.width, self.height)
         else:
-            return render_half_block_local_image(self.path_or_url, self.width, self.height)
+            return images.render_local(self.path_or_url, self.width, self.height)
 
     def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
         if event.state == WorkerState.SUCCESS:
