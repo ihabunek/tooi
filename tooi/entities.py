@@ -98,6 +98,10 @@ class MediaAttachment:
     description: str
     blurhash: str
 
+    @property
+    def aspect_ratio(self) -> float | None:
+        return self.meta.get("original", {}).get("aspect")
+
 
 @dataclass
 class StatusMention:

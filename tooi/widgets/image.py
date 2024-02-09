@@ -6,14 +6,22 @@ from tooi.utils import images
 
 
 class HalfblockImage(Static):
-    def __init__(self, path_or_url: str, width: int, height: int):
+    def __init__(
+        self,
+        path_or_url: str,
+        width: int,
+        height: int,
+        *,
+        blurhash: str | None = None,
+        aspect_ratio: float | None = None,
+    ):
         self.path_or_url = path_or_url
         self.width = width
         self.height = height
 
-        # TODO: Display an image-sized placeholder instead
         # TODO: dynamic size based on viewport?
-        super().__init__("Loading...")
+        placeholder = images.render_placeholder(width, height, blurhash, aspect_ratio)
+        super().__init__(placeholder)
         self.worker = self.load()
 
     @work(exit_on_error=False, thread=True)

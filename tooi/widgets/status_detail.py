@@ -174,7 +174,13 @@ class StatusMediaAttachment(Widget):
             yield Static(self.attachment.description, markup=False)
         yield Link(self.attachment.url)
         if self.attachment.type == "image":
-            yield HalfblockImage(self.attachment.preview_url, width=50, height=40)
+            yield HalfblockImage(
+                self.attachment.preview_url,
+                width=50,
+                height=40,
+                blurhash=self.attachment.blurhash,
+                aspect_ratio=self.attachment.aspect_ratio,
+            )
 
 
 class StatusMeta(Static):

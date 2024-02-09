@@ -31,6 +31,22 @@ def render_blurhash(blurhash: str, width: int, height: int, aspect_ratio: float 
     return _encode(_blurhash_pixels(blurhash, width, height, aspect_ratio))
 
 
+def render_plain_placeholder(width: int, height: int, aspect_ratio: float | None):
+    width, height = _adjust_aspect_ratio(width, height, aspect_ratio)
+    height = int(height / 2)  # height is in pixels, 1 char = 2 pixels
+    style = Style(bgcolor=Color.from_rgb(50, 50, 50))
+    return Text("\n".join(" " * width for _ in range(height)), style)
+
+
+def render_placeholder(width: int, height: int, blurhash: str | None, aspect_ratio: float | None = None) -> Text:
+    if blurhash:
+        try:
+            return render_blurhash(blurhash, width, height, aspect_ratio)
+        except ValueError:
+            pass
+    return render_plain_placeholder(width, height, aspect_ratio)
+
+
 # No sense making this async since PIL doesn't support async so this needs
 # to be run in a thread.
 @contextmanager
@@ -65,14 +81,15 @@ def _image_pixels(image: Image.Image) -> Generator[list[ColorTuple], None, None]
 
 def _blurhash_pixels(bhash: str, width: int, height: int, aspect_ratio: float | None = None) \
         -> Generator[list[ColorTuple], None, None]:
-    if aspect_ratio:
-        width, height = _adjust_aspect_ratio(width, height, aspect_ratio)
-
+    width, height = _adjust_aspect_ratio(width, height, aspect_ratio)
     pixels = blurhash_decode(bhash, width, height)
     yield from batched(pixels, width)
 
 
-def _adjust_aspect_ratio(width: int, height: int, target_aspect_ratio: float) -> tuple[int, int]:
+def _adjust_aspect_ratio(width: int, height: int, target_aspect_ratio: float | None) -> tuple[int, int]:
+    if not target_aspect_ratio:
+        return width, height
+
     viewport_aspect_ratio = width / height
     if viewport_aspect_ratio >= target_aspect_ratio:
         # Viewport wider than target
